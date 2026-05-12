@@ -9,43 +9,12 @@ const C = {
   bloom:"#c85a45", parch:"#e0d8c0", tan:"#a09070", dust:"#585040",
 };
 
-const INITIAL_POSTS = [
-  { id:"p1", cat:"Project Save Humanity", icon:"💧", color:"#f5d060", flagship:true,
-    title:"Open-Source Desalination Unit: $40/Family, 48hr Deploy",
-    summary:"Modular solar-powered desalination for disaster zones. Full schematics, BOM, and deployment protocol. Field-tested on 3 continents.",
-    author:"Dr. Amara Osei", field:"Humanitarian Engineering", verified:true, substack:false,
-    up:18203, cite:341, tokenData:{sym:"H2OPEN", supply:5400, col:"#f5d060", change:18.4, commission:8} },
-  { id:"p2", cat:"Artificial Intelligence", icon:"⚙", color:"#5aabaa",
-    title:"Bias Detection Framework for LLM Governance",
-    summary:"Open standard for auditing AI systems for systemic bias and corporate capture. Community-run audit protocol included.",
-    author:"Prof. Yuki Tanaka", field:"AI Ethics", verified:true, substack:true,
-    up:12401, cite:289, tokenData:{sym:"AISAFE", supply:3900, col:"#e8a830", change:7.1, commission:5} },
-  { id:"p3", cat:"Medicine", icon:"🌿", color:"#88d068",
-    title:"mRNA Reprogramming for Cellular Senescence Reversal",
-    summary:"3-year independent study: modified mRNA vectors reduce inflammatory markers in aged tissue by 40%. No pharma funding. All data open.",
-    author:"Dr. Fatima Al-Rashid", field:"Molecular Biology", verified:true, substack:true,
-    up:21890, cite:512, tokenData:{sym:"LONGEVX", supply:7400, col:"#88d068", change:31.2, commission:8} },
-  { id:"p4", cat:"Climate Science", icon:"🌦", color:"#72c44a",
-    title:"Biochar Distributed Grid: Scalable Carbon Sequestration",
-    summary:"Protocol for distributed biochar production. 10-12x more efficient per hectare than reforestation. Tested in 14 communities.",
-    author:"Marcus Velde", field:"Climate Systems", verified:true, substack:false,
-    up:9840, cite:198, tokenData:{sym:"BIOCARB", supply:3100, col:"#72c44a", change:12.8, commission:7.5} },
-  { id:"p5", cat:"Neuroscience", icon:"🍄", color:"#d0a068",
-    title:"Psychedelic-Assisted PTSD Treatment: Open-Source Protocol",
-    summary:"Peer-reviewed protocol for psilocybin-assisted PTSD therapy. Tested across 847 veterans — 76% remission rate at 12 months. No pharma funding. All data open.",
-    author:"Dr. Kenji Morales", field:"Clinical Neuroscience", verified:true, substack:false,
-    up:14820, cite:267 },
-  { id:"p6", cat:"Engineering", icon:"📡", color:"#5aabaa",
-    title:"Decentralized Mesh Internet Protocol",
-    summary:"Open-source protocol for building censorship-resistant mesh networks. Deployed in 12 countries. 340,000+ nodes active. No central authority.",
-    author:"Dr. Priya Nair", field:"Network Engineering", verified:true, substack:false,
-    up:15430, cite:298, tokenData:{sym:"MESHNET", supply:6400, col:"#5aabaa", change:22.6, commission:5.5} },
-  { id:"p7", cat:"Physics", icon:"⚛", color:"#c87941",
-    title:"Quantum Error Correction: Universal Framework",
-    summary:"A universal framework for fault-tolerant quantum computation. Open-source implementation across 3 hardware platforms. No government or defense funding.",
-    author:"Dr. Kai Lindström", field:"Quantum Computing", verified:true, substack:false,
-    up:32100, cite:687, tokenData:{sym:"QUANTM", supply:9600, col:"#c87941", change:44.1, commission:5.5} },
-];
+const LS = {
+  get: (k, def) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del: k => { try { localStorage.removeItem(k); } catch {} },
+};
+
 
 const CATS = [
   // Flagship
@@ -159,24 +128,6 @@ const CATS = [
 
 const nf = n => n>=1e6?`${(n/1e6).toFixed(1)}M`:n>=1e3?`${(n/1e3).toFixed(1)}K`:`${n}`;
 
-const INITIAL_VOTES = {
-  p1: { scientific:1240, civil:890,  independent:1500, tech:670,  grassroots:430, academic:980,  journalism:340, legal:210 },
-  p2: { scientific:680,  civil:420,  independent:980,  tech:1840, grassroots:210, academic:560,  journalism:290, legal:140 },
-  p3: { scientific:2100, civil:580,  independent:1200, tech:890,  grassroots:340, academic:1760, journalism:420, legal:310 },
-  p4: { scientific:280,  civil:320,  independent:240,  tech:170,  grassroots:295, academic:220,  journalism:130, legal:85  },
-  p5: { scientific:780,  civil:560,  independent:940,  tech:420,  grassroots:610, academic:880,  journalism:380, legal:330 },
-  p6: { scientific:680,  civil:540,  independent:820,  tech:1240, grassroots:380, academic:590,  journalism:420, legal:310 },
-  p7: { scientific:1890, civil:420,  independent:680,  tech:1540, grassroots:210, academic:1680, journalism:310, legal:280 },
-};
-const INITIAL_DISPUTES = {
-  p1: { scientific:45,  civil:120, independent:200, tech:30,  grassroots:80,  academic:15,  journalism:60,  legal:25  },
-  p2: { scientific:28,  civil:65,  independent:140, tech:90,  grassroots:30,  academic:42,  journalism:110, legal:35  },
-  p3: { scientific:85,  civil:210, independent:310, tech:120, grassroots:90,  academic:45,  journalism:180, legal:70  },
-  p4: { scientific:40,  civil:58,  independent:80,  tech:28,  grassroots:45,  academic:36,  journalism:18,  legal:12  },
-  p5: { scientific:40,  civil:85,  independent:120, tech:55,  grassroots:70,  academic:30,  journalism:90,  legal:45  },
-  p6: { scientific:22,  civil:45,  independent:80,  tech:60,  grassroots:18,  academic:30,  journalism:55,  legal:20  },
-  p7: { scientific:60,  civil:165, independent:200, tech:100, grassroots:40,  academic:75,  journalism:130, legal:70  },
-};
 
 function shannonDiversity(counts) {
   const vals = Object.values(counts);
@@ -330,35 +281,6 @@ function commissionRate(cat) {
   return COMMISSION_RATES[cat] ?? 5;
 }
 
-function Ticker({ tokens }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let x = 0;
-    const id = setInterval(() => {
-      x -= 0.5;
-      if (x < -el.scrollWidth / 2) x = 0;
-      el.style.transform = `translateX(${x}px)`;
-    }, 16);
-    return () => clearInterval(id);
-  }, []);
-  const items = [...tokens, ...tokens];
-  return (
-    <div style={{overflow:"hidden",background:C.wood,borderBottom:`1px solid ${C.shadow}`,padding:"7px 0"}}>
-      <div ref={ref} style={{display:"flex",gap:44,whiteSpace:"nowrap",willChange:"transform"}}>
-        {items.map((t, i) => (
-          <span key={i} style={{display:"inline-flex",alignItems:"center",gap:8,fontFamily:"monospace",fontSize:10}}>
-            <span style={{color:t.col,fontWeight:700}}>⬡ {t.sym}</span>
-            <span style={{color:C.tan}}>${t.price.toFixed(2)}</span>
-            <span style={{color:t.ch>0?C.sprout:C.bloom}}>{t.ch>0?"+":""}{t.ch}%</span>
-            <span style={{color:C.dust}}>·</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function NetCanvas({ h = 130 }) {
   const ref = useRef(null);
@@ -419,13 +341,14 @@ function NetCanvas({ h = 130 }) {
   return <canvas ref={ref} width={880} height={h} style={{width:"100%",height:h,borderRadius:12,display:"block"}}/>;
 }
 
-function PostCard({ post, user, votes, disputes, onValidate, onTokenize }) {
+function PostCard({ post, user, votes, disputes, onValidate, onTokenize, onPostClick }) {
   const [hov, setHov] = useState(false);
   const score = votes && disputes ? calcTrustScore(votes, disputes) : null;
   const scoreColor = score === null ? C.amber : score >= 0.8 ? C.sprout : score >= 0.6 ? C.amber : C.bloom;
   const gateInfo = votes && disputes ? checkGates(post, votes, disputes) : null;
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      onClick={() => onPostClick && onPostClick(post)}
       style={{background:`linear-gradient(160deg,${C.card},${C.earth})`,border:`1px solid ${hov ? post.color + "55" : C.border}`,borderRadius:16,overflow:"hidden",cursor:"pointer",transition:"border-color .3s,transform .22s,box-shadow .3s",transform:hov?"translateY(-3px)":"none",boxShadow:hov?`0 14px 40px ${post.color}12`:"none"}}>
       <div style={{height:2,background:`linear-gradient(90deg,${post.color}88,${post.color}22,transparent)`}}/>
       <div style={{padding:"17px 19px"}}>
@@ -511,6 +434,150 @@ function PostCard({ post, user, votes, disputes, onValidate, onTokenize }) {
             ◈ VALIDATE THIS POST
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PostDetailModal({ post, votes, disputes, user, onClose, onValidate, onTokenize, onBuyToken }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const score = votes && disputes ? calcTrustScore(votes, disputes) : null;
+  const gateInfo = votes && disputes ? checkGates(post, votes, disputes) : null;
+  const scoreColor = score === null ? C.amber : score >= 0.8 ? C.sprout : score >= 0.6 ? C.amber : C.bloom;
+  const maxCluster = votes ? Math.max(...Object.values(votes), 1) : 1;
+
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${post.color}44`,borderRadius:20,padding:28,maxWidth:600,width:"100%",position:"relative",maxHeight:"92vh",overflowY:"auto"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${post.color},${post.color}22,transparent)`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+
+        <div style={{display:"flex",gap:7,alignItems:"center",marginBottom:10}}>
+          <span style={{fontSize:17}}>{post.icon}</span>
+          <span style={{fontSize:8,fontFamily:"monospace",color:post.color,letterSpacing:2}}>{post.cat.toUpperCase()}</span>
+          {post.flagship && <span style={{fontSize:7,fontFamily:"monospace",color:"#f5d060",background:"#f5d06010",border:"1px solid #f5d06040",padding:"1px 8px",borderRadius:20,letterSpacing:1}}>★ SAVE HUMANITY</span>}
+          {post.substack && <span style={{fontSize:7,color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,padding:"1px 6px",borderRadius:20,fontFamily:"monospace",marginLeft:"auto"}}>📰 SUBSTACK</span>}
+        </div>
+
+        <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:17,color:C.parch,lineHeight:1.45,fontWeight:700,marginBottom:12,paddingRight:40}}>{post.title}</h2>
+        <p style={{color:C.dust,fontSize:12,lineHeight:1.8,marginBottom:16}}>{post.summary}</p>
+
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 13px",background:C.wood,borderRadius:9,marginBottom:16,border:`1px solid ${C.shadow}`}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:`${post.color}22`,border:`1px solid ${post.color}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:post.color,fontWeight:700,flexShrink:0}}>{post.author[0]}</div>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:11,color:C.tan,fontFamily:"monospace",fontWeight:700}}>{post.author}</span>
+              {post.verified && <span style={{fontSize:7,color:C.sprout,background:C.sproutD,padding:"1px 5px",borderRadius:10}}>✓ VERIFIED</span>}
+            </div>
+            <span style={{fontSize:9,color:C.dust}}>{post.field}</span>
+          </div>
+          <div style={{display:"flex",gap:12}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:11,fontFamily:"monospace",color:C.sprout}}>▲ {nf(post.up)}</div>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>UPVOTES</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:11,fontFamily:"monospace",color:C.sky}}>◎ {post.cite}</div>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>CITATIONS</div>
+            </div>
+          </div>
+        </div>
+
+        {score !== null && (
+          <div style={{background:C.card,border:`1px solid ${scoreColor}22`,borderRadius:12,padding:"14px 16px",marginBottom:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+              <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>TRUST SCORE</span>
+              <span style={{fontSize:18,fontFamily:"monospace",fontWeight:700,color:scoreColor}}>{(score*100).toFixed(1)}%</span>
+            </div>
+            <div style={{height:5,background:C.shadow,borderRadius:3,overflow:"hidden",marginBottom:10}}>
+              <div style={{height:"100%",width:`${score*100}%`,background:`linear-gradient(90deg,${C.sky},${scoreColor})`,borderRadius:3,transition:"width .6s ease"}}/>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+              {CLUSTERS.map(cl => {
+                const v = (votes && votes[cl.id]) || 0;
+                const d = (disputes && disputes[cl.id]) || 0;
+                const barPct = maxCluster > 0 ? (v / maxCluster) * 100 : 0;
+                return (
+                  <div key={cl.id} style={{display:"flex",alignItems:"center",gap:7}}>
+                    <span style={{fontSize:9,width:16,textAlign:"center",flexShrink:0}}>{cl.icon}</span>
+                    <span style={{fontSize:6,fontFamily:"monospace",color:C.dust,width:58,flexShrink:0,letterSpacing:.3}}>{cl.label.toUpperCase()}</span>
+                    <div style={{flex:1,height:4,background:C.shadow,borderRadius:2,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${barPct}%`,background:C.sky,borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,minWidth:28,textAlign:"right"}}>{v}</span>
+                    {d > 0 && <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom}}>-{d}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {gateInfo && (
+          <div style={{background:C.bark,border:`1px solid ${gateInfo.allMet?C.amber+"44":C.shadow}`,borderRadius:10,padding:"12px 14px",marginBottom:14}}>
+            <div style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust,letterSpacing:2,marginBottom:8}}>TOKENIZATION GATES {gateInfo.metCount}/5</div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {gateInfo.items.map(g => {
+                const met = g.val >= g.req;
+                const pct = Math.min((g.val / g.req) * 100, 100);
+                return (
+                  <div key={g.key} style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:9,color:met?C.sprout:C.dust,width:12,flexShrink:0}}>{met?"✓":"·"}</span>
+                    <span style={{fontSize:7,fontFamily:"monospace",color:met?C.sprout:C.dust,width:130,flexShrink:0,letterSpacing:.3}}>{g.label}</span>
+                    <div style={{flex:1,height:3,background:C.shadow,borderRadius:1,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${pct}%`,background:met?C.sprout:C.amber,borderRadius:1}}/>
+                    </div>
+                    <span style={{fontSize:7,fontFamily:"monospace",color:met?C.sprout:C.dust,minWidth:44,textAlign:"right"}}>{g.fmt(g.val)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {post.tokenData && (
+          <div style={{background:`${post.tokenData.col}0a`,border:`1px solid ${post.tokenData.col}22`,borderRadius:9,padding:"11px 14px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <span style={{fontSize:13,fontFamily:"monospace",color:post.tokenData.col,fontWeight:700}}>⬡ {post.tokenData.sym}</span>
+              <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginTop:2}}>{post.tokenData.commission}% author commission · locked forever</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:13,fontFamily:"monospace",color:C.parch}}>${bondingPrice(post.tokenData.supply).toFixed(2)}</div>
+              <div style={{fontSize:8,fontFamily:"monospace",color:C.sprout}}>+{post.tokenData.change}%</div>
+            </div>
+          </div>
+        )}
+
+        <div style={{display:"flex",gap:8}}>
+          {user && (
+            <button onClick={() => { onClose(); onValidate(post); }}
+              style={{flex:1,background:`${C.sky}0a`,border:`1px solid ${C.sky}33`,color:C.sky,borderRadius:8,padding:"10px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:1}}>
+              ◈ VALIDATE
+            </button>
+          )}
+          {user && gateInfo?.allMet && !post.tokenData && (
+            <button onClick={() => { onClose(); onTokenize(post); }}
+              style={{flex:1,background:`${C.amber}0a`,border:`1px solid ${C.amber}33`,color:C.amber,borderRadius:8,padding:"10px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:1}}>
+              ★ TOKENIZE
+            </button>
+          )}
+          {post.tokenData && (
+            <button onClick={() => { onClose(); onBuyToken(post.tokenData.sym); }}
+              style={{flex:1,background:`${post.tokenData.col}12`,border:`1px solid ${post.tokenData.col}44`,color:post.tokenData.col,borderRadius:8,padding:"10px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:1,fontWeight:700}}>
+              ⬡ BUY {post.tokenData.sym}
+            </button>
+          )}
+          {!user && (
+            <div style={{flex:1,textAlign:"center",padding:"10px",border:`1px solid ${C.shadow}`,borderRadius:8,fontSize:9,fontFamily:"monospace",color:C.dust}}>
+              Sign in to validate or buy tokens.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -936,99 +1003,55 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
   );
 }
 
-function SubModal({ onClose, user, onPublish }) {
-  const [url, setUrl] = useState("");
-  const [fetching, setFetching] = useState(false);
-  const [previewed, setPreviewed] = useState(false);
-  const [published, setPublished] = useState(false);
-  const [selected, setSelected] = useState([0, 1]);
-  const MOCK = [
-    { title:"Three Patents That Could End Energy Poverty — And Why You've Never Heard of Them", date:"Apr 2025", reads:12034, cat:"Energy" },
-    { title:"My Year Documenting Water Contamination in Rural Communities", date:"Mar 2025", reads:7890, cat:"Project Save Humanity" },
-    { title:"The Hidden Costs of Industrial Agriculture Nobody Talks About", date:"Feb 2025", reads:4821, cat:"Agriculture" },
-  ];
-  const doFetch = async () => {
-    if (!url.trim()) return;
-    setFetching(true);
-    await new Promise(r => setTimeout(r, 1800));
-    setFetching(false);
-    setPreviewed(true);
+function SubModal({ onClose, user }) {
+  const [url, setUrl]           = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone]         = useState(false);
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const handleSubmit = () => {
+    if (!url.trim() || submitting) return;
+    setSubmitting(true);
+    setTimeout(() => { setSubmitting(false); setDone(true); setTimeout(onClose, 3000); }, 2000);
   };
-  const doPublish = () => {
-    selected.forEach(idx => {
-      const m = MOCK[idx];
-      const catEntry = CATS.find(c => c.name === m.cat) || CATS[0];
-      if (onPublish) onPublish({
-        id: `sub_${Date.now()}_${idx}`,
-        cat: catEntry.name,
-        icon: "📰",
-        color: catEntry.color,
-        title: m.title,
-        summary: `Imported from Substack · ${m.reads.toLocaleString()} reads · Originally published ${m.date}`,
-        author: user?.username || "Substack Author",
-        field: "Independent Research",
-        verified: !!(user?.pohMethod),
-        substack: true,
-        up: Math.floor(m.reads * 0.08),
-        cite: 0,
-      });
-    });
-    setPublished(true);
-    setTimeout(onClose, 2600);
-  };
-  const toggle = i => setSelected(s => s.includes(i) ? s.filter(x => x !== i) : [...s, i]);
+
   return (
-    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:26,maxWidth:480,width:"100%",maxHeight:"88vh",overflowY:"auto",position:"relative"}}>
-        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:26,maxWidth:440,width:"100%",position:"relative"}}>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
           <span style={{fontSize:24}}>📰</span>
           <div>
             <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:17,color:C.parch,margin:0}}>Import from Substack</h2>
             <p style={{margin:0,fontSize:9,fontFamily:"monospace",color:C.dust}}>Preserve your research permanently on the chain.</p>
           </div>
         </div>
-        {!previewed ? (
+        {done ? (
+          <div style={{textAlign:"center",padding:"24px 0"}}>
+            <div style={{fontSize:32,marginBottom:12,animation:"sway 1.5s ease-in-out infinite"}}>🌱</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,letterSpacing:2,marginBottom:8}}>SUBMITTED FOR IMPORT</div>
+            <p style={{fontSize:11,color:C.dust,lineHeight:1.75}}>Your Substack has been received. Once verified, your work will appear in Discover — permanently archived and censor-proof.</p>
+          </div>
+        ) : (
           <>
             <div style={{background:C.canopy,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"11px 13px",marginBottom:14,fontSize:10,fontFamily:"monospace",color:C.tan,lineHeight:1.8}}>
-              Your Substack stays live. This creates an <span style={{color:C.amber}}>immutable backup</span> across 19,000+ nodes. No corporation or government can erase it.
+              Your Substack stays live. This creates an <span style={{color:C.amber}}>immutable on-chain backup</span>. No corporation or government can erase it.
             </div>
             <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>YOUR SUBSTACK URL</label>
             <input value={url} onChange={e => setUrl(e.target.value)} placeholder="yourname.substack.com"
-              style={{width:"100%",background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"10px 13px",color:C.parch,fontSize:13,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:14,transition:"border-color .2s"}}/>
-            <button onClick={doFetch} disabled={!url.trim() || fetching}
-              style={{width:"100%",background:url?`${C.amber}18`:"transparent",border:`1px solid ${url ? C.amber + "44" : C.shadow}`,color:url?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:url?"pointer":"not-allowed",letterSpacing:2}}>
-              {fetching ? "FETCHING POSTS…" : "FETCH & PREVIEW POSTS →"}
+              onKeyDown={e => { if(e.key==="Enter") handleSubmit(); }}
+              style={{width:"100%",background:C.wood,border:`1px solid ${url?C.amber+"44":C.shadow}`,borderRadius:8,padding:"10px 13px",color:C.parch,fontSize:13,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:14}}/>
+            <button onClick={handleSubmit} disabled={!url.trim() || submitting || !user}
+              style={{width:"100%",background:url&&user?`${C.amber}18`:"transparent",border:`1px solid ${url&&user?C.amber+"44":C.shadow}`,color:url&&user?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:url&&user?"pointer":"not-allowed",letterSpacing:2}}>
+              {submitting ? "SUBMITTING…" : "SUBMIT FOR IMPORT →"}
             </button>
-          </>
-        ) : (
-          <>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:10}}>SELECT POSTS TO IMPORT</div>
-            {MOCK.map((p, i) => (
-              <div key={i} onClick={() => toggle(i)}
-                style={{background:selected.includes(i)?`${C.amber}0f`:C.bark,border:`1px solid ${selected.includes(i)?C.amber+"55":C.shadow}`,borderRadius:10,padding:"12px",marginBottom:8,cursor:"pointer",transition:"all .2s"}}>
-                <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-                  <div style={{width:16,height:16,borderRadius:4,border:`2px solid ${selected.includes(i)?C.amber:C.dust}`,background:selected.includes(i)?C.amber:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}}>
-                    {selected.includes(i) && <span style={{fontSize:9,color:C.bark,fontWeight:700}}>✓</span>}
-                  </div>
-                  <div>
-                    <div style={{fontSize:12,fontFamily:"'Palatino Linotype',serif",color:C.parch,lineHeight:1.4,marginBottom:4}}>{p.title}</div>
-                    <div style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{p.date} · {p.reads.toLocaleString()} reads</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {published ? (
-              <div style={{textAlign:"center",padding:"14px 0"}}>
-                <div style={{fontSize:32,marginBottom:10,animation:"sway 1.5s ease-in-out infinite"}}>🌱</div>
-                <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,letterSpacing:2,marginBottom:6}}>PRESERVED ON-CHAIN</div>
-                <p style={{fontSize:11,color:C.dust,lineHeight:1.7}}>{selected.length} post{selected.length!==1?"s":""} broadcast to 19,000+ nodes. No corporation or government can erase them now.</p>
-              </div>
-            ) : (
-              <button onClick={doPublish} disabled={selected.length === 0}
-                style={{width:"100%",marginTop:8,background:selected.length?`${C.sprout}18`:"transparent",border:`1px solid ${selected.length?C.sprout+"44":C.shadow}`,color:selected.length?C.sprout:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:selected.length?"pointer":"not-allowed",letterSpacing:2}}>
-                PUBLISH {selected.length} POST{selected.length !== 1 ? "S" : ""} TO CHAIN →
-              </button>
+            {!user && (
+              <p style={{fontSize:9,fontFamily:"monospace",color:C.dust,textAlign:"center",marginTop:10,opacity:.7}}>Sign in to import Substack content.</p>
             )}
           </>
         )}
@@ -1117,43 +1140,71 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
   );
 }
 
-function ProfileModal({ user, onClose, onLogout }) {
+function ProfileModal({ user, posts, portfolio, tokens, userVotes, onClose, onLogout }) {
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  const myPosts = (posts || []).filter(p => p.author === user.username);
+  const validationCount = Object.keys(userVotes || {}).length;
+  const ownedSyms = Object.keys(portfolio || {});
+  const walletAddr = "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40,"0").slice(0,40);
+
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:440,width:"100%",position:"relative",maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:20}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
-        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:18}}>
           <div style={{width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber}33,${C.vine}22)`,border:`2px solid ${C.amber}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:C.amber,fontWeight:700,flexShrink:0}}>
             {user.username[0].toUpperCase()}
           </div>
           <div>
             <div style={{fontSize:16,fontFamily:"'Palatino Linotype',serif",color:C.parch,fontWeight:700}}>@{user.username}</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:2}}>Member</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:2}}>Joined {user.joined}</div>
             <div style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{user.field}</div>
           </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-          {[{l:"POSTS",v:"0"},{l:"VALIDATED",v:"0"},{l:"TOKENS",v:"0"}].map(({l,v}) => (
+          {[{l:"WORKS",v:myPosts.length},{l:"VALIDATED",v:validationCount},{l:"TOKENS",v:ownedSyms.length}].map(({l,v}) => (
             <div key={l} style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"10px",textAlign:"center"}}>
               <div style={{fontSize:15,fontFamily:"monospace",fontWeight:700,color:C.amber}}>{v}</div>
               <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginTop:2}}>{l}</div>
             </div>
           ))}
         </div>
-        <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"11px 14px",marginBottom:16,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2}}>
+        <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"11px 14px",marginBottom:14,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2}}>
           <div>⬡ <span style={{color:C.tan}}>Email:</span> {user.email}</div>
           {user.field && <div>⬡ <span style={{color:C.tan}}>Field:</span> {user.field}</div>}
           {user.cluster && <div>⬡ <span style={{color:C.tan}}>Cluster:</span> {CLUSTERS.find(c=>c.id===user.cluster)?.icon} {CLUSTERS.find(c=>c.id===user.cluster)?.label}</div>}
           {user.pohMethod && <div>⬡ <span style={{color:C.tan}}>Proof of Humanity:</span> <span style={{color:C.sprout}}>✓ {user.pohMethod==="worldid"?"World ID":"Gitcoin Passport"}</span></div>}
           {user.credentials?.length > 0 && <div>⬡ <span style={{color:C.tan}}>Credentials:</span> {user.credentials.length} on-chain</div>}
           <div>⬡ <span style={{color:C.tan}}>Member since:</span> {user.joined}</div>
+          <div style={{display:"flex",alignItems:"center",gap:4}}>⬡ <span style={{color:C.tan}}>Wallet:</span> <span style={{color:C.amber,fontSize:8,marginLeft:4}}>{walletAddr.slice(0,10)}…{walletAddr.slice(-4)}</span></div>
         </div>
+        {ownedSyms.length > 0 && (
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>MY TOKEN PORTFOLIO</div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {ownedSyms.map(sym => {
+                const qty = (portfolio || {})[sym] || 0;
+                const tok = (tokens || []).find(t => t.sym === sym);
+                if (!tok) return null;
+                return (
+                  <div key={sym} style={{background:C.wood,border:`1px solid ${tok.col}22`,borderRadius:8,padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div>
+                      <span style={{fontSize:11,fontFamily:"monospace",color:tok.col,fontWeight:700}}>⬡ {sym}</span>
+                      <span style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginLeft:8}}>{qty.toLocaleString()} tokens</span>
+                    </div>
+                    <span style={{fontSize:10,fontFamily:"monospace",color:C.parch}}>${(tok.price * qty).toFixed(2)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <button onClick={() => { onLogout(); onClose(); }}
           style={{width:"100%",background:"transparent",border:`1px solid ${C.bloom}44`,color:C.bloom,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,transition:"all .2s"}}>
           LOG OUT
@@ -2031,35 +2082,47 @@ const NAV_ITEMS = [
 
 export default function Veridax() {
   const [section, setSection] = useState("home");
-  const [user, setUser] = useState(null);
-  const [accounts, setAccounts] = useState([]);
+  const [user, setUser]             = useState(() => LS.get('vdx_session', null));
+  const [accounts, setAccounts]     = useState(() => LS.get('vdx_accounts', []));
   const [showJoin, setShowJoin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
-  const [posts, setPosts] = useState(INITIAL_POSTS);
-  const [postVotes,    setPostVotes]    = useState(INITIAL_VOTES);
-  const [postDisputes, setPostDisputes] = useState(INITIAL_DISPUTES);
-  const [userVotes,    setUserVotes]    = useState({});
+  const [posts, setPosts]               = useState(() => LS.get('vdx_posts', []));
+  const [postVotes,    setPostVotes]    = useState(() => LS.get('vdx_votes', {}));
+  const [postDisputes, setPostDisputes] = useState(() => LS.get('vdx_disputes', {}));
+  const [userVotes,    setUserVotes]    = useState(() => LS.get('vdx_uservotes', {}));
+  const [portfolio,    setPortfolio]    = useState(() => LS.get('vdx_portfolio', {}));
   const [validatingPost,  setValidatingPost]  = useState(null);
   const [tokenizePost,    setTokenizePost]    = useState(null);
   const [buyTokenSym,     setBuyTokenSym]     = useState(null);
+  const [detailPost,      setDetailPost]      = useState(null);
   const [discoverFilter,  setDiscoverFilter]  = useState("all");
   const [discoverSearch,  setDiscoverSearch]  = useState("");
+  const [discoverSort,    setDiscoverSort]    = useState("newest");
   const [showProposecat,  setShowProposecat]  = useState(false);
 
   const tokens = posts
     .filter(p => p.tokenData)
     .map(p => ({ sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply, commission:p.tokenData.commission ?? commissionRate(p.cat) }));
   const buyToken = buyTokenSym ? tokens.find(t => t.sym === buyTokenSym) : null;
-  const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
+
+  // Persistence effects
+  useEffect(() => LS.set('vdx_posts', posts), [posts]);
+  useEffect(() => LS.set('vdx_votes', postVotes), [postVotes]);
+  useEffect(() => LS.set('vdx_disputes', postDisputes), [postDisputes]);
+  useEffect(() => LS.set('vdx_accounts', accounts), [accounts]);
+  useEffect(() => { if (user) LS.set('vdx_session', user); else LS.del('vdx_session'); }, [user]);
+  useEffect(() => LS.set('vdx_portfolio', portfolio), [portfolio]);
+  useEffect(() => LS.set('vdx_uservotes', userVotes), [userVotes]);
 
   const handleVote = (postId, type) => {
     if (!user || userVotes[postId]) return;
     const cluster = user.cluster || "independent";
     if (type === "up") {
       setPostVotes(prev => ({ ...prev, [postId]: { ...prev[postId], [cluster]: (prev[postId]?.[cluster]||0) + 1 } }));
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, up: (p.up||0) + 1 } : p));
     } else {
       setPostDisputes(prev => ({ ...prev, [postId]: { ...prev[postId], [cluster]: (prev[postId]?.[cluster]||0) + 1 } }));
     }
@@ -2068,7 +2131,7 @@ export default function Veridax() {
 
   const handleTokenized = (postId, sym) => {
     setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, tokenData: { sym, supply: 1000, col: p.color, change: 0, commission: commissionRate(p.cat) } } : p
+      p.id === postId ? { ...p, tokenData: { sym, supply: 1000, col: p.color || p.col || C.amber, change: 0, commission: commissionRate(p.cat) } } : p
     ));
     setPostVotes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
     setPostDisputes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
@@ -2079,45 +2142,18 @@ export default function Veridax() {
     setPosts(prev => prev.map(p =>
       p.tokenData?.sym === sym ? { ...p, tokenData: { ...p.tokenData, supply: p.tokenData.supply + qty } } : p
     ));
+    setPortfolio(prev => ({ ...prev, [sym]: (prev[sym] || 0) + qty }));
   };
 
   const handlePublish = (newPost) => {
-    setPosts(prev => [...prev, newPost]);
     const empty = { scientific:0, civil:0, independent:0, tech:0, grassroots:0, academic:0, journalism:0, legal:0 };
-    setPostVotes(prev => ({ ...prev, [newPost.id]: { ...empty } }));
-    setPostDisputes(prev => ({ ...prev, [newPost.id]: { ...empty } }));
+    const p = { ...newPost, up: newPost.up ?? 0, cite: newPost.cite ?? 0 };
+    setPosts(prev => [...prev, p]);
+    setPostVotes(prev => ({ ...prev, [p.id]: { ...empty } }));
+    setPostDisputes(prev => ({ ...prev, [p.id]: { ...empty } }));
   };
 
-  const [liveStats, setLiveStats] = useState({ experts:24182, works:89403, nodes:19203, imports:3841, tokens:3401 });
-
-  const GOSSIPS = [
-    "📰 Substack import: 'Three Patents That Could End Energy Poverty' — preserved on 19,200+ nodes",
-    "🌍 19,203 nodes active across 7 global regions — no central server",
-    "⬡ LONGEVX +31.2% · author earned $1,240 this week",
-    "🛡 Sybil cluster quarantined: 847 coordinated wallets blocked before affecting consensus",
-    "★ Project Save Humanity: new proposal — 'Universal Clean Water Grid' — 4,200 upvotes",
-    "⚖ Legal takedown attempt blocked — recorded as suppression evidence on-chain",
-  ];
-
-  useEffect(() => {
-    const id = setInterval(() => setGossip(GOSSIPS[Math.floor(Math.random() * GOSSIPS.length)]), 4000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setLiveStats(prev => {
-        const next = { ...prev };
-        if (Math.random() < 0.40) next.experts++;
-        if (Math.random() < 0.60) next.works++;
-        if (Math.random() < 0.20) next.nodes++;
-        if (Math.random() < 0.30) next.imports++;
-        if (Math.random() < 0.05) next.tokens++;
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(id);
-  }, []);
+  const totalValidations = Object.values(postVotes).reduce((s,v) => s + Object.values(v).reduce((a,b) => a+b, 0), 0);
 
   return (
     <div style={{minHeight:"100vh",background:C.soil,color:C.parch,fontFamily:"'Palatino Linotype',Palatino,Georgia,serif",display:"flex",flexDirection:"column"}}>
@@ -2136,14 +2172,14 @@ export default function Veridax() {
         button{transition:all .2s}
       `}</style>
 
-      {/* GOSSIP */}
+      {/* STATUS BAR */}
       <div style={{background:C.canopy,borderBottom:`1px solid ${C.shadow}`,padding:"5px 24px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout,letterSpacing:3,flexShrink:0,animation:"pulse 2s infinite"}}>● LIVE</span>
-        <span style={{fontSize:9,fontFamily:"monospace",color:C.dust,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{gossip}</span>
+        <span style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>
+          {posts.length} works published · {totalValidations.toLocaleString()} validations · {tokens.length} tokens
+        </span>
         <span style={{marginLeft:"auto",fontSize:9,fontFamily:"monospace",color:"#181828",flexShrink:0,animation:"blink 1s infinite"}}>█</span>
       </div>
-
-      <Ticker tokens={tokens}/>
 
       {/* NAV */}
       <nav style={{position:"sticky",top:0,zIndex:100,background:`${C.earth}f8`,borderBottom:`1px solid ${C.shadow}`,backdropFilter:"blur(20px)",flexShrink:0}}>
@@ -2240,7 +2276,13 @@ export default function Veridax() {
                     <span style={{fontSize:6,color:C.sprout,animation:"pulse 2s infinite"}}>●</span>
                     <span style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>LIVE</span>
                   </div>
-                  {[{l:"EXPERTS",v:liveStats.experts,c:C.amber},{l:"WORKS",v:liveStats.works,c:C.vine},{l:"NODES",v:liveStats.nodes,c:C.sky},{l:"IMPORTS",v:liveStats.imports,c:C.copper},{l:"TOKENS",v:liveStats.tokens,c:"#f5d060"}].map(({l,v,c},i,arr) => (
+                  {[
+                    {l:"EXPERTS",   v:accounts.length,        c:C.amber},
+                    {l:"WORKS",     v:posts.length,            c:C.vine},
+                    {l:"NODES",     v:1,                       c:C.sky},
+                    {l:"VALIDATIONS",v:totalValidations,       c:C.copper},
+                    {l:"TOKENS",    v:tokens.length,           c:"#f5d060"},
+                  ].map(({l,v,c},i,arr) => (
                     <div key={l} style={{flex:"1 1 80px",textAlign:"center",padding:"0 10px",borderRight:i<arr.length-1?`1px solid ${C.shadow}`:"none"}}>
                       <div key={v} style={{fontSize:16,fontFamily:"monospace",fontWeight:700,color:c,marginBottom:2,animation:"numtick .25s ease"}}>{v.toLocaleString()}</div>
                       <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1.5}}>{l}</div>
@@ -2255,7 +2297,7 @@ export default function Veridax() {
               <div style={{maxWidth:1100,margin:"0 auto"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                   <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>LIVE P2P MESH — NO CENTRAL SERVER — NO KILL SWITCH</span>
-                  <span style={{fontSize:8,fontFamily:"monospace",color:C.sprout,animation:"pulse 2s infinite"}}>● 19,203 NODES</span>
+                  <span style={{fontSize:8,fontFamily:"monospace",color:C.sprout,animation:"pulse 2s infinite"}}>● NODE #1 ACTIVE</span>
                 </div>
                 <NetCanvas h={120}/>
               </div>
@@ -2263,16 +2305,43 @@ export default function Veridax() {
 
             {/* Posts */}
             <div style={{maxWidth:1160,margin:"0 auto",padding:"34px 24px"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20}}>
-                <div>
-                  <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:3}}>Featured Discoveries</h2>
-                  <p style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>Most validated · Highest consensus · Trending</p>
+              {posts.length === 0 ? (
+                <div style={{textAlign:"center",padding:"60px 24px",animation:"fadein .5s ease both"}}>
+                  <div style={{fontSize:40,marginBottom:16}}>◉</div>
+                  <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:10}}>No works published yet.</h2>
+                  <p style={{fontSize:12,color:C.dust,lineHeight:1.8,maxWidth:400,margin:"0 auto 24px"}}>
+                    Be the first expert to publish here. Every verified work becomes a permanent, tamper-proof record — and earns its author forever.
+                  </p>
+                  {user ? (
+                    <button onClick={() => setShowPublish(true)}
+                      style={{background:`linear-gradient(135deg,${C.amber}20,${C.vine}10)`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:10,padding:"12px 24px",fontSize:10,fontFamily:"monospace",cursor:"pointer",letterSpacing:2}}>
+                      ✦ PUBLISH YOUR WORK →
+                    </button>
+                  ) : (
+                    <button onClick={() => setShowJoin(true)}
+                      style={{background:`linear-gradient(135deg,${C.amber}20,${C.vine}10)`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:10,padding:"12px 24px",fontSize:10,fontFamily:"monospace",cursor:"pointer",letterSpacing:2}}>
+                      JOIN AS EXPERT →
+                    </button>
+                  )}
                 </div>
-                <button onClick={() => setSection("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-                {posts.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
-              </div>
+              ) : (
+                <>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20}}>
+                    <div>
+                      <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:3}}>Recent Discoveries</h2>
+                      <p style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>Latest · Most validated · Highest consensus</p>
+                    </div>
+                    <button onClick={() => setSection("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
+                    {[...posts].reverse().slice(0, 9).map((p, i) => (
+                      <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}>
+                        <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Four Pillars */}
@@ -2287,7 +2356,7 @@ export default function Veridax() {
                     {icon:"⬡",color:C.amber,title:"Knowledge Marketplace",body:"Publish discoveries that earn. Every validated work becomes a tokenized asset — authors earn automatically on every engagement, forever. No publisher takes a cut."},
                     {icon:"◈",color:C.sky,title:"Credibility System",body:"Trust is built through consensus across diverse, independent networks — not handed down by institutions. No authority decides what is true. The many decide together."},
                     {icon:"🤝",color:C.sprout,title:"Decentralized Social Network",body:"Connect with researchers, journalists, engineers, scientists, and philosophers across every field. No algorithm, no feed manipulation, no corporate agenda shaping what you see."},
-                    {icon:"⛓",color:C.copper,title:"Blockchain-Backed Archive",body:"Every post is permanently recorded across 19,000+ independent nodes. Tamper-proof. Immutable. No corporation, government, or court order can erase what has been published here."},
+                    {icon:"⛓",color:C.copper,title:"Blockchain-Backed Archive",body:"Every post is permanently recorded across every node in the network. Tamper-proof. Immutable. No corporation, government, or court order can erase what has been published here."},
                   ].map(({icon,color,title,body}) => (
                     <div key={title} style={{background:C.earth,border:`1px solid ${color}22`,borderRadius:14,padding:"20px",transition:"border-color .2s"}}
                       onMouseEnter={e => e.currentTarget.style.borderColor=`${color}55`}
@@ -2377,18 +2446,50 @@ export default function Veridax() {
                 ))}
               </div>
             </div>
+            {/* Sort controls */}
+            <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+              {[{k:"newest",l:"NEWEST"},{k:"trust",l:"TRUST SCORE"},{k:"upvotes",l:"MOST UPVOTES"}].map(({k,l}) => (
+                <button key={k} onClick={() => setDiscoverSort(k)}
+                  style={{background:discoverSort===k?`${C.amber}18`:C.bark,border:`1px solid ${discoverSort===k?C.amber+"55":C.shadow}`,color:discoverSort===k?C.amber:C.dust,borderRadius:20,padding:"4px 12px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
+                  {l}
+                </button>
+              ))}
+            </div>
             {/* Post grid */}
             {(() => {
-              const filtered = discoverFilter === "all"
-                ? posts
-                : posts.filter(p => p.cat === discoverFilter);
+              let filtered = discoverFilter === "all" ? [...posts] : posts.filter(p => p.cat === discoverFilter);
+              if (discoverSort === "newest") filtered = filtered.reverse();
+              else if (discoverSort === "trust") filtered = filtered.sort((a,b) => {
+                const ta = calcTrustScore(postVotes[a.id]||{},postDisputes[a.id]||{});
+                const tb = calcTrustScore(postVotes[b.id]||{},postDisputes[b.id]||{});
+                return tb - ta;
+              });
+              else if (discoverSort === "upvotes") filtered = filtered.sort((a,b) => (b.up||0)-(a.up||0));
+              if (posts.length === 0) return (
+                <div style={{textAlign:"center",padding:"80px 24px",animation:"fadein .5s ease both"}}>
+                  <div style={{fontSize:36,marginBottom:14}}>◉</div>
+                  <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:10}}>No works published yet.</h2>
+                  <p style={{fontSize:12,color:C.dust,lineHeight:1.8,maxWidth:380,margin:"0 auto 22px"}}>Be the first expert to publish here.</p>
+                  {user ? (
+                    <button onClick={() => setShowPublish(true)}
+                      style={{background:`${C.sky}14`,border:`1px solid ${C.sky}44`,color:C.sky,borderRadius:10,padding:"10px 22px",fontSize:9,fontFamily:"monospace",cursor:"pointer",letterSpacing:2}}>
+                      ✦ PUBLISH YOUR WORK →
+                    </button>
+                  ) : (
+                    <button onClick={() => setShowJoin(true)}
+                      style={{background:`${C.amber}14`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:10,padding:"10px 22px",fontSize:9,fontFamily:"monospace",cursor:"pointer",letterSpacing:2}}>
+                      JOIN AS EXPERT →
+                    </button>
+                  )}
+                </div>
+              );
               return filtered.length > 0 ? (
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-                  {filtered.map((p,i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
+                  {filtered.map((p,i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/></div>)}
                 </div>
               ) : (
                 <div style={{textAlign:"center",padding:"60px 24px",color:C.dust,fontFamily:"monospace",fontSize:11}}>
-                  No works yet in <span style={{color:C.parch}}>{discoverFilter}</span> — be the first to publish.
+                  No works yet in <b style={{color:C.parch}}>{discoverFilter}</b> — be the first to publish in this domain.
                 </div>
               );
             })()}
@@ -2407,9 +2508,14 @@ export default function Veridax() {
                 A global open collaboration space for ideas, inventions, and systems specifically aimed at moving civilization toward a healthier, freer, more advanced, and more ethical future.
               </p>
               <div style={{display:"flex",gap:28,justifyContent:"center",flexWrap:"wrap",paddingTop:22,borderTop:`1px solid ${C.shadow}`}}>
-                {[{l:"PROPOSALS",v:"4,821",c:"#f5d060"},{l:"CONTRIBUTORS",v:"18,203",c:C.sprout},{l:"NATIONS",v:"94",c:C.sky},{l:"ACTIVE TOKENS",v:"341",c:C.copper}].map(({l,v,c}) => (
+                {[
+                  {l:"PROPOSALS",  v:posts.filter(p=>p.flagship).length,         c:"#f5d060"},
+                  {l:"CONTRIBUTORS",v:accounts.length,                            c:C.sprout},
+                  {l:"VALIDATIONS", v:totalValidations,                           c:C.sky},
+                  {l:"ACTIVE TOKENS",v:tokens.filter(t=>posts.find(p=>p.flagship&&p.tokenData?.sym===t.sym)).length, c:C.copper},
+                ].map(({l,v,c}) => (
                   <div key={l} style={{textAlign:"center"}}>
-                    <div style={{fontSize:21,fontFamily:"monospace",fontWeight:700,color:c}}>{v}</div>
+                    <div style={{fontSize:21,fontFamily:"monospace",fontWeight:700,color:c}}>{v.toLocaleString()}</div>
                     <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginTop:3}}>{l}</div>
                   </div>
                 ))}
@@ -2477,7 +2583,15 @@ export default function Veridax() {
                 <span style={{fontSize:7,fontFamily:"monospace",color:"#f5d060",letterSpacing:3}}>FEATURED WORK</span>
                 <div style={{flex:1,height:1,background:"#f5d06022"}}/>
               </div>
-              {(() => { const fp = posts.find(p => p.flagship); return fp && <PostCard post={fp} user={user} votes={postVotes[fp.id]} disputes={postDisputes[fp.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>; })()}
+              {(() => {
+                const fp = posts.find(p => p.flagship);
+                if (!fp) return (
+                  <div style={{textAlign:"center",padding:"30px",border:`1px dashed #f5d06030`,borderRadius:12,color:C.dust,fontFamily:"monospace",fontSize:11}}>
+                    No PSH works yet — be the first to publish a Project Save Humanity work.
+                  </div>
+                );
+                return <PostCard post={fp} user={user} votes={postVotes[fp.id]} disputes={postDisputes[fp.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>;
+              })()}
             </div>
 
           </div>
@@ -2487,28 +2601,38 @@ export default function Veridax() {
           <div style={{maxWidth:940,margin:"0 auto",padding:"40px 24px"}}>
             <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:6}}>Knowledge Market</h1>
             <p style={{color:C.dust,fontSize:12,fontFamily:"monospace",marginBottom:24}}>Tokenized discoveries. Bonding curve pricing. Author earns a commission on every buy — automatically, forever.</p>
-            <div style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:12,overflow:"hidden",marginBottom:22}}>
-              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"10px 16px",borderBottom:`1px solid ${C.shadow}`,fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>
-                {["KNOWLEDGE ASSET","PRICE","24H","AUTHOR RATE","ACTION"].map(h => <div key={h}>{h}</div>)}
+            {tokens.length === 0 ? (
+              <div style={{textAlign:"center",padding:"48px 24px",background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:12,marginBottom:22,animation:"fadein .5s ease both"}}>
+                <div style={{fontSize:30,marginBottom:14,color:C.amber}}>⬡</div>
+                <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.parch,marginBottom:10}}>No knowledge tokens yet.</h2>
+                <p style={{fontSize:11,color:C.dust,lineHeight:1.85,maxWidth:420,margin:"0 auto"}}>
+                  Tokens are created when a published work clears all five trust gates simultaneously and the community votes YES. The first tokenized discovery will appear here.
+                </p>
               </div>
-              {tokens.map((t, i) => (
-                <div key={i} onClick={() => setBuyTokenSym(t.sym)} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"13px 16px",borderBottom:`1px solid ${C.shadow}`,alignItems:"center",transition:"background .2s",cursor:"pointer"}}
-                  onMouseEnter={e => e.currentTarget.style.background=C.wood}
-                  onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-                  <div style={{display:"flex",alignItems:"center",gap:9}}>
-                    <div style={{width:7,height:7,borderRadius:"50%",background:t.col,boxShadow:`0 0 7px ${t.col}`,flexShrink:0}}/>
-                    <div>
-                      <div style={{fontSize:11,fontFamily:"monospace",color:t.col,fontWeight:700}}>⬡ {t.sym}</div>
-                      <div style={{fontSize:9,color:C.dust}}>{t.name.length>38?t.name.slice(0,38)+"…":t.name}</div>
-                    </div>
-                  </div>
-                  <div style={{fontSize:12,fontFamily:"monospace",color:C.parch,fontWeight:700}}>${t.price.toFixed(2)}</div>
-                  <div style={{fontSize:11,fontFamily:"monospace",color:t.ch>0?C.sprout:C.bloom}}>{t.ch>0?"+":""}{t.ch}%</div>
-                  <div style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>{t.commission}%</div>
-                  <button onClick={() => setBuyTokenSym(t.sym)} style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
+            ) : (
+              <div style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:12,overflow:"hidden",marginBottom:22}}>
+                <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"10px 16px",borderBottom:`1px solid ${C.shadow}`,fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>
+                  {["KNOWLEDGE ASSET","PRICE","24H","AUTHOR RATE","ACTION"].map(h => <div key={h}>{h}</div>)}
                 </div>
-              ))}
-            </div>
+                {tokens.map((t, i) => (
+                  <div key={i} onClick={() => setBuyTokenSym(t.sym)} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"13px 16px",borderBottom:`1px solid ${C.shadow}`,alignItems:"center",transition:"background .2s",cursor:"pointer"}}
+                    onMouseEnter={e => e.currentTarget.style.background=C.wood}
+                    onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                    <div style={{display:"flex",alignItems:"center",gap:9}}>
+                      <div style={{width:7,height:7,borderRadius:"50%",background:t.col,boxShadow:`0 0 7px ${t.col}`,flexShrink:0}}/>
+                      <div>
+                        <div style={{fontSize:11,fontFamily:"monospace",color:t.col,fontWeight:700}}>⬡ {t.sym}</div>
+                        <div style={{fontSize:9,color:C.dust}}>{t.name.length>38?t.name.slice(0,38)+"…":t.name}</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:12,fontFamily:"monospace",color:C.parch,fontWeight:700}}>${t.price.toFixed(2)}</div>
+                    <div style={{fontSize:11,fontFamily:"monospace",color:t.ch>0?C.sprout:C.bloom}}>{t.ch>0?"+":""}{t.ch}%</div>
+                    <div style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>{t.commission}%</div>
+                    <button onClick={() => setBuyTokenSym(t.sym)} style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Bonding Curve Mechanics */}
             <div style={{background:C.bark,border:`1px solid ${C.sky}28`,borderRadius:14,padding:"22px",marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
@@ -2706,13 +2830,22 @@ export default function Veridax() {
             {/* Live validation queue */}
             <div>
               <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:14}}>LIVE VALIDATION QUEUE</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
-                {posts.map((p, i) => (
-                  <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}>
-                    <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>
-                  </div>
-                ))}
-              </div>
+              {posts.length === 0 ? (
+                <div style={{textAlign:"center",padding:"50px 24px",border:`1px dashed ${C.shadow}`,borderRadius:12,animation:"fadein .5s ease both"}}>
+                  <div style={{fontSize:28,marginBottom:12}}>◈</div>
+                  <p style={{fontSize:11,fontFamily:"monospace",color:C.dust,lineHeight:1.8,maxWidth:380,margin:"0 auto"}}>
+                    No works have been submitted for validation yet. When researchers publish, their works appear here for community validation.
+                  </p>
+                </div>
+              ) : (
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+                  {posts.map((p, i) => (
+                    <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}>
+                      <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2939,7 +3072,7 @@ export default function Veridax() {
             <NetCanvas h={160}/>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(185px,1fr))",gap:10,marginTop:20}}>
               {[{i:"📡",t:"Gossip Protocol",c:C.sky,d:"Blocks propagate P2P in seconds. No broadcast server required."},
-                {i:"🌿",t:"No Kill Switch",c:C.sprout,d:"No domain to seize, no company to pressure. 19,000+ nodes."},
+                {i:"🌿",t:"No Kill Switch",c:C.sprout,d:"No domain to seize, no company to pressure. Every user is a node."},
                 {i:"⚡",t:"Light Node",c:C.amber,d:"Runs on a phone, Raspberry Pi, or old laptop."},
                 {i:"🔒",t:"Tor Ready",c:C.copper,d:"Nodes can route through anonymizing networks."},
                 {i:"🔗",t:"Immutable Chain",c:C.sprout,d:"Altering one block breaks every block after it."},
@@ -2996,16 +3129,42 @@ export default function Veridax() {
             </div>
             <p style={{fontSize:9,color:C.dust,fontFamily:"monospace",lineHeight:1.7}}>A decentralized, peer-to-peer knowledge platform. Publish freely. Earn what your ideas are worth. Leave a record that cannot be erased.</p>
           </div>
-          {[{h:"Platform",ls:["Discover","★ Save Humanity","Knowledge Market","Import Substack","Submit Research"]},
-            {h:"Security",ls:["Proof of Humanity","Defense Layers","Suppression Vault","Open Source","Run a Node"]},
-            {h:"Network",ls:["19,203 Nodes Live","P2P Protocol","IPFS Storage","Tor Support","Light Node"]},
-            {h:"Mission",ls:["About","Manifesto","Roadmap","Community","Contact"]}].map(col => (
+          {[
+            {h:"Platform",ls:[
+              {label:"Discover",          action:() => setSection("discover")},
+              {label:"★ Save Humanity",   action:() => setSection("psh")},
+              {label:"Knowledge Market",  action:() => setSection("market")},
+              {label:"Import Substack",   action:() => setShowSub(true)},
+              {label:"Submit Research",   action:() => user ? setShowPublish(true) : setShowJoin(true)},
+            ]},
+            {h:"Security",ls:[
+              {label:"Proof of Humanity", action:() => setSection("security")},
+              {label:"Defense Layers",    action:() => setSection("security")},
+              {label:"Suppression Vault", action:() => setSection("security")},
+              {label:"Open Source",       action:() => setSection("security")},
+              {label:"Run a Node",        action:() => setSection("network")},
+            ]},
+            {h:"Network",ls:[
+              {label:"Node #1 Active",    action:() => setSection("network")},
+              {label:"P2P Protocol",      action:() => setSection("network")},
+              {label:"IPFS Storage",      action:() => setSection("network")},
+              {label:"Tor Support",       action:() => setSection("network")},
+              {label:"Light Node",        action:() => setSection("network")},
+            ]},
+            {h:"Mission",ls:[
+              {label:"About",             action:() => setSection("psh")},
+              {label:"Manifesto",         action:() => setSection("psh")},
+              {label:"Community",         action:() => setSection("psh")},
+              {label:"Consensus",         action:() => setSection("consensus")},
+              {label:"Contact",           action:() => {}},
+            ]},
+          ].map(col => (
             <div key={col.h}>
               <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>{col.h.toUpperCase()}</div>
-              {col.ls.map(l => (
-                <div key={l} style={{fontSize:10,fontFamily:"monospace",color:C.dust,padding:"2px 0",cursor:"pointer",transition:"color .2s"}}
+              {col.ls.map(({label,action}) => (
+                <div key={label} onClick={action} style={{fontSize:10,fontFamily:"monospace",color:C.dust,padding:"2px 0",cursor:"pointer",transition:"color .2s"}}
                   onMouseEnter={e => e.currentTarget.style.color=C.tan}
-                  onMouseLeave={e => e.currentTarget.style.color=C.dust}>{l}</div>
+                  onMouseLeave={e => e.currentTarget.style.color=C.dust}>{label}</div>
               ))}
             </div>
           ))}
@@ -3014,9 +3173,15 @@ export default function Veridax() {
         {/* Stats */}
         <div style={{borderTop:`1px solid ${C.shadow}`,borderBottom:`1px solid ${C.shadow}`,padding:"11px 24px"}}>
           <div style={{maxWidth:1160,margin:"0 auto",display:"flex",gap:0,flexWrap:"wrap",justifyContent:"center"}}>
-            {[{l:"NODES",v:liveStats.nodes,c:C.sprout},{l:"EXPERTS",v:liveStats.experts,c:C.amber},{l:"WORKS",v:liveStats.works,c:C.sky},{l:"BLOCKED",v:4821,c:C.sprout},{l:"TOKENS",v:liveStats.tokens,c:C.copper},{l:"AUTHOR EARNINGS",v:"$284K",c:"#f5d060"}].map(({l,v,c},i,arr) => (
+            {[
+              {l:"NODES",       v:1,                c:C.sprout},
+              {l:"EXPERTS",     v:accounts.length,  c:C.amber},
+              {l:"WORKS",       v:posts.length,      c:C.sky},
+              {l:"VALIDATIONS", v:totalValidations,  c:C.copper},
+              {l:"TOKENS",      v:tokens.length,     c:"#f5d060"},
+            ].map(({l,v,c},i,arr) => (
               <div key={l} style={{textAlign:"center",padding:"0 16px",borderRight:i<arr.length-1?`1px solid ${C.shadow}`:"none"}}>
-                <div key={v} style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c,lineHeight:1,animation:"numtick .25s ease"}}>{typeof v === "number" ? v.toLocaleString() : v}</div>
+                <div key={v} style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c,lineHeight:1,animation:"numtick .25s ease"}}>{v.toLocaleString()}</div>
                 <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginTop:2}}>{l}</div>
               </div>
             ))}
@@ -3035,8 +3200,20 @@ export default function Veridax() {
 
       {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
-      {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
-      {showSub && <SubModal user={user} onClose={() => setShowSub(false)} onPublish={handlePublish}/>}
+      {showProfile && user && <ProfileModal user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }}/>}
+      {showSub && <SubModal user={user} onClose={() => setShowSub(false)}/>}
+      {detailPost && (
+        <PostDetailModal
+          post={detailPost}
+          votes={postVotes[detailPost.id] || {}}
+          disputes={postDisputes[detailPost.id] || {}}
+          user={user}
+          onClose={() => setDetailPost(null)}
+          onValidate={p => { setDetailPost(null); setValidatingPost(p); }}
+          onTokenize={p => { setDetailPost(null); setTokenizePost(p); }}
+          onBuyToken={sym => { setDetailPost(null); setBuyTokenSym(sym); }}
+        />
+      )}
       {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)} onPublish={handlePublish}/>}
       {showProposecat && <ProposeCategoryModal user={user} onClose={() => setShowProposecat(false)}/>}
       {tokenizePost && postVotes[tokenizePost.id] && (
