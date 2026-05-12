@@ -700,6 +700,7 @@ export default function Veridax() {
   const [showProfile, setShowProfile] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
+  const [liveStats, setLiveStats] = useState({ experts:24182, works:89403, nodes:19203, imports:3841, tokens:3401 });
 
   const GOSSIPS = [
     "📰 Substack import: 'Three Patents That Could End Energy Poverty' — preserved on 19,200+ nodes",
@@ -712,6 +713,21 @@ export default function Veridax() {
 
   useEffect(() => {
     const id = setInterval(() => setGossip(GOSSIPS[Math.floor(Math.random() * GOSSIPS.length)]), 4000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLiveStats(prev => {
+        const next = { ...prev };
+        if (Math.random() < 0.40) next.experts++;
+        if (Math.random() < 0.60) next.works++;
+        if (Math.random() < 0.20) next.nodes++;
+        if (Math.random() < 0.30) next.imports++;
+        if (Math.random() < 0.05) next.tokens++;
+        return next;
+      });
+    }, 3000);
     return () => clearInterval(id);
   }, []);
 
@@ -728,6 +744,7 @@ export default function Veridax() {
         @keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
         @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+        @keyframes numtick{0%{opacity:.4;transform:translateY(-3px)}100%{opacity:1;transform:none}}
         button{transition:all .2s}
       `}</style>
 
@@ -824,10 +841,14 @@ export default function Veridax() {
                     JOIN AS EXPERT →
                   </button>
                 </div>
-                <div style={{display:"flex",gap:0,justifyContent:"center",flexWrap:"wrap",background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:14,padding:"15px",maxWidth:600,margin:"0 auto"}}>
-                  {[{l:"EXPERTS",v:"24,182",c:C.amber},{l:"WORKS",v:"89,403",c:C.vine},{l:"NODES",v:"19,203",c:C.sky},{l:"IMPORTS",v:"3,841",c:C.copper},{l:"TOKENS",v:"3,401",c:"#f5d060"}].map(({l,v,c},i,arr) => (
+                <div style={{display:"flex",gap:0,justifyContent:"center",flexWrap:"wrap",background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:14,padding:"15px",maxWidth:600,margin:"0 auto",position:"relative"}}>
+                  <div style={{position:"absolute",top:-9,left:"50%",transform:"translateX(-50%)",background:C.bark,padding:"0 8px",display:"flex",alignItems:"center",gap:5}}>
+                    <span style={{fontSize:6,color:C.sprout,animation:"pulse 2s infinite"}}>●</span>
+                    <span style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>LIVE</span>
+                  </div>
+                  {[{l:"EXPERTS",v:liveStats.experts,c:C.amber},{l:"WORKS",v:liveStats.works,c:C.vine},{l:"NODES",v:liveStats.nodes,c:C.sky},{l:"IMPORTS",v:liveStats.imports,c:C.copper},{l:"TOKENS",v:liveStats.tokens,c:"#f5d060"}].map(({l,v,c},i,arr) => (
                     <div key={l} style={{flex:"1 1 80px",textAlign:"center",padding:"0 10px",borderRight:i<arr.length-1?`1px solid ${C.shadow}`:"none"}}>
-                      <div style={{fontSize:16,fontFamily:"monospace",fontWeight:700,color:c,marginBottom:2}}>{v}</div>
+                      <div key={v} style={{fontSize:16,fontFamily:"monospace",fontWeight:700,color:c,marginBottom:2,animation:"numtick .25s ease"}}>{v.toLocaleString()}</div>
                       <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1.5}}>{l}</div>
                     </div>
                   ))}
@@ -1130,9 +1151,9 @@ export default function Veridax() {
         {/* Stats */}
         <div style={{borderTop:`1px solid ${C.shadow}`,borderBottom:`1px solid ${C.shadow}`,padding:"11px 24px"}}>
           <div style={{maxWidth:1160,margin:"0 auto",display:"flex",gap:0,flexWrap:"wrap",justifyContent:"center"}}>
-            {[{l:"NODES",v:"19,203",c:C.sprout},{l:"EXPERTS",v:"24,182",c:C.amber},{l:"WORKS",v:"89,403",c:C.sky},{l:"BLOCKED",v:"4,821",c:C.sprout},{l:"TOKENS",v:"3,401",c:C.copper},{l:"AUTHOR EARNINGS",v:"$284K",c:"#f5d060"}].map(({l,v,c},i,arr) => (
+            {[{l:"NODES",v:liveStats.nodes,c:C.sprout},{l:"EXPERTS",v:liveStats.experts,c:C.amber},{l:"WORKS",v:liveStats.works,c:C.sky},{l:"BLOCKED",v:4821,c:C.sprout},{l:"TOKENS",v:liveStats.tokens,c:C.copper},{l:"AUTHOR EARNINGS",v:"$284K",c:"#f5d060"}].map(({l,v,c},i,arr) => (
               <div key={l} style={{textAlign:"center",padding:"0 16px",borderRight:i<arr.length-1?`1px solid ${C.shadow}`:"none"}}>
-                <div style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c,lineHeight:1}}>{v}</div>
+                <div key={v} style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c,lineHeight:1,animation:"numtick .25s ease"}}>{typeof v === "number" ? v.toLocaleString() : v}</div>
                 <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginTop:2}}>{l}</div>
               </div>
             ))}
