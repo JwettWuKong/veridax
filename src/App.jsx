@@ -2386,31 +2386,88 @@ export default function Veridax() {
         )}
 
         {section === "psh" && (
-          <div style={{maxWidth:920,margin:"0 auto",padding:"46px 24px"}}>
-            <div style={{textAlign:"center",marginBottom:36}}>
-              <div style={{fontSize:40,marginBottom:12}}>🌍</div>
-              <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(22px,5vw,38px)",fontWeight:900,color:"#f5d060",marginBottom:12,fontStyle:"italic"}}>Project Save Humanity</h1>
-              <p style={{color:C.dust,fontSize:13,lineHeight:1.85,maxWidth:480,margin:"0 auto 24px"}}>The flagship open collaboration category. A global space for inventions and systems that could move civilization toward a healthier, freer, more advanced future.</p>
-              <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
-                {[{l:"PROPOSALS",v:"4,821",c:"#f5d060"},{l:"CONTRIBUTORS",v:"18,203",c:C.sprout},{l:"NATIONS",v:"94",c:C.sky},{l:"TOKENS",v:"341",c:C.copper}].map(({l,v,c}) => (
+          <div style={{maxWidth:940,margin:"0 auto",padding:"46px 24px"}}>
+
+            {/* Hero */}
+            <div style={{textAlign:"center",marginBottom:40}}>
+              <div style={{fontSize:8,fontFamily:"monospace",color:"#f5d060",letterSpacing:4,marginBottom:12}}>★ FLAGSHIP CATEGORY</div>
+              <div style={{fontSize:50,marginBottom:14}}>🌍</div>
+              <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,44px)",fontWeight:900,color:"#f5d060",marginBottom:16,fontStyle:"italic",lineHeight:1.15}}>Project Save Humanity</h1>
+              <p style={{color:C.dust,fontSize:13,lineHeight:1.9,maxWidth:560,margin:"0 auto 28px"}}>
+                A global open collaboration space for ideas, inventions, and systems specifically aimed at moving civilization toward a healthier, freer, more advanced, and more ethical future.
+              </p>
+              <div style={{display:"flex",gap:28,justifyContent:"center",flexWrap:"wrap",paddingTop:22,borderTop:`1px solid ${C.shadow}`}}>
+                {[{l:"PROPOSALS",v:"4,821",c:"#f5d060"},{l:"CONTRIBUTORS",v:"18,203",c:C.sprout},{l:"NATIONS",v:"94",c:C.sky},{l:"ACTIVE TOKENS",v:"341",c:C.copper}].map(({l,v,c}) => (
                   <div key={l} style={{textAlign:"center"}}>
-                    <div style={{fontSize:19,fontFamily:"monospace",fontWeight:700,color:c}}>{v}</div>
-                    <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>{l}</div>
+                    <div style={{fontSize:21,fontFamily:"monospace",fontWeight:700,color:c}}>{v}</div>
+                    <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginTop:3}}>{l}</div>
                   </div>
                 ))}
               </div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(165px,1fr))",gap:8,marginBottom:30}}>
-              {[["💧","Water & Sanitation","#60a5fa"],["☀","Clean Energy","#f5d060"],["🌿","Healthcare for All","#72c44a"],["📜","Education Reform","#a09070"],["🌾","Food Security","#a0c860"],["🔩","Humanitarian Engineering","#c87941"],["🛡","Anti-Corruption","#c85a45"],["⚙","Ethical AI","#5aabaa"],["🌱","Sustainability","#3a7a28"],["⚖","Justice Systems","#e8a830"],["🧠","Mental Health","#c090c0"],["🌒","Civilization Tech","#8090d0"]].map(([i,n,c]) => (
-                <button key={n} style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:10,padding:"12px 10px",cursor:"pointer",textAlign:"left",transition:"all .2s"}}
-                  onMouseEnter={e => { e.currentTarget.style.background=`${c}10`; e.currentTarget.style.borderColor=`${c}44`; }}
-                  onMouseLeave={e => { e.currentTarget.style.background=C.bark; e.currentTarget.style.borderColor=C.shadow; }}>
-                  <div style={{fontSize:19,marginBottom:5}}>{i}</div>
-                  <div style={{fontSize:9,fontFamily:"monospace",color:c,letterSpacing:.5,lineHeight:1.4}}>{n}</div>
-                </button>
-              ))}
+
+            {/* Philosophy */}
+            <div style={{background:`linear-gradient(135deg,${C.bark},${C.earth})`,border:`1px solid #f5d06044`,borderRadius:16,padding:"26px 28px",marginBottom:20,textAlign:"center"}}>
+              <div style={{fontSize:9,fontFamily:"monospace",color:"#f5d060",letterSpacing:3,marginBottom:16}}>THE PHILOSOPHY</div>
+              <blockquote style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:"clamp(14px,2.5vw,19px)",color:C.parch,lineHeight:1.6,maxWidth:660,margin:"0 auto 16px",fontWeight:700}}>
+                "The greatest discoveries for humanity's future should not be locked behind institutional gatekeeping, corporate ownership, or geographic privilege."
+              </blockquote>
+              <p style={{color:C.dust,fontSize:12,lineHeight:1.85,maxWidth:600,margin:"0 auto"}}>
+                This category exists because the world's most important problems have never respected borders or credentials. A breakthrough can come from anywhere. What matters is whether the idea works — not where it was conceived, who funded it, or which institution published it.
+              </p>
             </div>
-            {(() => { const fp = posts.find(p => p.flagship); return fp && <PostCard post={fp} user={user} votes={postVotes[fp.id]} disputes={postDisputes[fp.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>; })()}
+
+            {/* What this covers */}
+            <div style={{marginBottom:20}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:"#f5d060",letterSpacing:3}}>WHAT THIS CATEGORY COVERS</span>
+                <div style={{flex:1,height:1,background:"#f5d06022"}}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:9}}>
+                {[
+                  {i:"💧",n:"Clean Water Access",       c:"#5aabaa", d:"Desalination, purification protocols, and distribution networks for water-scarce populations."},
+                  {i:"☀",n:"Renewable Energy",          c:"#f5d060", d:"Solar, wind, geothermal, and open-source microgrid designs deployable without corporate infrastructure."},
+                  {i:"🌿",n:"Healthcare for All",        c:"#72c44a", d:"Medical protocols, diagnostics, and treatments for underserved populations — no pharma gating."},
+                  {i:"📜",n:"Education Reform",          c:"#a09070", d:"Open-access learning systems, community-driven curricula, and tools for democratizing knowledge."},
+                  {i:"🌾",n:"Food Security",             c:"#a0c860", d:"Agricultural innovation, crop resilience, distributed food systems, and famine prevention."},
+                  {i:"🔩",n:"Humanitarian Engineering",  c:"#c87941", d:"Infrastructure, disaster response tools, and low-cost deployment solutions for crisis zones."},
+                  {i:"🛡",n:"Anti-Corruption Systems",  c:"#c85a45", d:"Transparency frameworks, accountability tools, and institutional integrity infrastructure."},
+                  {i:"⚙",n:"Ethical AI",                c:"#5aabaa", d:"Bias detection, safety standards, and community governance models for AI systems."},
+                  {i:"🌱",n:"Environmental Sustainability",c:"#3a7a28",d:"Carbon sequestration, ecosystem restoration, pollution reversal, and regenerative systems."},
+                  {i:"⚖",n:"Justice System Reform",     c:"#e8a830", d:"Legal reform, incarceration alternatives, restorative justice protocols, and anti-impunity tools."},
+                  {i:"🧠",n:"Mental Health Access",      c:"#c090c0", d:"Open-source therapy protocols, crisis intervention systems, and global mental health infrastructure."},
+                  {i:"🌒",n:"Civilization Technology",   c:"#8090d0", d:"Long-horizon systems for human flourishing at civilizational scale — the ideas that define the next century."},
+                ].map(({i,n,c,d}) => (
+                  <div key={n} style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:11,padding:"14px 13px",transition:"all .2s",cursor:"default"}}
+                    onMouseEnter={e => { e.currentTarget.style.background=`${c}0e`; e.currentTarget.style.borderColor=`${c}44`; }}
+                    onMouseLeave={e => { e.currentTarget.style.background=C.bark; e.currentTarget.style.borderColor=C.shadow; }}>
+                    <div style={{fontSize:20,marginBottom:7}}>{i}</div>
+                    <div style={{fontSize:9,fontFamily:"monospace",color:c,letterSpacing:.5,marginBottom:5,fontWeight:700}}>{n.toUpperCase()}</div>
+                    <div style={{fontSize:10,color:C.dust,lineHeight:1.65}}>{d}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Equality Principle */}
+            <div style={{background:`${C.bloom}08`,border:`1px solid ${C.bloom}33`,borderRadius:14,padding:"24px 26px",marginBottom:24}}>
+              <div style={{fontSize:9,fontFamily:"monospace",color:C.bloom,letterSpacing:2,marginBottom:14}}>THE EQUALITY PRINCIPLE</div>
+              <p style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(13px,2vw,16px)",color:C.parch,lineHeight:1.75,marginBottom:14,fontStyle:"italic"}}>
+                "A water purification protocol developed by an independent engineer in a water-scarce country deserves the same validation pathway, the same permanent preservation, and the same financial reward as a paper from MIT."
+              </p>
+              <p style={{color:C.dust,fontSize:12,lineHeight:1.85,marginBottom:0}}>
+                The quality of the idea — verified by the community — is the only criterion that matters. VERIDAX does not know which country you published from, which university accepted you, or whether a journal peer-reviewed your work. It knows whether your idea can survive the scrutiny of thousands of independent validators across eight ideological clusters. That is the only gatekeeping that exists here.
+              </p>
+            </div>
+
+            {/* Featured post */}
+            <div style={{marginBottom:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:"#f5d060",letterSpacing:3}}>FEATURED WORK</span>
+                <div style={{flex:1,height:1,background:"#f5d06022"}}/>
+              </div>
+              {(() => { const fp = posts.find(p => p.flagship); return fp && <PostCard post={fp} user={user} votes={postVotes[fp.id]} disputes={postDisputes[fp.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>; })()}
+            </div>
 
           </div>
         )}
