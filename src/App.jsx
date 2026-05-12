@@ -1140,7 +1140,7 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
   );
 }
 
-function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, postDisputes, balance, transactions, onDeposit, onWithdraw, onClose, onLogout, onPublish }) {
+function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes, postDisputes, balance, transactions, onDeposit, onWithdraw, onClose, onLogout, onPublish, onJoin, onLogin }) {
   const [tab,             setTab]             = useState("works");
   const [walletMode,      setWalletMode]      = useState(null); // null | "deposit" | "withdraw"
   const [walletAmount,    setWalletAmount]    = useState("");
@@ -1187,12 +1187,66 @@ function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, 
 
   const TABS = [{k:"works",l:"WORKS"},{k:"portfolio",l:"PORTFOLIO"},{k:"wallet",l:"WALLET"},{k:"activity",l:"ACTIVITY"},{k:"account",l:"ACCOUNT"}];
 
-  return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,width:"100%",maxWidth:640,maxHeight:"92vh",display:"flex",flexDirection:"column",position:"relative",boxShadow:`0 0 60px ${C.amber}08`}}>
+  const panel = (children) => (
+    <>
+      <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000aa",zIndex:399,animation:"fadein .2s ease both"}}/>
+      <div style={{position:"fixed",top:0,right:0,height:"100vh",width:"min(420px,100vw)",background:`linear-gradient(180deg,${C.earth} 0%,${C.bark} 100%)`,borderLeft:`1px solid ${C.amber}33`,zIndex:400,display:"flex",flexDirection:"column",animation:"slideInRight .25s cubic-bezier(.22,.68,0,1.2) both",boxShadow:`-8px 0 40px #000000aa`}}>
+        {children}
+      </div>
+    </>
+  );
 
-        {/* Top gradient bar */}
-        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.sky},${C.vine})`,borderRadius:"20px 20px 0 0",flexShrink:0}}/>
+  if (!user) return panel(
+    <>
+      <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.sky},${C.vine})`,flexShrink:0}}/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:`1px solid ${C.shadow}`,flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:28,height:28,borderRadius:7,background:`linear-gradient(135deg,${C.amber}28,${C.copper}18)`,border:`1px solid ${C.amber}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>⛓</div>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:900,color:C.parch}}>VERIDAX</span>
+        </div>
+        <button onClick={onClose} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"32px 24px",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
+        <div style={{fontSize:36,marginBottom:14}}>🌿</div>
+        <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.parch,marginBottom:10,fontWeight:700}}>Join the Platform</h2>
+        <p style={{fontSize:11,color:C.dust,lineHeight:1.85,maxWidth:300,margin:"0 auto 28px"}}>
+          Publish research. Validate discoveries. Earn from your ideas — permanently, mathematically, and beyond the reach of any power that would prefer it didn't.
+        </p>
+        <button onClick={onJoin}
+          style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:10,padding:"13px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,marginBottom:10,fontWeight:700}}>
+          JOIN AS EXPERT →
+        </button>
+        <button onClick={onLogin}
+          style={{width:"100%",background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:10,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1,marginBottom:32}}>
+          LOG IN
+        </button>
+        <div style={{borderTop:`1px solid ${C.shadow}`,paddingTop:24,width:"100%"}}>
+          <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:14}}>WHAT YOU GET</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10,textAlign:"left"}}>
+            {[
+              {icon:"✦",col:C.sky,   title:"Publish freely",   body:"Your work is recorded on-chain — permanent and tamper-proof."},
+              {icon:"◈",col:C.sprout,title:"Validate & earn",   body:"Validate discoveries and build reputation across 8 clusters."},
+              {icon:"⬡",col:C.amber, title:"Knowledge tokens",  body:"Top works earn tokens on a bonding curve — authors earn forever."},
+              {icon:"🌍",col:"#f5d060",title:"Save Humanity",   body:"Contribute to the most important category on the platform."},
+            ].map(({icon,col,title,body}) => (
+              <div key={title} style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                <span style={{fontSize:14,color:col,flexShrink:0,marginTop:1}}>{icon}</span>
+                <div>
+                  <div style={{fontSize:10,fontFamily:"monospace",color:col,letterSpacing:.5,marginBottom:3}}>{title.toUpperCase()}</div>
+                  <div style={{fontSize:10,color:C.dust,lineHeight:1.6}}>{body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  return panel(
+    <>
+      {/* Top gradient bar */}
+      <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.sky},${C.vine})`,flexShrink:0}}/>
 
         {/* Profile header */}
         <div style={{padding:"20px 24px 16px",flexShrink:0}}>
@@ -1535,8 +1589,7 @@ function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, 
           )}
 
         </div>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -2547,6 +2600,7 @@ export default function Veridax() {
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
         @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
         @keyframes numtick{0%{opacity:.4;transform:translateY(-3px)}100%{opacity:1;transform:none}}
+        @keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
         button{transition:all .2s}
       `}</style>
 
@@ -3587,7 +3641,7 @@ export default function Veridax() {
 
       {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
-      {showProfile && user && <DashboardModal user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} balance={balance} transactions={transactions} onDeposit={handleDeposit} onWithdraw={handleWithdraw} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }}/>}
+      {showProfile && <DashboardSidebar user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} balance={balance} transactions={transactions} onDeposit={handleDeposit} onWithdraw={handleWithdraw} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }} onJoin={() => { setShowProfile(false); setShowJoin(true); }} onLogin={() => { setShowProfile(false); setShowLogin(true); }}/>}
       {showSub && <SubModal user={user} onClose={() => setShowSub(false)}/>}
       {detailPost && (
         <PostDetailModal
