@@ -518,17 +518,23 @@ function PostCard({ post, user, votes, disputes, onValidate, onTokenize }) {
 
 function DonateSection() {
   const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState(null);
-  const [custom, setCustom] = useState("");
-  const [done, setDone] = useState(false);
-  const [hov, setHov] = useState(false);
-  const final = amount || parseFloat(custom) || 0;
+  const [hov,  setHov]  = useState(false);
 
-  const handleGive = async () => {
-    if (!final) return;
-    setDone(true);
-    setTimeout(() => { setOpen(false); setDone(false); setAmount(null); setCustom(""); }, 3000);
-  };
+  useEffect(() => {
+    if (!open) return;
+    const tryInit = () => {
+      if (!window.paypal) return false;
+      const el = document.getElementById("paypal-container-M5BWUPDDP95EE");
+      if (!el) return false;
+      el.innerHTML = "";
+      window.paypal.HostedButtons({ hostedButtonId: "M5BWUPDDP95EE" }).render("#paypal-container-M5BWUPDDP95EE");
+      return true;
+    };
+    if (!tryInit()) {
+      const t = setInterval(() => { if (tryInit()) clearInterval(t); }, 100);
+      return () => clearInterval(t);
+    }
+  }, [open]);
 
   if (!open) {
     return (
@@ -558,46 +564,19 @@ function DonateSection() {
           style={{position:"absolute",top:14,right:14,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>
           ✕
         </button>
-        {!done ? (
-          <>
-            <div style={{marginBottom:18,paddingRight:36}}>
-              <div style={{fontSize:22,marginBottom:8}}>🌍</div>
-              <h3 style={{fontFamily:"'Palatino Linotype',serif",fontSize:17,color:C.parch,fontWeight:700,margin:"0 0 7px"}}>Thank you for being here.</h3>
-              <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:0}}>Every dollar goes back into hosting, development, and keeping this platform free, open, and independent. Nothing more.</p>
-            </div>
-            <div style={{display:"flex",gap:7,marginBottom:11}}>
-              {[5, 10, 20, 50].map(n => (
-                <button key={n} onClick={() => { setAmount(n); setCustom(""); }}
-                  style={{flex:1,background:amount===n?`${C.amber}22`:C.wood,border:`1px solid ${amount===n?C.amber:C.shadow}`,color:amount===n?C.amber:C.dust,borderRadius:9,padding:"9px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",transition:"all .2s",fontWeight:amount===n?"700":"400"}}>
-                  ${n}
-                </button>
-              ))}
-            </div>
-            <div style={{position:"relative",marginBottom:14}}>
-              <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:C.dust,fontFamily:"monospace",fontSize:13}}>$</span>
-              <input type="number" min="1" placeholder="other amount" value={custom}
-                onChange={e => { setCustom(e.target.value); setAmount(null); }}
-                style={{width:"100%",background:C.wood,border:`1px solid ${custom ? C.amber + "44" : C.shadow}`,borderRadius:9,padding:"10px 14px 10px 26px",color:C.parch,fontFamily:"monospace",fontSize:13,outline:"none",boxSizing:"border-box",transition:"border-color .2s"}}/>
-            </div>
-            <div style={{background:C.sproutD,border:`1px solid ${C.sprout}20`,borderRadius:9,padding:"10px 14px",marginBottom:14,fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.9}}>
-              <div style={{color:C.sprout,marginBottom:2,letterSpacing:1}}>100% goes toward:</div>
-              {["Node infrastructure & hosting","Security audits & improvements","Open-source development","Keeping VERIDAX free for everyone"].map(s => (
-                <div key={s} style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:C.sprout}}>✦</span>{s}</div>
-              ))}
-            </div>
-            <button onClick={handleGive} disabled={!final}
-              style={{width:"100%",background:final?`linear-gradient(135deg,${C.amber}22,${C.copper}12)`:"transparent",border:`1px solid ${final ? C.amber + "55" : C.shadow}`,color:final?C.amber:C.dust,borderRadius:11,padding:"12px",fontFamily:"monospace",fontSize:11,cursor:final?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
-              {final ? `contribute $${final} →` : "choose an amount"}
-            </button>
-            <p style={{fontSize:8,color:"#1e1828",fontFamily:"monospace",marginTop:10,letterSpacing:1,textAlign:"center"}}>no account required · no recurring charges · one-time only</p>
-          </>
-        ) : (
-          <div style={{textAlign:"center",padding:"20px 0"}}>
-            <div style={{fontSize:36,marginBottom:12,display:"inline-block",animation:"sway 1.5s ease-in-out infinite"}}>🌱</div>
-            <h3 style={{fontFamily:"'Palatino Linotype',serif",fontSize:18,color:C.parch,marginBottom:8}}>Growing.</h3>
-            <p style={{fontSize:12,color:C.dust,lineHeight:1.7}}>Your contribution is planting something real.<br/>Thank you — genuinely.</p>
-          </div>
-        )}
+        <div style={{marginBottom:18,paddingRight:36}}>
+          <div style={{fontSize:22,marginBottom:8}}>🌍</div>
+          <h3 style={{fontFamily:"'Palatino Linotype',serif",fontSize:17,color:C.parch,fontWeight:700,margin:"0 0 7px"}}>Thank you for being here.</h3>
+          <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:0}}>Every dollar goes back into hosting, security audits, and keeping this platform free, open, and independent. Nothing more.</p>
+        </div>
+        <div style={{background:C.sproutD,border:`1px solid ${C.sprout}20`,borderRadius:9,padding:"10px 14px",marginBottom:18,fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.9}}>
+          <div style={{color:C.sprout,marginBottom:2,letterSpacing:1}}>100% goes toward:</div>
+          {["Node infrastructure & hosting","Security audits & improvements","Open-source development","Keeping VERIDAX free for everyone"].map(s => (
+            <div key={s} style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:C.sprout}}>✦</span>{s}</div>
+          ))}
+        </div>
+        <div id="paypal-container-M5BWUPDDP95EE"/>
+        <p style={{fontSize:8,color:C.dust,fontFamily:"monospace",marginTop:12,letterSpacing:1,textAlign:"center",opacity:.5}}>no account required · no recurring charges · one-time only</p>
       </div>
     </div>
   );
