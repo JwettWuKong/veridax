@@ -381,7 +381,7 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
         {step === 1 && (
           <>
             <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Create your account</h2>
-            <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>Publish without gatekeepers. Earn when your ideas change the world.</p>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>Join a network of experts, researchers, journalists, scientists, and truth-seekers publishing freely — without gatekeepers, censorship, or corporate interference.</p>
 
             <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>USERNAME</label>
             <input value={username} onChange={e => { setUsername(e.target.value); setErrors(v=>({...v,username:""})); }}
@@ -802,13 +802,13 @@ export default function Veridax() {
                   <span style={{fontSize:7,fontFamily:"monospace",color:"#f5d060",letterSpacing:3}}>PROJECT SAVE HUMANITY — LIVE</span>
                 </div>
                 <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(28px,5.5vw,50px)",fontWeight:900,lineHeight:1.15,marginBottom:18,color:C.parch,letterSpacing:-.5}}>
-                  Where humanity's<br/><span style={{color:C.amber,fontStyle:"italic"}}>free thinkers</span><br/>build the future — openly.
+                  Truth verified by the many<br/>cannot be <span style={{color:C.amber,fontStyle:"italic"}}>buried</span> by the few.
                 </h1>
-                <p style={{color:C.dust,fontSize:13,lineHeight:1.9,maxWidth:500,margin:"0 auto 14px"}}>
-                  A decentralized P2P knowledge ecosystem. Credentials on-chain. No gatekeepers. No suppression. Discoveries become tokenized assets.
+                <p style={{color:C.dust,fontSize:13,lineHeight:1.9,maxWidth:540,margin:"0 auto 14px"}}>
+                  A decentralized, peer-to-peer platform where <span style={{color:C.parch}}>experts, researchers, independent journalists, engineers, scientists, philosophers,</span> and everyday truth-seekers can publish freely — without being silenced, suppressed, or bought out by corporations, governments, or institutions.
                 </p>
-                <p style={{color:C.dust,fontSize:12,lineHeight:1.85,maxWidth:460,margin:"0 auto 28px"}}>
-                  Already on <span style={{color:C.amber}}>Substack</span>? Import your research — permanent, tamper-proof, on 19,000+ nodes. <span style={{color:C.tan}}>No corporation can delete it.</span>
+                <p style={{color:C.dust,fontSize:12,lineHeight:1.85,maxWidth:480,margin:"0 auto 28px"}}>
+                  Part <span style={{color:C.amber}}>knowledge marketplace</span>, part <span style={{color:C.sky}}>credibility system</span>, part <span style={{color:C.sprout}}>decentralized social network</span>, and part <span style={{color:C.copper}}>blockchain-backed archive</span> of human progress.
                 </p>
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:38}}>
                   <button onClick={() => setShowSub(true)}
@@ -860,11 +860,37 @@ export default function Veridax() {
               </div>
             </div>
 
+            {/* Four Pillars */}
+            <div style={{borderTop:`1px solid ${C.shadow}`,background:C.bark,padding:"40px 24px"}}>
+              <div style={{maxWidth:1160,margin:"0 auto"}}>
+                <div style={{textAlign:"center",marginBottom:28}}>
+                  <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:8}}>WHAT IS VERIDAX</div>
+                  <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,fontWeight:700}}>Four systems. One mission.</h2>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
+                  {[
+                    {icon:"⬡",color:C.amber,title:"Knowledge Marketplace",body:"Publish discoveries that earn. Every validated work becomes a tokenized asset — authors earn automatically on every engagement, forever. No publisher takes a cut."},
+                    {icon:"◈",color:C.sky,title:"Credibility System",body:"Trust is built through consensus across diverse, independent networks — not handed down by institutions. No authority decides what is true. The many decide together."},
+                    {icon:"🤝",color:C.sprout,title:"Decentralized Social Network",body:"Connect with researchers, journalists, engineers, scientists, and philosophers across every field. No algorithm, no feed manipulation, no corporate agenda shaping what you see."},
+                    {icon:"⛓",color:C.copper,title:"Blockchain-Backed Archive",body:"Every post is permanently recorded across 19,000+ independent nodes. Tamper-proof. Immutable. No corporation, government, or court order can erase what has been published here."},
+                  ].map(({icon,color,title,body}) => (
+                    <div key={title} style={{background:C.earth,border:`1px solid ${color}22`,borderRadius:14,padding:"20px",transition:"border-color .2s"}}
+                      onMouseEnter={e => e.currentTarget.style.borderColor=`${color}55`}
+                      onMouseLeave={e => e.currentTarget.style.borderColor=`${color}22`}>
+                      <div style={{fontSize:22,color,marginBottom:10}}>{icon}</div>
+                      <div style={{fontSize:10,fontFamily:"monospace",color,letterSpacing:1,marginBottom:8}}>{title.toUpperCase()}</div>
+                      <p style={{fontSize:11,color:C.dust,lineHeight:1.75}}>{body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Categories */}
             <div style={{borderTop:`1px solid ${C.shadow}`,background:C.earth,padding:"34px 24px"}}>
               <div style={{maxWidth:1160,margin:"0 auto"}}>
                 <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:19,color:C.parch,marginBottom:3}}>90+ Knowledge Domains</h2>
-                <p style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Every field of human knowledge — open, censor-proof, permanently archived</p>
+                <p style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>From medicine to philosophy to engineering — every field, open, censor-proof, permanently archived</p>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:7}}>
                   {CATS.map(cat => (
                     <button key={cat.id} onClick={() => setSection("discover")}
@@ -884,15 +910,18 @@ export default function Veridax() {
             </div>
 
             {/* Mission */}
-            <div style={{padding:"50px 24px",textAlign:"center",background:C.soil}}>
-              <div style={{maxWidth:580,margin:"0 auto"}}>
+            <div style={{padding:"60px 24px",textAlign:"center",background:C.soil}}>
+              <div style={{maxWidth:620,margin:"0 auto"}}>
                 <div style={{fontSize:42,marginBottom:14}}>🌍</div>
-                <div style={{fontSize:7,fontFamily:"monospace",color:C.vine,letterSpacing:4,marginBottom:15}}>THE MISSION</div>
-                <blockquote style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(15px,3vw,23px)",fontWeight:700,fontStyle:"italic",color:C.parch,lineHeight:1.45,marginBottom:16}}>
-                  "A civilization-scale platform where truth, expertise, and morally driven progress are rewarded instead of suppressed."
+                <div style={{fontSize:7,fontFamily:"monospace",color:C.vine,letterSpacing:4,marginBottom:18}}>THE CORE PROMISE</div>
+                <blockquote style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(17px,3vw,26px)",fontWeight:700,fontStyle:"italic",color:C.parch,lineHeight:1.45,marginBottom:22}}>
+                  "Truth that is verified by the many cannot be buried by the few."
                 </blockquote>
+                <p style={{color:C.dust,fontSize:13,lineHeight:1.9,marginBottom:16}}>
+                  VERIDAX exists because the most important ideas in human history have been silenced, bought, buried, and discredited — not because they were wrong, but because they were <span style={{color:C.parch}}>inconvenient to those in power.</span>
+                </p>
                 <p style={{color:C.dust,fontSize:12,lineHeight:1.85}}>
-                  The <span style={{color:C.amber}}>discovery</span> becomes the asset. The <span style={{color:C.sprout}}>breakthrough</span> becomes the investment. The <span style={{color:"#f5d060"}}>idea</span> earns what it deserves.
+                  Here, knowledge lives permanently. <span style={{color:C.amber}}>Publish freely.</span> Earn what your ideas are worth. Leave a record that no corporation, government, or institution can erase. The <span style={{color:C.sprout}}>breakthrough</span> belongs to humanity — not to whoever owns the server.
                 </p>
               </div>
             </div>
@@ -1052,7 +1081,7 @@ export default function Veridax() {
               <div style={{width:24,height:24,borderRadius:6,background:`linear-gradient(135deg,${C.amber}28,${C.copper}18)`,border:`1px solid ${C.amber}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>⛓</div>
               <span style={{fontFamily:"'Palatino Linotype',serif",fontSize:13,fontWeight:700,color:C.parch}}>VERIDAX</span>
             </div>
-            <p style={{fontSize:9,color:C.dust,fontFamily:"monospace",lineHeight:1.7}}>Decentralized knowledge. Verified truth. Power returned to the people.</p>
+            <p style={{fontSize:9,color:C.dust,fontFamily:"monospace",lineHeight:1.7}}>A decentralized, peer-to-peer knowledge platform. Publish freely. Earn what your ideas are worth. Leave a record that cannot be erased.</p>
           </div>
           {[{h:"Platform",ls:["Discover","★ Save Humanity","Knowledge Market","Import Substack","Submit Research"]},
             {h:"Security",ls:["Proof of Humanity","Defense Layers","Suppression Vault","Open Source","Run a Node"]},
