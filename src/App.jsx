@@ -936,15 +936,16 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
   );
 }
 
-function SubModal({ onClose }) {
+function SubModal({ onClose, user, onPublish }) {
   const [url, setUrl] = useState("");
   const [fetching, setFetching] = useState(false);
   const [previewed, setPreviewed] = useState(false);
+  const [published, setPublished] = useState(false);
   const [selected, setSelected] = useState([0, 1]);
   const MOCK = [
-    { title:"Three Patents That Could End Energy Poverty — And Why You've Never Heard of Them", date:"Apr 2025", reads:12034 },
-    { title:"My Year Documenting Water Contamination in Rural Communities", date:"Mar 2025", reads:7890 },
-    { title:"The Hidden Costs of Industrial Agriculture Nobody Talks About", date:"Feb 2025", reads:4821 },
+    { title:"Three Patents That Could End Energy Poverty — And Why You've Never Heard of Them", date:"Apr 2025", reads:12034, cat:"Energy" },
+    { title:"My Year Documenting Water Contamination in Rural Communities", date:"Mar 2025", reads:7890, cat:"Project Save Humanity" },
+    { title:"The Hidden Costs of Industrial Agriculture Nobody Talks About", date:"Feb 2025", reads:4821, cat:"Agriculture" },
   ];
   const doFetch = async () => {
     if (!url.trim()) return;
@@ -952,6 +953,28 @@ function SubModal({ onClose }) {
     await new Promise(r => setTimeout(r, 1800));
     setFetching(false);
     setPreviewed(true);
+  };
+  const doPublish = () => {
+    selected.forEach(idx => {
+      const m = MOCK[idx];
+      const catEntry = CATS.find(c => c.name === m.cat) || CATS[0];
+      if (onPublish) onPublish({
+        id: `sub_${Date.now()}_${idx}`,
+        cat: catEntry.name,
+        icon: "📰",
+        color: catEntry.color,
+        title: m.title,
+        summary: `Imported from Substack · ${m.reads.toLocaleString()} reads · Originally published ${m.date}`,
+        author: user?.username || "Substack Author",
+        field: "Independent Research",
+        verified: !!(user?.pohMethod),
+        substack: true,
+        up: Math.floor(m.reads * 0.08),
+        cite: 0,
+      });
+    });
+    setPublished(true);
+    setTimeout(onClose, 2600);
   };
   const toggle = i => setSelected(s => s.includes(i) ? s.filter(x => x !== i) : [...s, i]);
   return (
@@ -995,10 +1018,18 @@ function SubModal({ onClose }) {
                 </div>
               </div>
             ))}
-            <button onClick={onClose}
-              style={{width:"100%",marginTop:8,background:`${C.sprout}18`,border:`1px solid ${C.sprout}44`,color:C.sprout,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
-              PUBLISH {selected.length} POST{selected.length !== 1 ? "S" : ""} TO CHAIN →
-            </button>
+            {published ? (
+              <div style={{textAlign:"center",padding:"14px 0"}}>
+                <div style={{fontSize:32,marginBottom:10,animation:"sway 1.5s ease-in-out infinite"}}>🌱</div>
+                <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,letterSpacing:2,marginBottom:6}}>PRESERVED ON-CHAIN</div>
+                <p style={{fontSize:11,color:C.dust,lineHeight:1.7}}>{selected.length} post{selected.length!==1?"s":""} broadcast to 19,000+ nodes. No corporation or government can erase them now.</p>
+              </div>
+            ) : (
+              <button onClick={doPublish} disabled={selected.length === 0}
+                style={{width:"100%",marginTop:8,background:selected.length?`${C.sprout}18`:"transparent",border:`1px solid ${selected.length?C.sprout+"44":C.shadow}`,color:selected.length?C.sprout:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:selected.length?"pointer":"not-allowed",letterSpacing:2}}>
+                PUBLISH {selected.length} POST{selected.length !== 1 ? "S" : ""} TO CHAIN →
+              </button>
+            )}
           </>
         )}
       </div>
@@ -1992,7 +2023,7 @@ const NAV_ITEMS = [
   {id:"home",label:"Home"},
   {id:"discover",label:"Discover"},
   {id:"psh",label:"★ Save Humanity"},
-  {id:"market",label:"Knowledge Market"},
+  {id:"market",label:"Market"},
   {id:"consensus",label:"Consensus"},
   {id:"security",label:"Security"},
   {id:"network",label:"Network"},
@@ -2277,7 +2308,7 @@ export default function Veridax() {
                 <p style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>From medicine to philosophy to engineering — every field, open, censor-proof, permanently archived</p>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:7}}>
                   {CATS.map(cat => (
-                    <button key={cat.id} onClick={() => setSection("discover")}
+                    <button key={cat.id} onClick={() => { setDiscoverFilter(cat.name); setSection("discover"); }}
                       style={{background:cat.flagship?"#f5d06008":C.bark,border:`1px solid ${cat.flagship?"#f5d06033":C.shadow}`,borderRadius:10,padding:"10px 9px",cursor:"pointer",textAlign:"left",transition:"all .2s"}}
                       onMouseEnter={e => { e.currentTarget.style.background=`${cat.color}10`; e.currentTarget.style.borderColor=`${cat.color}44`; }}
                       onMouseLeave={e => { e.currentTarget.style.background=cat.flagship?"#f5d06008":C.bark; e.currentTarget.style.borderColor=cat.flagship?"#f5d06033":C.shadow; }}>
@@ -2417,7 +2448,8 @@ export default function Veridax() {
                   {i:"🧠",n:"Mental Health Access",      c:"#c090c0", d:"Open-source therapy protocols, crisis intervention systems, and global mental health infrastructure."},
                   {i:"🌒",n:"Civilization Technology",   c:"#8090d0", d:"Long-horizon systems for human flourishing at civilizational scale — the ideas that define the next century."},
                 ].map(({i,n,c,d}) => (
-                  <div key={n} style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:11,padding:"14px 13px",transition:"all .2s",cursor:"default"}}
+                  <div key={n} onClick={() => { setDiscoverFilter("Project Save Humanity"); setSection("discover"); }}
+                    style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:11,padding:"14px 13px",transition:"all .2s",cursor:"pointer"}}
                     onMouseEnter={e => { e.currentTarget.style.background=`${c}0e`; e.currentTarget.style.borderColor=`${c}44`; }}
                     onMouseLeave={e => { e.currentTarget.style.background=C.bark; e.currentTarget.style.borderColor=C.shadow; }}>
                     <div style={{fontSize:20,marginBottom:7}}>{i}</div>
@@ -2460,7 +2492,7 @@ export default function Veridax() {
                 {["KNOWLEDGE ASSET","PRICE","24H","AUTHOR RATE","ACTION"].map(h => <div key={h}>{h}</div>)}
               </div>
               {tokens.map((t, i) => (
-                <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"13px 16px",borderBottom:`1px solid ${C.shadow}`,alignItems:"center",transition:"background .2s",cursor:"pointer"}}
+                <div key={i} onClick={() => setBuyTokenSym(t.sym)} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"13px 16px",borderBottom:`1px solid ${C.shadow}`,alignItems:"center",transition:"background .2s",cursor:"pointer"}}
                   onMouseEnter={e => e.currentTarget.style.background=C.wood}
                   onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                   <div style={{display:"flex",alignItems:"center",gap:9}}>
@@ -3004,7 +3036,7 @@ export default function Veridax() {
       {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
-      {showSub && <SubModal onClose={() => setShowSub(false)}/>}
+      {showSub && <SubModal user={user} onClose={() => setShowSub(false)} onPublish={handlePublish}/>}
       {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)} onPublish={handlePublish}/>}
       {showProposecat && <ProposeCategoryModal user={user} onClose={() => setShowProposecat(false)}/>}
       {tokenizePost && postVotes[tokenizePost.id] && (
