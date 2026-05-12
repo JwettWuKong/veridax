@@ -292,22 +292,65 @@ function DonateSection() {
   );
 }
 
-function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
+function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [field, setField] = useState("");
+  const [errors, setErrors] = useState({});
 
-  const step1Ready = username.trim() && email.includes("@") && password.length >= 8;
-  const step2Ready = field.trim().length > 0;
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
-  const inputStyle = (val) => ({
-    width:"100%", background:C.wood, border:`1px solid ${val ? C.amber+"33" : C.shadow}`,
+  const inputStyle = (valid, hasError) => ({
+    width:"100%", background:C.wood,
+    border:`1px solid ${hasError ? C.bloom+"88" : valid ? C.sprout+"44" : C.shadow}`,
     borderRadius:8, padding:"10px 13px", color:C.parch, fontSize:12, fontFamily:"monospace",
     outline:"none", boxSizing:"border-box", transition:"border-color .2s",
   });
+
+  const FieldError = ({ msg }) => msg ? (
+    <div style={{fontSize:9,fontFamily:"monospace",color:C.bloom,marginTop:4,marginBottom:8}}>✕ {msg}</div>
+  ) : <div style={{marginBottom:10}}/>;
+
+  const pwStrength = password.length === 0 ? 0 : password.length < 8 ? 1 : password.length < 12 ? 2 : 3;
+  const pwColors = ["transparent", C.bloom, C.amber, C.sprout];
+  const pwLabels = ["", "Weak", "Good", "Strong"];
+
+  const validateStep1 = () => {
+    const e = {};
+    if (!username.trim()) e.username = "Username is required.";
+    else if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) e.username = "Letters, numbers, and underscores only.";
+    if (!email.trim()) e.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Enter a valid email address.";
+    else if (accounts.some(a => a.email === email.trim())) e.email = "An account with this email already exists.";
+    if (password.length < 8) e.password = "Password must be at least 8 characters.";
+    if (!confirmPw) e.confirmPw = "Please confirm your password.";
+    else if (password !== confirmPw) e.confirmPw = "Passwords do not match.";
+    return e;
+  };
+
+  const handleStep1 = () => {
+    const e = validateStep1();
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setErrors({});
+    setStep(2);
+  };
+
+  const handleStep2 = () => {
+    if (!field.trim()) { setErrors({ field: "Please select or enter your field." }); return; }
+    setErrors({});
+    const profile = { username: username.trim(), email: email.trim(), password, field: field.trim(), joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) };
+    onJoin(profile);
+    setStep(3);
+  };
 
   const Steps = () => (
     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:20}}>
@@ -315,7 +358,7 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
         <div key={n} style={{display:"flex",alignItems:"center",gap:6}}>
           <div style={{width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontFamily:"monospace",fontWeight:700,
             background: step>n ? C.sprout : step===n ? C.amber : "transparent",
-            border: `1px solid ${step>n ? C.sprout : step===n ? C.amber : C.shadow}`,
+            border:`1px solid ${step>n ? C.sprout : step===n ? C.amber : C.shadow}`,
             color: step>=n ? C.bark : C.dust,
           }}>{step>n?"✓":n}</div>
           {n<3 && <div style={{width:24,height:1,background:step>n?C.sprout:C.shadow}}/>}
@@ -328,8 +371,8 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
   );
 
   return (
-    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:420,width:"100%",position:"relative",maxHeight:"90vh",overflowY:"auto"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:420,width:"100%",position:"relative",maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
 
@@ -338,28 +381,53 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
         {step === 1 && (
           <>
             <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Create your account</h2>
-            <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>Build your verified expert profile. Publish without gatekeepers. Earn when your ideas change the world.</p>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>Publish without gatekeepers. Earn when your ideas change the world.</p>
 
             <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>USERNAME</label>
-            <input value={username} onChange={e => setUsername(e.target.value)} placeholder="e.g. drfatima"
-              style={{...inputStyle(username), marginBottom:12}}/>
+            <input value={username} onChange={e => { setUsername(e.target.value); setErrors(v=>({...v,username:""})); }}
+              placeholder="Letters, numbers, underscores"
+              style={{...inputStyle(username.trim(), errors.username)}}/>
+            <FieldError msg={errors.username}/>
 
             <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>EMAIL</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"
-              style={{...inputStyle(email.includes("@")), marginBottom:12}}/>
+            <input type="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(v=>({...v,email:""})); }}
+              placeholder="you@example.com"
+              style={{...inputStyle(email.includes("@") && email.includes("."), errors.email)}}/>
+            <FieldError msg={errors.email}/>
 
             <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>PASSWORD</label>
-            <div style={{position:"relative",marginBottom:18}}>
-              <input type={showPw?"text":"password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters"
-                style={{...inputStyle(password.length>=8), paddingRight:44}}/>
-              <button onClick={() => setShowPw(s=>!s)}
-                style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:11,fontFamily:"monospace"}}>
+            <div style={{position:"relative"}}>
+              <input type={showPw?"text":"password"} value={password}
+                onChange={e => { setPassword(e.target.value); setErrors(v=>({...v,password:""})); }}
+                placeholder="Min. 8 characters"
+                style={{...inputStyle(password.length>=8, errors.password), paddingRight:50}}/>
+              <button onClick={() => setShowPw(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:10,fontFamily:"monospace"}}>
                 {showPw?"HIDE":"SHOW"}
               </button>
             </div>
+            {password.length > 0 && (
+              <div style={{display:"flex",gap:3,marginTop:6,marginBottom:4}}>
+                {[1,2,3].map(i => <div key={i} style={{flex:1,height:3,borderRadius:2,background:i<=pwStrength?pwColors[pwStrength]:`${C.shadow}`}}/>)}
+                <span style={{fontSize:8,fontFamily:"monospace",color:pwColors[pwStrength],marginLeft:6,minWidth:40}}>{pwLabels[pwStrength]}</span>
+              </div>
+            )}
+            <FieldError msg={errors.password}/>
 
-            <button onClick={() => step1Ready && setStep(2)} disabled={!step1Ready}
-              style={{width:"100%",background:step1Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step1Ready?C.amber+"55":C.shadow}`,color:step1Ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:step1Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s",marginBottom:14}}>
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>CONFIRM PASSWORD</label>
+            <div style={{position:"relative"}}>
+              <input type={showConfirm?"text":"password"} value={confirmPw}
+                onChange={e => { setConfirmPw(e.target.value); setErrors(v=>({...v,confirmPw:""})); }}
+                onKeyDown={e => { if(e.key==="Enter") handleStep1(); }}
+                placeholder="Repeat your password"
+                style={{...inputStyle(confirmPw && confirmPw===password, errors.confirmPw), paddingRight:50}}/>
+              <button onClick={() => setShowConfirm(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:10,fontFamily:"monospace"}}>
+                {showConfirm?"HIDE":"SHOW"}
+              </button>
+            </div>
+            <FieldError msg={errors.confirmPw}/>
+
+            <button onClick={handleStep1}
+              style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,transition:"all .2s",marginBottom:14}}>
               CONTINUE →
             </button>
             <div style={{textAlign:"center",fontSize:9,fontFamily:"monospace",color:C.dust}}>
@@ -375,31 +443,26 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
             <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>This shapes how your profile is shown and which discoveries you're invited to validate.</p>
 
             <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>YOUR FIELD</label>
-            <input value={field} onChange={e => setField(e.target.value)} placeholder="e.g. Climate Engineering, Molecular Biology…"
-              style={{...inputStyle(field.trim()), marginBottom:10}}/>
+            <input value={field} onChange={e => { setField(e.target.value); setErrors({}); }}
+              placeholder="e.g. Climate Engineering, Molecular Biology…"
+              style={{...inputStyle(field.trim(), errors.field), marginBottom:8}}/>
+            <FieldError msg={errors.field}/>
 
-            <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:16}}>
-              {["Medicine","Climate Science","AI & Ethics","Physics","Biology","Economics"].map(f => (
-                <button key={f} onClick={() => setField(f)}
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:18}}>
+              {["Medicine","Climate Science","AI & Ethics","Physics","Biology","Economics","Engineering","Law"].map(f => (
+                <button key={f} onClick={() => { setField(f); setErrors({}); }}
                   style={{background:field===f?`${C.amber}18`:C.wood,border:`1px solid ${field===f?C.amber+"55":C.shadow}`,color:field===f?C.amber:C.dust,borderRadius:20,padding:"4px 10px",fontSize:8,fontFamily:"monospace",cursor:"pointer",transition:"all .2s"}}>
                   {f}
                 </button>
               ))}
             </div>
 
-            <div style={{padding:"10px 12px",background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:8,marginBottom:16,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.9}}>
-              ✦ Credentials verified via ZK attestation — your identity stays private<br/>
-              ✦ Earn tokens when your discoveries are validated
-            </div>
-
             <div style={{display:"flex",gap:8}}>
-              <button onClick={() => setStep(1)}
-                style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>
+              <button onClick={() => setStep(1)} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>
                 ← BACK
               </button>
-              <button onClick={() => { if(step2Ready){ setStep(3); onJoin({ username, email, password, field, joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) }); }}} disabled={!step2Ready}
-                style={{flex:2,background:step2Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step2Ready?C.amber+"55":C.shadow}`,color:step2Ready?C.amber:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:step2Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
-                CREATE PROFILE →
+              <button onClick={handleStep2} style={{flex:2,background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,transition:"all .2s"}}>
+                CREATE ACCOUNT →
               </button>
             </div>
           </>
@@ -409,15 +472,14 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
           <div style={{textAlign:"center",padding:"10px 0 6px"}}>
             <div style={{fontSize:44,marginBottom:14}}>🌱</div>
             <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Welcome, {username}.</h2>
-            <p style={{color:C.dust,fontSize:12,lineHeight:1.8,marginBottom:6}}>Your expert profile has been created.</p>
+            <p style={{color:C.dust,fontSize:12,lineHeight:1.8,marginBottom:16}}>Your account has been created. You're now part of the network.</p>
             <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2,textAlign:"left"}}>
-              <div style={{color:C.sprout,marginBottom:4,letterSpacing:1}}>YOUR ACCOUNT</div>
-              <div>⬡ <span style={{color:C.tan}}>Username:</span> {username}</div>
+              <div style={{color:C.tan,marginBottom:4,letterSpacing:1}}>ACCOUNT SUMMARY</div>
+              <div>⬡ <span style={{color:C.tan}}>Username:</span> @{username}</div>
+              <div>⬡ <span style={{color:C.tan}}>Email:</span> {email}</div>
               <div>⬡ <span style={{color:C.tan}}>Field:</span> {field}</div>
-              <div>⬡ <span style={{color:C.tan}}>Status:</span> <span style={{color:C.dust}}>Member</span></div>
             </div>
-            <button onClick={onClose}
-              style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+            <button onClick={onClose} style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
               ENTER VERIDAX →
             </button>
           </div>
@@ -503,58 +565,70 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const ready = email.includes("@") && password.length > 0;
 
-  const inputStyle = (val) => ({
-    width:"100%", background:C.wood, border:`1px solid ${val ? C.amber+"33" : C.shadow}`,
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const inputStyle = (valid) => ({
+    width:"100%", background:C.wood,
+    border:`1px solid ${error ? C.bloom+"55" : valid ? C.sprout+"44" : C.shadow}`,
     borderRadius:8, padding:"10px 13px", color:C.parch, fontSize:12, fontFamily:"monospace",
     outline:"none", boxSizing:"border-box", transition:"border-color .2s",
   });
 
   const handleLogin = async () => {
-    if (!ready) return;
+    if (!email.trim() || !password) { setError("Please enter your email and password."); return; }
     setError("");
     setLoading(true);
     await new Promise(r => setTimeout(r, 700));
     setLoading(false);
-    const match = accounts.find(a => a.email === email && a.password === password);
+    const match = accounts.find(a => a.email === email.trim() && a.password === password);
     if (!match) {
-      setError(accounts.some(a => a.email === email) ? "Incorrect password." : "No account found with that email.");
+      setError(accounts.some(a => a.email === email.trim()) ? "Incorrect password." : "No account found with that email.");
       return;
     }
     onLogin(match);
   };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
         <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Welcome back.</h2>
-        <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:20}}>Sign in to your VERIDAX expert profile.</p>
+        <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:20}}>Sign in to your VERIDAX account.</p>
 
         <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>EMAIL</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"
-          style={{...inputStyle(email.includes("@")), marginBottom:12}}/>
+        <input type="email" value={email}
+          onChange={e => { setEmail(e.target.value); setError(""); }}
+          onKeyDown={e => { if(e.key==="Enter") handleLogin(); }}
+          placeholder="you@example.com"
+          style={{...inputStyle(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)), marginBottom:14}}/>
 
         <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>PASSWORD</label>
-        <div style={{position:"relative",marginBottom:20}}>
-          <input type={showPw?"text":"password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password"
-            style={{...inputStyle(password.length>=8), paddingRight:50}}/>
-          <button onClick={() => setShowPw(s=>!s)}
-            style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:11,fontFamily:"monospace"}}>
+        <div style={{position:"relative",marginBottom:18}}>
+          <input type={showPw?"text":"password"} value={password}
+            onChange={e => { setPassword(e.target.value); setError(""); }}
+            onKeyDown={e => { if(e.key==="Enter") handleLogin(); }}
+            placeholder="Your password"
+            style={{...inputStyle(password.length>0), paddingRight:50}}/>
+          <button onClick={() => setShowPw(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:10,fontFamily:"monospace"}}>
             {showPw?"HIDE":"SHOW"}
           </button>
         </div>
 
         {error && (
-          <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+          <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:14,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
             ✕ {error}
           </div>
         )}
-        <button onClick={handleLogin} disabled={!ready || loading}
-          style={{width:"100%",background:ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${ready?C.amber+"55":C.shadow}`,color:ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:ready?"pointer":"not-allowed",letterSpacing:2,marginBottom:14,transition:"all .2s"}}>
-          {loading?"SIGNING IN…":"SIGN IN →"}
+
+        <button onClick={handleLogin} disabled={loading}
+          style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,marginBottom:14,transition:"all .2s"}}>
+          {loading ? "SIGNING IN…" : "SIGN IN →"}
         </button>
         <div style={{textAlign:"center",fontSize:9,fontFamily:"monospace",color:C.dust}}>
           No account?{" "}
@@ -566,9 +640,14 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
 }
 
 function ProfileModal({ user, onClose, onLogout }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return (
-    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:20}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
         <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
@@ -1012,7 +1091,7 @@ export default function Veridax() {
         </div>
       </footer>
 
-      {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
+      {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
