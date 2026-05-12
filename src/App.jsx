@@ -48,26 +48,113 @@ const INITIAL_POSTS = [
 ];
 
 const CATS = [
-  {id:"psh",name:"Project Save Humanity",icon:"🌍",color:"#f5d060",flagship:true},
-  {id:"med",name:"Medicine",icon:"🌿",color:"#88d068"},
-  {id:"ai",name:"Artificial Intelligence",icon:"⚙",color:"#5aabaa"},
-  {id:"clim",name:"Climate Science",icon:"🌦",color:"#72c44a"},
-  {id:"eng",name:"Engineering",icon:"🔩",color:"#c87941"},
-  {id:"phys",name:"Physics",icon:"⚛",color:"#5aabaa"},
-  {id:"phil",name:"Philosophy",icon:"🪴",color:"#a09070"},
-  {id:"agri",name:"Agriculture",icon:"🌾",color:"#a0c860"},
-  {id:"edu",name:"Education",icon:"📜",color:"#a09070"},
-  {id:"econ",name:"Economics",icon:"⚖",color:"#c87941"},
-  {id:"energy",name:"Energy",icon:"☀",color:"#e8a830"},
-  {id:"space",name:"Space Exploration",icon:"🌒",color:"#8090d0"},
-  {id:"cyber",name:"Cybersecurity",icon:"🔐",color:"#c85a45"},
-  {id:"neuro",name:"Neuroscience",icon:"🍄",color:"#d0a068"},
-  {id:"psych",name:"Psychology",icon:"🧠",color:"#c090c0"},
-  {id:"soc",name:"Social Innovation",icon:"🤝",color:"#5aabaa"},
-  {id:"law",name:"Law & Governance",icon:"🏛",color:"#e8a830"},
-  {id:"bio",name:"Biology",icon:"🦋",color:"#72c44a"},
-  {id:"ethics",name:"Ethics",icon:"🌱",color:"#3a7a28"},
-  {id:"robo",name:"Robotics",icon:"🦾",color:"#5aabaa"},
+  // Flagship
+  {id:"psh",   name:"Project Save Humanity", icon:"🌍",color:"#f5d060",flagship:true},
+  // Life Sciences
+  {id:"med",   name:"Medicine",               icon:"🌿",color:"#88d068"},
+  {id:"neuro", name:"Neuroscience",           icon:"🍄",color:"#d0a068"},
+  {id:"bio",   name:"Biology",                icon:"🦋",color:"#72c44a"},
+  {id:"gen",   name:"Genetics",               icon:"🧬",color:"#88d068"},
+  {id:"micro", name:"Microbiology",           icon:"🔬",color:"#72c44a"},
+  {id:"immun", name:"Immunology",             icon:"🛡",color:"#88d068"},
+  {id:"pharm", name:"Pharmacology",           icon:"💊",color:"#a0c860"},
+  {id:"bioch", name:"Biochemistry",           icon:"⚗",color:"#72c44a"},
+  {id:"physio",name:"Physiology",             icon:"🫀",color:"#88d068"},
+  {id:"epid",  name:"Epidemiology",           icon:"📊",color:"#72c44a"},
+  {id:"onco",  name:"Oncology",               icon:"◎", color:"#88d068"},
+  {id:"viro",  name:"Virology",               icon:"🦠",color:"#a0c860"},
+  {id:"eco",   name:"Ecology",                icon:"🌿",color:"#3a7a28"},
+  {id:"evobio",name:"Evolutionary Biology",   icon:"🦕",color:"#72c44a"},
+  // Physical Sciences
+  {id:"phys",  name:"Physics",                icon:"⚛", color:"#5aabaa"},
+  {id:"chem",  name:"Chemistry",              icon:"🧪",color:"#c87941"},
+  {id:"astro", name:"Astronomy",              icon:"🔭",color:"#8090d0"},
+  {id:"astroph",name:"Astrophysics",          icon:"🌌",color:"#8090d0"},
+  {id:"cosmo", name:"Cosmology",              icon:"🌒",color:"#6070c0"},
+  {id:"geoph", name:"Geophysics",             icon:"🌍",color:"#c87941"},
+  {id:"mat",   name:"Materials Science",      icon:"⬡", color:"#c87941"},
+  {id:"opt",   name:"Optics",                 icon:"🌈",color:"#5aabaa"},
+  {id:"qc",    name:"Quantum Computing",      icon:"⚛", color:"#8090d0"},
+  {id:"nuke",  name:"Nuclear Science",        icon:"☢", color:"#e8a830"},
+  {id:"math",  name:"Mathematics",            icon:"∑", color:"#a09070"},
+  // Earth & Environment
+  {id:"clim",  name:"Climate Science",        icon:"🌦",color:"#72c44a"},
+  {id:"envs",  name:"Environmental Science",  icon:"🌱",color:"#3a7a28"},
+  {id:"ocean", name:"Oceanography",           icon:"🌊",color:"#5aabaa"},
+  {id:"geo",   name:"Geology",                icon:"🪨",color:"#a09070"},
+  {id:"atmo",  name:"Atmospheric Science",    icon:"🌪",color:"#72c44a"},
+  {id:"hydro", name:"Hydrology",              icon:"💧",color:"#5aabaa"},
+  {id:"consb", name:"Conservation Biology",   icon:"🐾",color:"#3a7a28"},
+  // Engineering & Technology
+  {id:"eng",   name:"Engineering",            icon:"🔩",color:"#c87941"},
+  {id:"ai",    name:"Artificial Intelligence",icon:"⚙", color:"#5aabaa"},
+  {id:"robo",  name:"Robotics",               icon:"🦾",color:"#5aabaa"},
+  {id:"cyber", name:"Cybersecurity",          icon:"🔐",color:"#c85a45"},
+  {id:"cs",    name:"Computer Science",       icon:"💻",color:"#5aabaa"},
+  {id:"ee",    name:"Electrical Engineering", icon:"⚡",color:"#e8a830"},
+  {id:"me",    name:"Mechanical Engineering", icon:"⚙", color:"#c87941"},
+  {id:"ce",    name:"Civil Engineering",      icon:"🏗", color:"#a09070"},
+  {id:"aero",  name:"Aerospace Engineering",  icon:"🛸",color:"#8090d0"},
+  {id:"biomed",name:"Biomedical Engineering", icon:"🩺",color:"#88d068"},
+  {id:"cheme", name:"Chemical Engineering",   icon:"🔬",color:"#c87941"},
+  {id:"nano",  name:"Nanotechnology",         icon:"⬡", color:"#5aabaa"},
+  {id:"energy",name:"Energy",                 icon:"☀", color:"#e8a830"},
+  {id:"tele",  name:"Telecommunications",     icon:"📡",color:"#5aabaa"},
+  {id:"space", name:"Space Exploration",      icon:"🚀",color:"#8090d0"},
+  {id:"ds",    name:"Data Science",           icon:"📈",color:"#5aabaa"},
+  // Social Sciences
+  {id:"econ",  name:"Economics",              icon:"⚖", color:"#c87941"},
+  {id:"poli",  name:"Political Science",      icon:"🗳", color:"#e8a830"},
+  {id:"socio", name:"Sociology",              icon:"🤝",color:"#5aabaa"},
+  {id:"anth",  name:"Anthropology",           icon:"🏺",color:"#c87941"},
+  {id:"arch",  name:"Archaeology",            icon:"🗿",color:"#a09070"},
+  {id:"psych", name:"Psychology",             icon:"🧠",color:"#c090c0"},
+  {id:"behav", name:"Behavioral Science",     icon:"◈", color:"#d0a068"},
+  {id:"crim",  name:"Criminology",            icon:"⚖", color:"#c85a45"},
+  {id:"demo",  name:"Demography",             icon:"📊",color:"#a09070"},
+  // Humanities
+  {id:"phil",  name:"Philosophy",             icon:"🪴",color:"#a09070"},
+  {id:"ethics",name:"Ethics",                 icon:"🌱",color:"#3a7a28"},
+  {id:"hist",  name:"History",                icon:"📜",color:"#a09070"},
+  {id:"ling",  name:"Linguistics",            icon:"🗣", color:"#c090c0"},
+  {id:"lit",   name:"Literature",             icon:"📖",color:"#a09070"},
+  {id:"cult",  name:"Cultural Studies",       icon:"🎭",color:"#c87941"},
+  {id:"relig", name:"Religious Studies",      icon:"🕊", color:"#a09070"},
+  // Agriculture & Food
+  {id:"agri",  name:"Agriculture",            icon:"🌾",color:"#a0c860"},
+  {id:"foods", name:"Food Science",           icon:"🌽",color:"#a0c860"},
+  {id:"nutr",  name:"Nutrition",              icon:"🥦",color:"#72c44a"},
+  {id:"hort",  name:"Horticulture",           icon:"🌸",color:"#a0c860"},
+  {id:"aqua",  name:"Aquaculture",            icon:"🐟",color:"#5aabaa"},
+  // Arts, Architecture & Design
+  {id:"archt", name:"Architecture",           icon:"🏛", color:"#c87941"},
+  {id:"urban", name:"Urban Planning",         icon:"🏙", color:"#a09070"},
+  {id:"design",name:"Design",                 icon:"✦",  color:"#c090c0"},
+  {id:"music", name:"Music Theory",           icon:"🎼",color:"#c090c0"},
+  {id:"visart",name:"Visual Arts",            icon:"🎨",color:"#c090c0"},
+  {id:"film",  name:"Film & Media",           icon:"🎬",color:"#c87941"},
+  // Health & Wellness
+  {id:"mhealth",name:"Mental Health",         icon:"🧘",color:"#c090c0"},
+  {id:"pubh",  name:"Public Health",          icon:"🏥",color:"#88d068"},
+  {id:"sport", name:"Sports Science",         icon:"⚡",color:"#72c44a"},
+  {id:"vet",   name:"Veterinary Science",     icon:"🐾",color:"#72c44a"},
+  {id:"long",  name:"Longevity Science",      icon:"⧖", color:"#88d068"},
+  // Governance & Society
+  {id:"edu",   name:"Education",              icon:"📜",color:"#a09070"},
+  {id:"law",   name:"Law & Governance",       icon:"🏛", color:"#e8a830"},
+  {id:"soc",   name:"Social Innovation",      icon:"🤝",color:"#5aabaa"},
+  {id:"hr",    name:"Human Rights",           icon:"✊",color:"#c85a45"},
+  {id:"intrel",name:"International Relations",icon:"🌐",color:"#5aabaa"},
+  {id:"polpol",name:"Public Policy",          icon:"📋",color:"#e8a830"},
+  // Emerging Fields
+  {id:"consci",name:"Consciousness Studies",  icon:"◉",  color:"#8090d0"},
+  {id:"cogn",  name:"Cognitive Science",      icon:"🧩",color:"#c090c0"},
+  {id:"synbio",name:"Synthetic Biology",      icon:"⬡", color:"#88d068"},
+  {id:"sysbio",name:"Systems Biology",        icon:"🔗",color:"#72c44a"},
+  {id:"comp",  name:"Complexity Science",     icon:"∿",  color:"#8090d0"},
+  {id:"crypt", name:"Cryptography",           icon:"🔑",color:"#c85a45"},
+  {id:"oceant",name:"Ocean Technology",       icon:"🌊",color:"#5aabaa"},
+  {id:"regen", name:"Regenerative Systems",   icon:"♻", color:"#3a7a28"},
 ];
 
 const nf = n => n>=1e6?`${(n/1e6).toFixed(1)}M`:n>=1e3?`${(n/1e3).toFixed(1)}K`:`${n}`;
@@ -133,26 +220,110 @@ function bondingCost(s1, s2) {
 }
 
 const COMMISSION_RATES = {
-  "Project Save Humanity": 8,
-  "Medicine":              8,
-  "Neuroscience":          7,
-  "Biology":               7,
-  "Climate Science":       7.5,
-  "Energy":                6.5,
-  "Agriculture":           6,
-  "Engineering":           5.5,
-  "Physics":               5.5,
-  "Robotics":              5.5,
-  "Artificial Intelligence": 5,
-  "Space Exploration":     5,
-  "Cybersecurity":         5,
-  "Economics":             4,
-  "Social Innovation":     4,
-  "Psychology":            4,
-  "Law & Governance":      3.5,
-  "Philosophy":            2.5,
-  "Education":             2.5,
-  "Ethics":                2.5,
+  // Flagship
+  "Project Save Humanity":    8,
+  // Life Sciences
+  "Medicine":                 8,
+  "Immunology":               8,
+  "Pharmacology":             8,
+  "Oncology":                 8,
+  "Virology":                 8,
+  "Epidemiology":             8,
+  "Public Health":            8,
+  "Longevity Science":        8,
+  "Genetics":                 7.5,
+  "Physiology":               7.5,
+  "Mental Health":            7.5,
+  "Microbiology":             7.5,
+  "Neuroscience":             7,
+  "Biochemistry":             7,
+  "Biology":                  7,
+  "Biomedical Engineering":   7,
+  "Systems Biology":          7,
+  "Synthetic Biology":        7.5,
+  "Evolutionary Biology":     5.5,
+  "Ecology":                  6.5,
+  // Earth & Environment
+  "Climate Science":          7.5,
+  "Atmospheric Science":      7,
+  "Environmental Science":    7,
+  "Hydrology":                6.5,
+  "Oceanography":             6.5,
+  "Conservation Biology":     6.5,
+  "Ocean Technology":         6,
+  // Agriculture & Food
+  "Agriculture":              6,
+  "Food Science":             6,
+  "Nutrition":                6.5,
+  "Horticulture":             6,
+  "Aquaculture":              6,
+  // Engineering & Technology
+  "Energy":                   6.5,
+  "Engineering":              5.5,
+  "Physics":                  5.5,
+  "Robotics":                 5.5,
+  "Electrical Engineering":   5.5,
+  "Mechanical Engineering":   5.5,
+  "Civil Engineering":        5.5,
+  "Aerospace Engineering":    5.5,
+  "Chemical Engineering":     5.5,
+  "Nanotechnology":           5.5,
+  "Materials Science":        5.5,
+  "Geophysics":               5.5,
+  "Chemistry":                5.5,
+  "Veterinary Science":       6.5,
+  "Sports Science":           5.5,
+  "Artificial Intelligence":  5,
+  "Computer Science":         5,
+  "Cybersecurity":            5,
+  "Space Exploration":        5,
+  "Data Science":             5,
+  "Telecommunications":       5,
+  "Quantum Computing":        5,
+  "Cognitive Science":        5.5,
+  "Optics":                   5,
+  "Nuclear Science":          5.5,
+  "Astronomy":                5,
+  "Astrophysics":             5,
+  "Regenerative Systems":     7,
+  "Complexity Science":       5,
+  "Cryptography":             5,
+  // Social Sciences
+  "Behavioral Science":       5,
+  "Economics":                4,
+  "Political Science":        4,
+  "Sociology":                4,
+  "Anthropology":             4,
+  "Demography":               4,
+  "Psychology":               4,
+  "Social Innovation":        4,
+  "Urban Planning":           4.5,
+  "Public Policy":            4.5,
+  "International Relations":  4,
+  "Criminology":              4,
+  // Humanities & Governance
+  "Law & Governance":         3.5,
+  "Human Rights":             5,
+  "History":                  3,
+  "Linguistics":              3,
+  "Cultural Studies":         3,
+  "Archaeology":              3.5,
+  "Religious Studies":        2.5,
+  "Philosophy":               2.5,
+  "Ethics":                   2.5,
+  "Literature":               2.5,
+  "Education":                2.5,
+  "Mathematics":              4,
+  "Cosmology":                4.5,
+  "Geology":                  5,
+  // Arts & Design
+  "Architecture":             4,
+  "Design":                   3,
+  "Film & Media":             3,
+  "Music Theory":             2.5,
+  "Visual Arts":              2.5,
+  // Other
+  "Consciousness Studies":    5,
 };
 
 function commissionRate(cat) {
@@ -1745,6 +1916,99 @@ function BuyModal({ token, user, onClose, onBought }) {
   );
 }
 
+function ProposeCategoryModal({ user, onClose }) {
+  const [name, setName]   = useState("");
+  const [why,  setWhy]    = useState("");
+  const [icon, setIcon]   = useState("◉");
+  const [step, setStep]   = useState(1);
+  const ICON_OPTIONS = ["◉","⬡","∿","✦","◈","∑","⧖","♻","🌐","🔬","⚗","📡","🧩","🔑","🌊","🌪","🛸","🧬","💡","⚡"];
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const handleSubmit = () => {
+    if (!name.trim() || !why.trim()) return;
+    setStep(2);
+    setTimeout(() => setStep(3), 2600);
+  };
+
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:460,width:"100%",position:"relative"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+
+        {step === 3 ? (
+          <div style={{textAlign:"center",padding:"24px 0"}}>
+            <div style={{fontSize:40,marginBottom:12,animation:"sway 2s ease-in-out infinite"}}>{icon}</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:3,marginBottom:8}}>PROPOSAL SUBMITTED</div>
+            <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.parch,marginBottom:10}}>{name}</h3>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:16}}>Your proposal has been recorded on-chain and broadcast to all nodes. Community vote opens in 72 hours. If it passes, the category goes live permanently — censor-proof and archived forever.</p>
+            <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:10,padding:"11px 14px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left",marginBottom:16}}>
+              <div>⬡ <span style={{color:C.tan}}>Category:</span> <span style={{color:C.amber}}>{icon} {name}</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Vote threshold:</span> <span style={{color:C.parch}}>66% YES</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Vote duration:</span> <span style={{color:C.parch}}>72 hours</span></div>
+            </div>
+            <button onClick={onClose} style={{width:"100%",background:`${C.amber}18`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+              CLOSE →
+            </button>
+          </div>
+        ) : step === 2 ? (
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:36,marginBottom:14,animation:"pulse 1s infinite"}}>{icon}</div>
+            <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:6}}>BROADCASTING…</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Recording proposal on-chain · Notifying node operators</div>
+            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:280,margin:"0 auto"}}>
+              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${C.amber},${C.vine})`,animation:"fadein 2.6s linear forwards"}}/>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:4}}>PROPOSE NEW CATEGORY</div>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.75,marginBottom:18}}>
+              If a field of human knowledge is missing, any user can propose it. The community votes. A 66% YES within 72 hours adds it permanently to the chain.
+            </p>
+            <div style={{marginBottom:12}}>
+              <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:5}}>CATEGORY NAME</label>
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Astrobiology, Sound Design, Cryonics…"
+                style={{width:"100%",background:C.wood,border:`1px solid ${name?C.amber+"44":C.shadow}`,borderRadius:9,padding:"10px 12px",color:C.parch,fontFamily:"monospace",fontSize:12,outline:"none",boxSizing:"border-box"}}/>
+            </div>
+            <div style={{marginBottom:12}}>
+              <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:5}}>WHY THIS FIELD MATTERS</label>
+              <textarea value={why} onChange={e=>setWhy(e.target.value)} placeholder="Describe the field and why it deserves a dedicated domain on VERIDAX…"
+                style={{width:"100%",background:C.wood,border:`1px solid ${why?C.amber+"44":C.shadow}`,borderRadius:9,padding:"10px 12px",color:C.parch,fontFamily:"monospace",fontSize:11,outline:"none",boxSizing:"border-box",resize:"vertical",minHeight:80,lineHeight:1.65}}/>
+            </div>
+            <div style={{marginBottom:18}}>
+              <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:8}}>CHOOSE AN ICON</label>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {ICON_OPTIONS.map(i => (
+                  <button key={i} onClick={() => setIcon(i)}
+                    style={{width:34,height:34,borderRadius:8,background:icon===i?`${C.amber}22`:C.wood,border:`1px solid ${icon===i?C.amber+"55":C.shadow}`,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {i}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {user ? (
+              <button onClick={handleSubmit} disabled={!name.trim()||!why.trim()}
+                style={{width:"100%",background:name&&why?`${C.amber}18`:"transparent",border:`1px solid ${name&&why?C.amber+"44":C.shadow}`,color:name&&why?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:name&&why?"pointer":"not-allowed",letterSpacing:2}}>
+                {name&&why?"SUBMIT PROPOSAL →":"FILL IN BOTH FIELDS"}
+              </button>
+            ) : (
+              <div style={{textAlign:"center",padding:"12px",border:`1px solid ${C.shadow}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:C.dust}}>
+                Sign in to propose a new category.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   {id:"home",label:"Home"},
   {id:"discover",label:"Discover"},
@@ -1768,9 +2032,12 @@ export default function Veridax() {
   const [postVotes,    setPostVotes]    = useState(INITIAL_VOTES);
   const [postDisputes, setPostDisputes] = useState(INITIAL_DISPUTES);
   const [userVotes,    setUserVotes]    = useState({});
-  const [validatingPost, setValidatingPost] = useState(null);
-  const [tokenizePost,   setTokenizePost]   = useState(null);
-  const [buyTokenSym,    setBuyTokenSym]    = useState(null);
+  const [validatingPost,  setValidatingPost]  = useState(null);
+  const [tokenizePost,    setTokenizePost]    = useState(null);
+  const [buyTokenSym,     setBuyTokenSym]     = useState(null);
+  const [discoverFilter,  setDiscoverFilter]  = useState("all");
+  const [discoverSearch,  setDiscoverSearch]  = useState("");
+  const [showProposecat,  setShowProposecat]  = useState(false);
 
   const tokens = posts
     .filter(p => p.tokenData)
@@ -2039,9 +2306,12 @@ export default function Veridax() {
                       <div style={{fontSize:8,fontFamily:"monospace",color:cat.color,lineHeight:1.3,letterSpacing:.4}}>{cat.name}</div>
                     </button>
                   ))}
-                  <button style={{background:"transparent",border:`2px dashed ${C.shadow}`,borderRadius:10,padding:"10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3}}>
-                    <div style={{fontSize:16,color:C.dust}}>✦</div>
-                    <div style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>NEW CATEGORY</div>
+                  <button onClick={() => setShowProposecat(true)}
+                    style={{background:"transparent",border:`2px dashed ${C.shadow}`,borderRadius:10,padding:"10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,transition:"all .2s"}}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor=`${C.amber}55`; e.currentTarget.querySelector(".pc-icon").style.color=C.amber; e.currentTarget.querySelector(".pc-label").style.color=C.amber; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor=C.shadow+"66"; e.currentTarget.querySelector(".pc-icon").style.color=C.dust; e.currentTarget.querySelector(".pc-label").style.color=C.dust; }}>
+                    <div className="pc-icon" style={{fontSize:16,color:C.dust,transition:"color .2s"}}>✦</div>
+                    <div className="pc-label" style={{fontSize:7,fontFamily:"monospace",color:C.dust,transition:"color .2s"}}>PROPOSE</div>
                   </button>
                 </div>
               </div>
@@ -2068,20 +2338,50 @@ export default function Veridax() {
 
         {section === "discover" && (
           <div style={{maxWidth:1100,margin:"0 auto",padding:"36px 24px"}}>
-            <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:6}}>Discover</h1>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
-              {CATS.slice(0, 10).map(c => (
-                <button key={c.id}
-                  style={{background:C.bark,border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:20,padding:"4px 11px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1,transition:"all .2s"}}
-                  onMouseEnter={e => { e.currentTarget.style.color=c.color; e.currentTarget.style.borderColor=`${c.color}44`; }}
-                  onMouseLeave={e => { e.currentTarget.style.color=C.dust; e.currentTarget.style.borderColor=C.shadow; }}>
-                  {c.icon} {c.name}
+            <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:6,flexWrap:"wrap"}}>
+              <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,margin:0}}>Discover</h1>
+              <span style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>95 knowledge domains · {posts.length} works</span>
+            </div>
+            {/* Search + filter row */}
+            <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10,flexWrap:"wrap"}}>
+              <input value={discoverSearch} onChange={e => { setDiscoverSearch(e.target.value); setDiscoverFilter("all"); }}
+                placeholder="Filter domains…"
+                style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:20,padding:"5px 14px",color:C.parch,fontFamily:"monospace",fontSize:9,outline:"none",width:160}}/>
+              {discoverSearch && (
+                <button onClick={() => setDiscoverSearch("")}
+                  style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:20,padding:"4px 10px",fontSize:8,fontFamily:"monospace",cursor:"pointer"}}>✕ clear</button>
+              )}
+            </div>
+            {/* Category pills — horizontally scrollable */}
+            <div style={{overflowX:"auto",marginBottom:18,paddingBottom:6}}>
+              <div style={{display:"flex",gap:5,flexWrap:"nowrap",width:"max-content"}}>
+                <button onClick={() => { setDiscoverFilter("all"); setDiscoverSearch(""); }}
+                  style={{background:discoverFilter==="all"?`${C.amber}22`:C.bark,border:`1px solid ${discoverFilter==="all"?C.amber+"44":C.shadow}`,color:discoverFilter==="all"?C.amber:C.dust,borderRadius:20,padding:"4px 12px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1,whiteSpace:"nowrap"}}>
+                  ALL
                 </button>
-              ))}
+                {CATS.filter(c => !discoverSearch || c.name.toLowerCase().includes(discoverSearch.toLowerCase())).map(c => (
+                  <button key={c.id} onClick={() => { setDiscoverFilter(c.name); setDiscoverSearch(""); }}
+                    style={{background:discoverFilter===c.name?`${c.color}22`:C.bark,border:`1px solid ${discoverFilter===c.name?c.color+"55":C.shadow}`,color:discoverFilter===c.name?c.color:C.dust,borderRadius:20,padding:"4px 11px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1,whiteSpace:"nowrap",transition:"all .15s"}}>
+                    {c.icon} {c.name}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-              {posts.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
-            </div>
+            {/* Post grid */}
+            {(() => {
+              const filtered = discoverFilter === "all"
+                ? posts
+                : posts.filter(p => p.cat === discoverFilter);
+              return filtered.length > 0 ? (
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
+                  {filtered.map((p,i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
+                </div>
+              ) : (
+                <div style={{textAlign:"center",padding:"60px 24px",color:C.dust,fontFamily:"monospace",fontSize:11}}>
+                  No works yet in <span style={{color:C.parch}}>{discoverFilter}</span> — be the first to publish.
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -2670,6 +2970,7 @@ export default function Veridax() {
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
       {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)} onPublish={handlePublish}/>}
+      {showProposecat && <ProposeCategoryModal user={user} onClose={() => setShowProposecat(false)}/>}
       {tokenizePost && postVotes[tokenizePost.id] && (
         <TokenizeModal
           post={tokenizePost}
