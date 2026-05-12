@@ -3599,6 +3599,11 @@ export default function Veridax() {
               {label:"Consensus",         action:() => navigate("consensus")},
               {label:"Contact",           action:() => {}},
             ]},
+            {h:"Documents",ls:[
+              {label:"Whitepaper",        action:() => window.open("/VERIDEX_Whitepaper.html","_blank")},
+              {label:"Pitch Deck",        action:() => window.open("/VERIDEX_Pitch_Deck.html","_blank")},
+              {label:"Tokenomics Model",  action:() => window.open("/VERIDEX_Tokenomics_Model.html","_blank")},
+            ]},
           ].map(col => (
             <div key={col.h}>
               <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>{col.h.toUpperCase()}</div>
