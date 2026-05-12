@@ -1140,7 +1140,9 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
   );
 }
 
-function ProfileModal({ user, posts, portfolio, tokens, userVotes, onClose, onLogout }) {
+function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, postDisputes, onClose, onLogout, onPublish }) {
+  const [tab, setTab] = useState("works");
+
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -1148,67 +1150,251 @@ function ProfileModal({ user, posts, portfolio, tokens, userVotes, onClose, onLo
   }, []);
 
   const myPosts = (posts || []).filter(p => p.author === user.username);
-  const validationCount = Object.keys(userVotes || {}).length;
-  const ownedSyms = Object.keys(portfolio || {});
-  const walletAddr = "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40,"0").slice(0,40);
+  const myValidationIds = Object.keys(userVotes || {});
+  const myValidatedPosts = (posts || []).filter(p => myValidationIds.includes(p.id));
+  const ownedSyms = Object.keys(portfolio || {}).filter(s => (portfolio[s] || 0) > 0);
+  const ownedTokens = ownedSyms.map(sym => {
+    const t = (tokens || []).find(t => t.sym === sym);
+    const qty = (portfolio || {})[sym] || 0;
+    return t ? { ...t, qty, value: t.price * qty } : null;
+  }).filter(Boolean);
+  const totalPortfolioValue = ownedTokens.reduce((s, t) => s + t.value, 0);
+  const avgTrust = myPosts.length > 0
+    ? myPosts.reduce((s, p) => s + calcTrustScore((postVotes||{})[p.id]||{}, (postDisputes||{})[p.id]||{}), 0) / myPosts.length
+    : null;
+  const walletAddr = "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40, "0").slice(0, 40);
+  const clusterInfo = CLUSTERS.find(cl => cl.id === user.cluster) || { icon:"🌐", label:"Independent" };
+
+  const TABS = [{k:"works",l:"MY WORKS"},{k:"portfolio",l:"PORTFOLIO"},{k:"activity",l:"ACTIVITY"},{k:"account",l:"ACCOUNT"}];
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:440,width:"100%",position:"relative",maxHeight:"90vh",overflowY:"auto"}}>
-        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:20}}/>
-        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
-        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:18}}>
-          <div style={{width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber}33,${C.vine}22)`,border:`2px solid ${C.amber}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:C.amber,fontWeight:700,flexShrink:0}}>
-            {user.username[0].toUpperCase()}
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,width:"100%",maxWidth:640,maxHeight:"92vh",display:"flex",flexDirection:"column",position:"relative",boxShadow:`0 0 60px ${C.amber}08`}}>
+
+        {/* Top gradient bar */}
+        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.sky},${C.vine})`,borderRadius:"20px 20px 0 0",flexShrink:0}}/>
+
+        {/* Profile header */}
+        <div style={{padding:"20px 24px 16px",flexShrink:0}}>
+          <button onClick={onClose} style={{position:"absolute",top:14,right:14,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+            <div style={{width:54,height:54,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber}33,${C.vine}22)`,border:`2px solid ${C.amber}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:C.amber,fontWeight:700,flexShrink:0}}>
+              {user.username[0].toUpperCase()}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
+                <span style={{fontSize:15,fontFamily:"'Palatino Linotype',serif",color:C.parch,fontWeight:700}}>@{user.username}</span>
+                {user.pohMethod && <span style={{fontSize:6,color:C.sprout,background:C.sproutD,border:`1px solid ${C.sprout}30`,padding:"1px 6px",borderRadius:20,fontFamily:"monospace",letterSpacing:1}}>✓ VERIFIED</span>}
+              </div>
+              <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:2}}>{user.field}</div>
+              <div style={{fontSize:8,fontFamily:"monospace",color:C.tan,letterSpacing:1}}>{clusterInfo.icon} {clusterInfo.label.toUpperCase()} CLUSTER</div>
+            </div>
+            <button onClick={() => { onLogout(); onClose(); }}
+              style={{background:"transparent",border:`1px solid ${C.bloom}44`,color:C.bloom,borderRadius:7,padding:"5px 11px",fontFamily:"monospace",fontSize:8,cursor:"pointer",letterSpacing:1,flexShrink:0,transition:"all .2s"}}
+              onMouseEnter={e => { e.currentTarget.style.background=`${C.bloom}10`; }}
+              onMouseLeave={e => { e.currentTarget.style.background="transparent"; }}>
+              LOG OUT
+            </button>
           </div>
-          <div>
-            <div style={{fontSize:16,fontFamily:"'Palatino Linotype',serif",color:C.parch,fontWeight:700}}>@{user.username}</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:2}}>Joined {user.joined}</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{user.field}</div>
+
+          {/* Wallet */}
+          <div style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"6px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,flexShrink:0}}>WALLET</span>
+            <span style={{fontSize:8,fontFamily:"monospace",color:C.amber,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{walletAddr}</span>
+          </div>
+
+          {/* Stats grid */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>
+            {[
+              {l:"WORKS",     v:myPosts.length,                                                c:C.sky},
+              {l:"VALIDATED", v:myValidationIds.length,                                        c:C.sprout},
+              {l:"PORTFOLIO", v:`$${totalPortfolioValue.toFixed(2)}`,                          c:C.copper},
+              {l:"AVG TRUST", v:avgTrust !== null ? `${(avgTrust*100).toFixed(0)}%` : "—",    c:C.amber},
+            ].map(({l,v,c}) => (
+              <div key={l} style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"10px 6px",textAlign:"center"}}>
+                <div style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c,marginBottom:2}}>{v}</div>
+                <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:.5}}>{l}</div>
+              </div>
+            ))}
           </div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-          {[{l:"WORKS",v:myPosts.length},{l:"VALIDATED",v:validationCount},{l:"TOKENS",v:ownedSyms.length}].map(({l,v}) => (
-            <div key={l} style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"10px",textAlign:"center"}}>
-              <div style={{fontSize:15,fontFamily:"monospace",fontWeight:700,color:C.amber}}>{v}</div>
-              <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginTop:2}}>{l}</div>
-            </div>
+
+        {/* Tab bar */}
+        <div style={{display:"flex",borderTop:`1px solid ${C.shadow}`,borderBottom:`1px solid ${C.shadow}`,flexShrink:0}}>
+          {TABS.map(({k,l}) => (
+            <button key={k} onClick={() => setTab(k)}
+              style={{flex:1,background:"transparent",border:"none",borderBottom:`2px solid ${tab===k?C.amber:"transparent"}`,color:tab===k?C.amber:C.dust,padding:"10px 0",fontSize:7,fontFamily:"monospace",cursor:"pointer",letterSpacing:1.5,transition:"color .2s,border-color .2s"}}>
+              {l}
+            </button>
           ))}
         </div>
-        <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"11px 14px",marginBottom:14,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2}}>
-          <div>⬡ <span style={{color:C.tan}}>Email:</span> {user.email}</div>
-          {user.field && <div>⬡ <span style={{color:C.tan}}>Field:</span> {user.field}</div>}
-          {user.cluster && <div>⬡ <span style={{color:C.tan}}>Cluster:</span> {CLUSTERS.find(c=>c.id===user.cluster)?.icon} {CLUSTERS.find(c=>c.id===user.cluster)?.label}</div>}
-          {user.pohMethod && <div>⬡ <span style={{color:C.tan}}>Proof of Humanity:</span> <span style={{color:C.sprout}}>✓ {user.pohMethod==="worldid"?"World ID":"Gitcoin Passport"}</span></div>}
-          {user.credentials?.length > 0 && <div>⬡ <span style={{color:C.tan}}>Credentials:</span> {user.credentials.length} on-chain</div>}
-          <div>⬡ <span style={{color:C.tan}}>Member since:</span> {user.joined}</div>
-          <div style={{display:"flex",alignItems:"center",gap:4}}>⬡ <span style={{color:C.tan}}>Wallet:</span> <span style={{color:C.amber,fontSize:8,marginLeft:4}}>{walletAddr.slice(0,10)}…{walletAddr.slice(-4)}</span></div>
-        </div>
-        {ownedSyms.length > 0 && (
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>MY TOKEN PORTFOLIO</div>
-            <div style={{display:"flex",flexDirection:"column",gap:5}}>
-              {ownedSyms.map(sym => {
-                const qty = (portfolio || {})[sym] || 0;
-                const tok = (tokens || []).find(t => t.sym === sym);
-                if (!tok) return null;
+
+        {/* Scrollable tab content */}
+        <div style={{flex:1,overflowY:"auto",padding:"16px 24px"}}>
+
+          {/* MY WORKS */}
+          {tab === "works" && (myPosts.length === 0 ? (
+            <div style={{textAlign:"center",padding:"40px 16px"}}>
+              <div style={{fontSize:28,marginBottom:10}}>◉</div>
+              <p style={{fontSize:11,fontFamily:"monospace",color:C.dust,lineHeight:1.8,maxWidth:300,margin:"0 auto 18px"}}>You haven't published any works yet.</p>
+              <button onClick={() => { onClose(); onPublish(); }}
+                style={{background:`${C.sky}14`,border:`1px solid ${C.sky}44`,color:C.sky,borderRadius:9,padding:"8px 18px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:2}}>
+                ✦ PUBLISH YOUR FIRST WORK
+              </button>
+            </div>
+          ) : (
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {myPosts.map(p => {
+                const votes = (postVotes||{})[p.id] || {};
+                const disputes = (postDisputes||{})[p.id] || {};
+                const trust = calcTrustScore(votes, disputes);
+                const gates = checkGates(p, votes, disputes);
+                const sc = trust >= 0.8 ? C.sprout : trust >= 0.6 ? C.amber : C.bloom;
                 return (
-                  <div key={sym} style={{background:C.wood,border:`1px solid ${tok.col}22`,borderRadius:8,padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div>
-                      <span style={{fontSize:11,fontFamily:"monospace",color:tok.col,fontWeight:700}}>⬡ {sym}</span>
-                      <span style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginLeft:8}}>{qty.toLocaleString()} tokens</span>
+                  <div key={p.id} style={{background:C.card,border:`1px solid ${p.color}22`,borderRadius:10,padding:"12px 14px",transition:"border-color .2s"}}
+                    onMouseEnter={e => e.currentTarget.style.borderColor=`${p.color}44`}
+                    onMouseLeave={e => e.currentTarget.style.borderColor=`${p.color}22`}>
+                    <div style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8}}>
+                      <span style={{fontSize:13,flexShrink:0}}>{p.icon}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:11,color:C.parch,fontWeight:700,lineHeight:1.35,marginBottom:2}}>{p.title}</div>
+                        <div style={{fontSize:7,fontFamily:"monospace",color:p.color,letterSpacing:1}}>{p.cat.toUpperCase()}</div>
+                      </div>
+                      {p.tokenData && <span style={{fontSize:7,fontFamily:"monospace",color:p.tokenData.col,background:`${p.tokenData.col}10`,border:`1px solid ${p.tokenData.col}30`,padding:"2px 7px",borderRadius:20,flexShrink:0}}>⬡ {p.tokenData.sym}</span>}
                     </div>
-                    <span style={{fontSize:10,fontFamily:"monospace",color:C.parch}}>${(tok.price * qty).toFixed(2)}</span>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{flex:1,height:3,background:C.shadow,borderRadius:2,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${trust*100}%`,background:`linear-gradient(90deg,${C.sky},${sc})`,borderRadius:2}}/>
+                      </div>
+                      <span style={{fontSize:7,fontFamily:"monospace",color:sc,minWidth:48,textAlign:"right"}}>TRUST {(trust*100).toFixed(0)}%</span>
+                      <span style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>{gates.metCount}/5</span>
+                      <span style={{fontSize:8,fontFamily:"monospace",color:C.sprout}}>▲ {nf(p.up)}</span>
+                    </div>
                   </div>
                 );
               })}
+              <button onClick={() => { onClose(); onPublish(); }}
+                style={{background:`${C.sky}08`,border:`1px dashed ${C.sky}30`,color:C.sky,borderRadius:9,padding:"9px",fontFamily:"monospace",fontSize:8,cursor:"pointer",letterSpacing:2,marginTop:2}}>
+                + PUBLISH NEW WORK
+              </button>
             </div>
-          </div>
-        )}
-        <button onClick={() => { onLogout(); onClose(); }}
-          style={{width:"100%",background:"transparent",border:`1px solid ${C.bloom}44`,color:C.bloom,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,transition:"all .2s"}}>
-          LOG OUT
-        </button>
+          ))}
+
+          {/* PORTFOLIO */}
+          {tab === "portfolio" && (ownedTokens.length === 0 ? (
+            <div style={{textAlign:"center",padding:"40px 16px"}}>
+              <div style={{fontSize:28,marginBottom:10,color:C.amber}}>⬡</div>
+              <p style={{fontSize:11,fontFamily:"monospace",color:C.dust,lineHeight:1.8,maxWidth:300,margin:"0 auto"}}>No tokens in your portfolio yet. Buy knowledge tokens from the market and they'll appear here.</p>
+            </div>
+          ) : (
+            <div>
+              <div style={{background:C.card,border:`1px solid ${C.amber}22`,borderRadius:9,padding:"11px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>TOTAL VALUE</span>
+                <span style={{fontSize:18,fontFamily:"monospace",fontWeight:700,color:C.amber}}>${totalPortfolioValue.toFixed(2)}</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {ownedTokens.map(t => (
+                  <div key={t.sym} style={{background:C.card,border:`1px solid ${t.col}22`,borderRadius:9,padding:"11px 13px",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}
+                    onMouseEnter={e => e.currentTarget.style.borderColor=`${t.col}44`}
+                    onMouseLeave={e => e.currentTarget.style.borderColor=`${t.col}22`}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:t.col,boxShadow:`0 0 6px ${t.col}`,flexShrink:0}}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontFamily:"monospace",color:t.col,fontWeight:700}}>⬡ {t.sym}</div>
+                      <div style={{fontSize:8,color:C.dust,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.name}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:9,fontFamily:"monospace",color:C.parch}}>{t.qty.toLocaleString()} tokens</div>
+                      <div style={{fontSize:8,fontFamily:"monospace",color:C.dust}}>@ ${t.price.toFixed(3)}</div>
+                    </div>
+                    <div style={{textAlign:"right",minWidth:56}}>
+                      <div style={{fontSize:12,fontFamily:"monospace",fontWeight:700,color:C.parch}}>${t.value.toFixed(2)}</div>
+                      <div style={{fontSize:6,fontFamily:"monospace",color:C.dust}}>USD VALUE</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* ACTIVITY */}
+          {tab === "activity" && (myValidatedPosts.length === 0 ? (
+            <div style={{textAlign:"center",padding:"40px 16px"}}>
+              <div style={{fontSize:28,marginBottom:10}}>◈</div>
+              <p style={{fontSize:11,fontFamily:"monospace",color:C.dust,lineHeight:1.8,maxWidth:300,margin:"0 auto"}}>No validation activity yet. When you validate published works your history will appear here.</p>
+            </div>
+          ) : (
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {myValidatedPosts.map(p => (
+                <div key={p.id} style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"10px 13px",display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:13,flexShrink:0}}>{p.icon}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:10,color:C.parch,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
+                    <div style={{fontSize:8,fontFamily:"monospace",color:C.dust}}>{p.author} · {p.cat}</div>
+                  </div>
+                  <span style={{fontSize:7,fontFamily:"monospace",flexShrink:0,padding:"2px 8px",borderRadius:20,letterSpacing:1,
+                    color:(userVotes||{})[p.id]==="up"?C.sprout:C.bloom,
+                    background:(userVotes||{})[p.id]==="up"?C.sproutD:`${C.bloom}12`,
+                    border:`1px solid ${(userVotes||{})[p.id]==="up"?C.sprout:C.bloom}30`}}>
+                    {(userVotes||{})[p.id]==="up" ? "✓ VALIDATED" : "✗ DISPUTED"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {/* ACCOUNT */}
+          {tab === "account" && (
+            <div>
+              <div style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:10,padding:"14px 16px",marginBottom:9}}>
+                <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:10}}>ACCOUNT DETAILS</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6,fontSize:10,fontFamily:"monospace",color:C.dust}}>
+                  {[
+                    {k:"Username",  v:`@${user.username}`},
+                    {k:"Email",     v:user.email},
+                    {k:"Field",     v:user.field || "—"},
+                    {k:"Cluster",   v:`${clusterInfo.icon} ${clusterInfo.label}`},
+                    {k:"Member since", v:user.joined || "—"},
+                    {k:"Humanity proof", v:user.pohMethod ? `✓ ${user.pohMethod === "worldid" ? "World ID" : "Gitcoin Passport"}` : "Not verified", special:true, ok:!!user.pohMethod},
+                  ].map(({k,v,special,ok}) => (
+                    <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:`1px solid ${C.shadow}`}}>
+                      <span style={{color:C.tan}}>{k}</span>
+                      <span style={{color:special?(ok?C.sprout:C.dust):C.parch}}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {user.credentials?.length > 0 && (
+                <div style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:10,padding:"14px 16px",marginBottom:9}}>
+                  <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:9}}>CREDENTIALS ({user.credentials.length})</div>
+                  <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                    {user.credentials.map((cred, i) => (
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:C.wood,borderRadius:7}}>
+                        <span style={{color:C.sprout,fontSize:10,flexShrink:0}}>✓</span>
+                        <div style={{minWidth:0}}>
+                          <div style={{fontSize:9,fontFamily:"monospace",color:C.parch}}>{cred.type}</div>
+                          <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cred.value}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:10,padding:"14px 16px",marginBottom:9}}>
+                <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:7}}>ON-CHAIN WALLET</div>
+                <div style={{fontSize:8,fontFamily:"monospace",color:C.amber,wordBreak:"break-all",lineHeight:1.7,marginBottom:5}}>{walletAddr}</div>
+                <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,lineHeight:1.6}}>Deterministically derived from username. Non-custodial. You own your keys.</div>
+              </div>
+              <button onClick={() => { onLogout(); onClose(); }}
+                style={{width:"100%",background:"transparent",border:`1px solid ${C.bloom}44`,color:C.bloom,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,transition:"all .2s"}}
+                onMouseEnter={e => { e.currentTarget.style.background=`${C.bloom}10`; e.currentTarget.style.borderColor=`${C.bloom}66`; }}
+                onMouseLeave={e => { e.currentTarget.style.background="transparent"; e.currentTarget.style.borderColor=`${C.bloom}44`; }}>
+                LOG OUT
+              </button>
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );
@@ -2190,12 +2376,21 @@ export default function Veridax() {
       <nav style={{position:"sticky",top:0,zIndex:100,background:`${C.earth}f8`,borderBottom:`1px solid ${C.shadow}`,backdropFilter:"blur(20px)",flexShrink:0}}>
         <div style={{maxWidth:1160,margin:"0 auto",padding:"0 24px",display:"flex",alignItems:"center",height:54,gap:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginRight:24,flexShrink:0}}>
-            <div style={{position:"relative",width:30,height:30}}>
-              <div style={{width:30,height:30,borderRadius:7,background:`linear-gradient(135deg,${C.amber}28,${C.copper}18)`,border:`1px solid ${C.amber}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>⛓</div>
-              <span style={{position:"absolute",top:-5,right:-5,fontSize:10,animation:"sway 4s ease-in-out infinite"}}>🌿</span>
+            <div onClick={() => setShowProfile(true)}
+              style={{position:"relative",width:30,height:30,cursor:"pointer"}}
+              title={user ? `Open dashboard — @${user.username}` : "Join or log in"}>
+              <div style={{width:30,height:30,borderRadius:7,background:`linear-gradient(135deg,${C.amber}28,${C.copper}18)`,border:`1px solid ${C.amber}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:user?13:14,transition:"border-color .2s,background .2s"}}
+                onMouseEnter={e => { e.currentTarget.style.borderColor=C.amber+"99"; e.currentTarget.style.background=`linear-gradient(135deg,${C.amber}40,${C.copper}28)`; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor=C.amber+"44"; e.currentTarget.style.background=`linear-gradient(135deg,${C.amber}28,${C.copper}18)`; }}>
+                {user ? user.username[0].toUpperCase() : "⛓"}
+              </div>
+              {user && <span style={{position:"absolute",bottom:-3,right:-3,width:8,height:8,borderRadius:"50%",background:C.sprout,border:`1px solid ${C.earth}`,boxShadow:`0 0 5px ${C.sprout}`}}/>}
+              {!user && <span style={{position:"absolute",top:-5,right:-5,fontSize:10,animation:"sway 4s ease-in-out infinite"}}>🌿</span>}
             </div>
-            <div>
-              <div style={{fontSize:14,fontFamily:"'Playfair Display',serif",fontWeight:900,color:C.parch,letterSpacing:-.5,lineHeight:1}}>VERIDAX</div>
+            <div onClick={() => navigate("home")} style={{cursor:"pointer"}}
+              onMouseEnter={e => e.currentTarget.querySelector(".vdx-name").style.color=C.amber}
+              onMouseLeave={e => e.currentTarget.querySelector(".vdx-name").style.color=C.parch}>
+              <div className="vdx-name" style={{fontSize:14,fontFamily:"'Playfair Display',serif",fontWeight:900,color:C.parch,letterSpacing:-.5,lineHeight:1,transition:"color .2s"}}>VERIDAX</div>
               <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:3}}>KNOWLEDGE · TRUTH · PROGRESS</div>
             </div>
           </div>
@@ -3205,7 +3400,7 @@ export default function Veridax() {
 
       {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
-      {showProfile && user && <ProfileModal user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }}/>}
+      {showProfile && user && <DashboardModal user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }}/>}
       {showSub && <SubModal user={user} onClose={() => setShowSub(false)}/>}
       {detailPost && (
         <PostDetailModal
