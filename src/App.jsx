@@ -9,41 +9,42 @@ const C = {
   bloom:"#c85a45", parch:"#e0d8c0", tan:"#a09070", dust:"#585040",
 };
 
-const POSTS = [
+const INITIAL_POSTS = [
   { id:"p1", cat:"Project Save Humanity", icon:"💧", color:"#f5d060", flagship:true,
     title:"Open-Source Desalination Unit: $40/Family, 48hr Deploy",
     summary:"Modular solar-powered desalination for disaster zones. Full schematics, BOM, and deployment protocol. Field-tested on 3 continents.",
     author:"Dr. Amara Osei", field:"Humanitarian Engineering", verified:true, substack:false,
-    token:"H2OPEN", price:142.80, change:18.4, up:18203, cite:341, valid:4821 },
+    up:18203, cite:341, tokenData:{sym:"H2OPEN", supply:5400, col:"#f5d060", change:18.4} },
   { id:"p2", cat:"Artificial Intelligence", icon:"⚙", color:"#5aabaa",
     title:"Bias Detection Framework for LLM Governance",
     summary:"Open standard for auditing AI systems for systemic bias and corporate capture. Community-run audit protocol included.",
     author:"Prof. Yuki Tanaka", field:"AI Ethics", verified:true, substack:true,
-    token:"AISAFE", price:89.20, change:7.1, up:12401, cite:289, valid:3102 },
+    up:12401, cite:289, tokenData:{sym:"AISAFE", supply:3900, col:"#e8a830", change:7.1} },
   { id:"p3", cat:"Medicine", icon:"🌿", color:"#88d068",
     title:"mRNA Reprogramming for Cellular Senescence Reversal",
     summary:"3-year independent study: modified mRNA vectors reduce inflammatory markers in aged tissue by 40%. No pharma funding. All data open.",
     author:"Dr. Fatima Al-Rashid", field:"Molecular Biology", verified:true, substack:true,
-    token:"LONGEVX", price:218.50, change:31.2, up:21890, cite:512, valid:6210 },
+    up:21890, cite:512, tokenData:{sym:"LONGEVX", supply:7400, col:"#88d068", change:31.2} },
   { id:"p4", cat:"Climate Science", icon:"🌦", color:"#72c44a",
     title:"Biochar Distributed Grid: Scalable Carbon Sequestration",
     summary:"Protocol for distributed biochar production. 10-12x more efficient per hectare than reforestation. Tested in 14 communities.",
     author:"Marcus Velde", field:"Climate Systems", verified:true, substack:false,
-    token:"BIOCARB", price:67.40, change:12.8, up:9840, cite:198, valid:2340 },
+    up:9840, cite:198, tokenData:{sym:"BIOCARB", supply:3100, col:"#72c44a", change:12.8} },
   { id:"p5", cat:"Neuroscience", icon:"🍄", color:"#d0a068",
     title:"Psychedelic-Assisted PTSD Treatment: Open-Source Protocol",
     summary:"Peer-reviewed protocol for psilocybin-assisted PTSD therapy. Tested across 847 veterans — 76% remission rate at 12 months. No pharma funding. All data open.",
     author:"Dr. Kenji Morales", field:"Clinical Neuroscience", verified:true, substack:false,
-    up:14820, cite:267, valid:3901 },
-];
-
-const TOKENS = [
-  { sym:"LONGEVX", name:"Cellular Senescence Reversal", price:218.50, ch:31.2, col:"#88d068", supply:7400 },
-  { sym:"H2OPEN",  name:"Open Desalination Protocol",   price:142.80, ch:18.4, col:"#f5d060", supply:5400 },
-  { sym:"MESHNET", name:"Decentralized Mesh Internet",  price:178.90, ch:22.6, col:"#5aabaa", supply:6400 },
-  { sym:"QUANTM",  name:"Quantum Error Correction",     price:312.40, ch:44.1, col:"#c87941", supply:9600 },
-  { sym:"AISAFE",  name:"AI Governance Framework",      price:89.20,  ch:7.1,  col:"#e8a830", supply:3900 },
-  { sym:"BIOCARB", name:"Biochar Carbon Protocol",      price:67.40,  ch:12.8, col:"#72c44a", supply:3100 },
+    up:14820, cite:267 },
+  { id:"p6", cat:"Engineering", icon:"📡", color:"#5aabaa",
+    title:"Decentralized Mesh Internet Protocol",
+    summary:"Open-source protocol for building censorship-resistant mesh networks. Deployed in 12 countries. 340,000+ nodes active. No central authority.",
+    author:"Dr. Priya Nair", field:"Network Engineering", verified:true, substack:false,
+    up:15430, cite:298, tokenData:{sym:"MESHNET", supply:6400, col:"#5aabaa", change:22.6} },
+  { id:"p7", cat:"Physics", icon:"⚛", color:"#c87941",
+    title:"Quantum Error Correction: Universal Framework",
+    summary:"A universal framework for fault-tolerant quantum computation. Open-source implementation across 3 hardware platforms. No government or defense funding.",
+    author:"Dr. Kai Lindström", field:"Quantum Computing", verified:true, substack:false,
+    up:32100, cite:687, tokenData:{sym:"QUANTM", supply:9600, col:"#c87941", change:44.1} },
 ];
 
 const CATS = [
@@ -71,19 +72,23 @@ const CATS = [
 
 const nf = n => n>=1e6?`${(n/1e6).toFixed(1)}M`:n>=1e3?`${(n/1e3).toFixed(1)}K`:`${n}`;
 
-const POST_VOTES = {
-  p1: { scientific:1240, civil:890, independent:1500, tech:670, grassroots:430, academic:980, journalism:340, legal:210 },
-  p2: { scientific:680,  civil:420, independent:980,  tech:1840, grassroots:210, academic:560, journalism:290, legal:140 },
-  p3: { scientific:2100, civil:580, independent:1200, tech:890,  grassroots:340, academic:1760, journalism:420, legal:310 },
-  p4: { scientific:920,  civil:1100, independent:840, tech:540,  grassroots:980, academic:620, journalism:310, legal:180 },
-  p5: { scientific:780,  civil:560, independent:940, tech:420,  grassroots:610, academic:880, journalism:380, legal:330 },
+const INITIAL_VOTES = {
+  p1: { scientific:1240, civil:890,  independent:1500, tech:670,  grassroots:430, academic:980,  journalism:340, legal:210 },
+  p2: { scientific:680,  civil:420,  independent:980,  tech:1840, grassroots:210, academic:560,  journalism:290, legal:140 },
+  p3: { scientific:2100, civil:580,  independent:1200, tech:890,  grassroots:340, academic:1760, journalism:420, legal:310 },
+  p4: { scientific:280,  civil:320,  independent:240,  tech:170,  grassroots:295, academic:220,  journalism:130, legal:85  },
+  p5: { scientific:780,  civil:560,  independent:940,  tech:420,  grassroots:610, academic:880,  journalism:380, legal:330 },
+  p6: { scientific:680,  civil:540,  independent:820,  tech:1240, grassroots:380, academic:590,  journalism:420, legal:310 },
+  p7: { scientific:1890, civil:420,  independent:680,  tech:1540, grassroots:210, academic:1680, journalism:310, legal:280 },
 };
-const POST_DISPUTES = {
+const INITIAL_DISPUTES = {
   p1: { scientific:45,  civil:120, independent:200, tech:30,  grassroots:80,  academic:15,  journalism:60,  legal:25  },
   p2: { scientific:28,  civil:65,  independent:140, tech:90,  grassroots:30,  academic:42,  journalism:110, legal:35  },
   p3: { scientific:85,  civil:210, independent:310, tech:120, grassroots:90,  academic:45,  journalism:180, legal:70  },
-  p4: { scientific:60,  civil:90,  independent:120, tech:40,  grassroots:70,  academic:50,  journalism:30,  legal:20  },
+  p4: { scientific:40,  civil:58,  independent:80,  tech:28,  grassroots:45,  academic:36,  journalism:18,  legal:12  },
   p5: { scientific:40,  civil:85,  independent:120, tech:55,  grassroots:70,  academic:30,  journalism:90,  legal:45  },
+  p6: { scientific:22,  civil:45,  independent:80,  tech:60,  grassroots:18,  academic:30,  journalism:55,  legal:20  },
+  p7: { scientific:60,  civil:165, independent:200, tech:100, grassroots:40,  academic:75,  journalism:130, legal:70  },
 };
 
 function shannonDiversity(counts) {
@@ -105,12 +110,13 @@ function calcTrustScore(ups, disps) {
 const TOKEN_GATES = { upvotes:10000, citations:200, validations:2500, diversity:0.72, trustScore:0.88 };
 
 function checkGates(post, votes, disputes) {
-  const trust = calcTrustScore(votes, disputes);
-  const diversity = shannonDiversity(votes);
+  const trust      = calcTrustScore(votes, disputes);
+  const diversity  = shannonDiversity(votes);
+  const validCount = Object.values(votes).reduce((s, v) => s + v, 0);
   const items = [
     { key:"upvotes",     label:"UPVOTES",                    val:post.up,    req:TOKEN_GATES.upvotes,     fmt:v => nf(v) },
     { key:"citations",   label:"PEER CITATIONS",             val:post.cite,  req:TOKEN_GATES.citations,   fmt:v => v.toLocaleString() },
-    { key:"validations", label:"CROSS-CLUSTER VALIDATIONS",  val:post.valid, req:TOKEN_GATES.validations, fmt:v => nf(v) },
+    { key:"validations", label:"CROSS-CLUSTER VALIDATIONS",  val:validCount, req:TOKEN_GATES.validations, fmt:v => nf(v) },
     { key:"diversity",   label:"DIVERSITY INDEX",            val:diversity,  req:TOKEN_GATES.diversity,   fmt:v => `${(v*100).toFixed(1)}%` },
     { key:"trustScore",  label:"TRUST SCORE",                val:trust,      req:TOKEN_GATES.trustScore,  fmt:v => `${(v*100).toFixed(1)}%` },
   ];
@@ -126,7 +132,7 @@ function bondingCost(s1, s2) {
   return (0.001 / 2.38) * (Math.pow(s2, 2.38) - Math.pow(s1, 2.38));
 }
 
-function Ticker() {
+function Ticker({ tokens }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
@@ -139,7 +145,7 @@ function Ticker() {
     }, 16);
     return () => clearInterval(id);
   }, []);
-  const items = [...TOKENS, ...TOKENS];
+  const items = [...tokens, ...tokens];
   return (
     <div style={{overflow:"hidden",background:C.wood,borderBottom:`1px solid ${C.shadow}`,padding:"7px 0"}}>
       <div ref={ref} style={{display:"flex",gap:44,whiteSpace:"nowrap",willChange:"transform"}}>
@@ -282,8 +288,8 @@ function PostCard({ post, user, votes, disputes, onValidate, onTokenize }) {
               </div>
               <span style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust}}>{gateInfo.metCount}/5</span>
             </div>
-            {gateInfo.allMet && post.token && <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout}}>✓ TOKENIZED</span>}
-            {gateInfo.allMet && !post.token && user && onTokenize && (
+            {gateInfo.allMet && post.tokenData && <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout}}>✓ TOKENIZED</span>}
+            {gateInfo.allMet && !post.tokenData && user && onTokenize && (
               <button onClick={e=>{e.stopPropagation();onTokenize(post);}}
                 style={{background:`${C.amber}18`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:5,padding:"2px 7px",fontSize:7,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
                 ★ VOTE
@@ -291,11 +297,11 @@ function PostCard({ post, user, votes, disputes, onValidate, onTokenize }) {
             )}
           </div>
         )}
-        {post.token && (
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 10px",background:`${post.color}0a`,border:`1px solid ${post.color}22`,borderRadius:7}}>
-            <span style={{fontSize:11,fontFamily:"monospace",color:post.color,fontWeight:700}}>⬡ {post.token}</span>
-            <span style={{fontSize:11,color:C.parch,fontFamily:"monospace"}}>${post.price?.toFixed(2)}</span>
-            <span style={{fontSize:9,color:C.sprout,fontFamily:"monospace"}}>+{post.change}%</span>
+        {post.tokenData && (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 10px",background:`${post.tokenData.col}0a`,border:`1px solid ${post.tokenData.col}22`,borderRadius:7}}>
+            <span style={{fontSize:11,fontFamily:"monospace",color:post.tokenData.col,fontWeight:700}}>⬡ {post.tokenData.sym}</span>
+            <span style={{fontSize:11,color:C.parch,fontFamily:"monospace"}}>${bondingPrice(post.tokenData.supply).toFixed(2)}</span>
+            <span style={{fontSize:9,color:C.sprout,fontFamily:"monospace"}}>+{post.tokenData.change}%</span>
           </div>
         )}
         {user && votes && onValidate && (
@@ -951,7 +957,7 @@ function ProfileModal({ user, onClose, onLogout }) {
 
 const EVIDENCE_TYPES = ["DOI Reference","IPFS Hash","Archived Page","External Source"];
 
-function PublishModal({ user, onClose }) {
+function PublishModal({ user, onClose, onPublish }) {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -977,6 +983,20 @@ function PublishModal({ user, onClose }) {
       const h = "0x" + Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join("");
       setTxHash(h);
       setStep(4);
+      if (onPublish) onPublish({
+        id: `pub_${Date.now()}`,
+        cat: category,
+        icon: CATS.find(c => c.name === category)?.icon || "📄",
+        color: CATS.find(c => c.name === category)?.color || C.amber,
+        title,
+        summary: body.slice(0, 200) + (body.length > 200 ? "…" : ""),
+        author: user.username,
+        field: user.field || user.cluster,
+        verified: !!user.pohMethod,
+        substack: false,
+        up: 1,
+        cite: 0,
+      });
     }, 2800);
     return () => clearTimeout(t);
   }, [signing]);
@@ -1222,7 +1242,7 @@ function PublishModal({ user, onClose }) {
   );
 }
 
-function TokenizeModal({ post, votes, disputes, user, onClose }) {
+function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
   const [yesVotes, setYesVotes] = useState(1316);
   const [noVotes,  setNoVotes]  = useState(684);
   const [voted, setVoted] = useState(null);
@@ -1246,7 +1266,7 @@ function TokenizeModal({ post, votes, disputes, user, onClose }) {
     setVoted(type);
     if (type === "yes") {
       setTimeout(() => { setCreating(true); }, 600);
-      setTimeout(() => { setCreating(false); setCreated(true); }, 3400);
+      setTimeout(() => { setCreating(false); setCreated(true); if (onTokenized) onTokenized(post.id, suggestedSymbol); }, 3400);
     }
   };
 
@@ -1519,7 +1539,7 @@ function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVot
   );
 }
 
-function BuyModal({ token, user, onClose }) {
+function BuyModal({ token, user, onClose, onBought }) {
   const [qty, setQty] = useState(1);
   const [buying, setBuying] = useState(false);
   const [bought, setBought] = useState(false);
@@ -1565,7 +1585,7 @@ function BuyModal({ token, user, onClose }) {
     if (!user || buying || bought) return;
     const rec = { qty, cost: bondingCost(token.supply, token.supply + qty), newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) };
     setBuying(true);
-    setTimeout(() => { setBuying(false); setBought(true); setRecord(rec); }, 2000);
+    setTimeout(() => { setBuying(false); setBought(true); setRecord(rec); if (onBought) onBought(token.sym, qty); }, 2000);
   };
 
   return (
@@ -1717,12 +1737,18 @@ export default function Veridax() {
   const [showProfile, setShowProfile] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
-  const [postVotes,    setPostVotes]    = useState(POST_VOTES);
-  const [postDisputes, setPostDisputes] = useState(POST_DISPUTES);
+  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [postVotes,    setPostVotes]    = useState(INITIAL_VOTES);
+  const [postDisputes, setPostDisputes] = useState(INITIAL_DISPUTES);
   const [userVotes,    setUserVotes]    = useState({});
   const [validatingPost, setValidatingPost] = useState(null);
   const [tokenizePost,   setTokenizePost]   = useState(null);
-  const [buyToken,       setBuyToken]       = useState(null);
+  const [buyTokenSym,    setBuyTokenSym]    = useState(null);
+
+  const tokens = posts
+    .filter(p => p.tokenData)
+    .map(p => ({ sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply }));
+  const buyToken = buyTokenSym ? tokens.find(t => t.sym === buyTokenSym) : null;
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
 
   const handleVote = (postId, type) => {
@@ -1735,6 +1761,29 @@ export default function Veridax() {
     }
     setUserVotes(prev => ({ ...prev, [postId]: type }));
   };
+
+  const handleTokenized = (postId, sym) => {
+    setPosts(prev => prev.map(p =>
+      p.id === postId ? { ...p, tokenData: { sym, supply: 1000, col: p.color, change: 0 } } : p
+    ));
+    setPostVotes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
+    setPostDisputes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
+    setTokenizePost(null);
+  };
+
+  const handleBought = (sym, qty) => {
+    setPosts(prev => prev.map(p =>
+      p.tokenData?.sym === sym ? { ...p, tokenData: { ...p.tokenData, supply: p.tokenData.supply + qty } } : p
+    ));
+  };
+
+  const handlePublish = (newPost) => {
+    setPosts(prev => [...prev, newPost]);
+    const empty = { scientific:0, civil:0, independent:0, tech:0, grassroots:0, academic:0, journalism:0, legal:0 };
+    setPostVotes(prev => ({ ...prev, [newPost.id]: { ...empty } }));
+    setPostDisputes(prev => ({ ...prev, [newPost.id]: { ...empty } }));
+  };
+
   const [liveStats, setLiveStats] = useState({ experts:24182, works:89403, nodes:19203, imports:3841, tokens:3401 });
 
   const GOSSIPS = [
@@ -1790,7 +1839,7 @@ export default function Veridax() {
         <span style={{marginLeft:"auto",fontSize:9,fontFamily:"monospace",color:"#181828",flexShrink:0,animation:"blink 1s infinite"}}>█</span>
       </div>
 
-      <Ticker/>
+      <Ticker tokens={tokens}/>
 
       {/* NAV */}
       <nav style={{position:"sticky",top:0,zIndex:100,background:`${C.earth}f8`,borderBottom:`1px solid ${C.shadow}`,backdropFilter:"blur(20px)",flexShrink:0}}>
@@ -1918,7 +1967,7 @@ export default function Veridax() {
                 <button onClick={() => setSection("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-                {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
+                {posts.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
               </div>
             </div>
 
@@ -2004,7 +2053,7 @@ export default function Veridax() {
               ))}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-              {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
+              {posts.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
             </div>
           </div>
         )}
@@ -2034,7 +2083,7 @@ export default function Veridax() {
                 </button>
               ))}
             </div>
-            <PostCard post={POSTS[0]} user={user} votes={postVotes[POSTS[0].id]} disputes={postDisputes[POSTS[0].id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>
+            {(() => { const fp = posts.find(p => p.flagship); return fp && <PostCard post={fp} user={user} votes={postVotes[fp.id]} disputes={postDisputes[fp.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>; })()}
 
           </div>
         )}
@@ -2047,7 +2096,7 @@ export default function Veridax() {
               <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"10px 16px",borderBottom:`1px solid ${C.shadow}`,fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>
                 {["KNOWLEDGE ASSET","PRICE","24H","AUTHOR RATE","ACTION"].map(h => <div key={h}>{h}</div>)}
               </div>
-              {TOKENS.map((t, i) => (
+              {tokens.map((t, i) => (
                 <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr",padding:"13px 16px",borderBottom:`1px solid ${C.shadow}`,alignItems:"center",transition:"background .2s",cursor:"pointer"}}
                   onMouseEnter={e => e.currentTarget.style.background=C.wood}
                   onMouseLeave={e => e.currentTarget.style.background="transparent"}>
@@ -2055,13 +2104,13 @@ export default function Veridax() {
                     <div style={{width:7,height:7,borderRadius:"50%",background:t.col,boxShadow:`0 0 7px ${t.col}`,flexShrink:0}}/>
                     <div>
                       <div style={{fontSize:11,fontFamily:"monospace",color:t.col,fontWeight:700}}>⬡ {t.sym}</div>
-                      <div style={{fontSize:9,color:C.dust}}>{t.name}</div>
+                      <div style={{fontSize:9,color:C.dust}}>{t.name.length>38?t.name.slice(0,38)+"…":t.name}</div>
                     </div>
                   </div>
                   <div style={{fontSize:12,fontFamily:"monospace",color:C.parch,fontWeight:700}}>${t.price.toFixed(2)}</div>
                   <div style={{fontSize:11,fontFamily:"monospace",color:t.ch>0?C.sprout:C.bloom}}>{t.ch>0?"+":""}{t.ch}%</div>
                   <div style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>5–8%</div>
-                  <button onClick={() => setBuyToken(t)} style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
+                  <button onClick={() => setBuyTokenSym(t.sym)} style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
                 </div>
               ))}
             </div>
@@ -2223,7 +2272,7 @@ export default function Veridax() {
             <div>
               <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:14}}>LIVE VALIDATION QUEUE</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
-                {POSTS.map((p, i) => (
+                {posts.map((p, i) => (
                   <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}>
                     <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>
                   </div>
@@ -2367,7 +2416,7 @@ export default function Veridax() {
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
-      {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)}/>}
+      {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)} onPublish={handlePublish}/>}
       {tokenizePost && postVotes[tokenizePost.id] && (
         <TokenizeModal
           post={tokenizePost}
@@ -2375,9 +2424,10 @@ export default function Veridax() {
           disputes={postDisputes[tokenizePost.id]}
           user={user}
           onClose={() => setTokenizePost(null)}
+          onTokenized={handleTokenized}
         />
       )}
-      {buyToken && <BuyModal token={buyToken} user={user} onClose={() => setBuyToken(null)}/>}
+      {buyToken && <BuyModal token={buyToken} user={user} onClose={() => setBuyTokenSym(null)} onBought={handleBought}/>}
       {validatingPost && postVotes[validatingPost.id] && (
         <ValidationModal
           post={validatingPost}
