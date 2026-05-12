@@ -38,12 +38,12 @@ const POSTS = [
 ];
 
 const TOKENS = [
-  { sym:"LONGEVX", name:"Cellular Senescence Reversal", price:218.50, ch:31.2, col:"#88d068" },
-  { sym:"H2OPEN",  name:"Open Desalination Protocol",   price:142.80, ch:18.4, col:"#f5d060" },
-  { sym:"MESHNET", name:"Decentralized Mesh Internet",  price:178.90, ch:22.6, col:"#5aabaa" },
-  { sym:"QUANTM",  name:"Quantum Error Correction",     price:312.40, ch:44.1, col:"#c87941" },
-  { sym:"AISAFE",  name:"AI Governance Framework",      price:89.20,  ch:7.1,  col:"#e8a830" },
-  { sym:"BIOCARB", name:"Biochar Carbon Protocol",      price:67.40,  ch:12.8, col:"#72c44a" },
+  { sym:"LONGEVX", name:"Cellular Senescence Reversal", price:218.50, ch:31.2, col:"#88d068", supply:7400 },
+  { sym:"H2OPEN",  name:"Open Desalination Protocol",   price:142.80, ch:18.4, col:"#f5d060", supply:5400 },
+  { sym:"MESHNET", name:"Decentralized Mesh Internet",  price:178.90, ch:22.6, col:"#5aabaa", supply:6400 },
+  { sym:"QUANTM",  name:"Quantum Error Correction",     price:312.40, ch:44.1, col:"#c87941", supply:9600 },
+  { sym:"AISAFE",  name:"AI Governance Framework",      price:89.20,  ch:7.1,  col:"#e8a830", supply:3900 },
+  { sym:"BIOCARB", name:"Biochar Carbon Protocol",      price:67.40,  ch:12.8, col:"#72c44a", supply:3100 },
 ];
 
 const CATS = [
@@ -116,6 +116,14 @@ function checkGates(post, votes, disputes) {
   ];
   const metCount = items.filter(g => g.val >= g.req).length;
   return { items, metCount, allMet: metCount === 5 };
+}
+
+function bondingPrice(supply) {
+  return 0.001 * Math.pow(Math.max(supply, 0), 1.38);
+}
+
+function bondingCost(s1, s2) {
+  return (0.001 / 2.38) * (Math.pow(s2, 2.38) - Math.pow(s1, 2.38));
 }
 
 function Ticker() {
@@ -1511,6 +1519,185 @@ function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVot
   );
 }
 
+function BuyModal({ token, user, onClose }) {
+  const [qty, setQty] = useState(1);
+  const [buying, setBuying] = useState(false);
+  const [bought, setBought] = useState(false);
+  const [record, setRecord] = useState(null);
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const curPrice  = bondingPrice(token.supply);
+  const newSupply = token.supply + qty;
+  const newPrice  = bondingPrice(newSupply);
+  const totalCost = bondingCost(token.supply, newSupply);
+
+  // SVG bonding curve
+  const W = 320, H = 80;
+  const maxS = Math.max(token.supply * 1.65, newSupply * 1.1);
+  const maxP = bondingPrice(maxS);
+  const toX  = s => 10 + (s / maxS) * (W - 20);
+  const toY  = p => (H - 10) - (p / maxP) * (H - 20);
+
+  const curvePts = [];
+  for (let i = 0; i <= 80; i++) {
+    const s = (i / 80) * maxS;
+    curvePts.push(`${toX(s).toFixed(1)},${toY(bondingPrice(s)).toFixed(1)}`);
+  }
+  const curveD = "M" + curvePts.join(" L");
+  const cx = toX(token.supply), cy = toY(curPrice);
+  const nx = toX(newSupply),    ny = toY(newPrice);
+
+  const fillPts = [];
+  for (let i = 0; i <= 30; i++) {
+    const s = token.supply + (i / 30) * qty;
+    fillPts.push(`${toX(s).toFixed(1)},${toY(bondingPrice(s)).toFixed(1)}`);
+  }
+  fillPts.push(`${nx.toFixed(1)},${(H - 10).toFixed(1)}`);
+  fillPts.push(`${cx.toFixed(1)},${(H - 10).toFixed(1)}`);
+  const fillD = `M${fillPts[0]} L${fillPts.slice(1).join(" L")} Z`;
+
+  const handleBuy = () => {
+    if (!user || buying || bought) return;
+    const rec = { qty, cost: bondingCost(token.supply, token.supply + qty), newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) };
+    setBuying(true);
+    setTimeout(() => { setBuying(false); setBought(true); setRecord(rec); }, 2000);
+  };
+
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${token.col}44`,borderRadius:20,padding:28,maxWidth:460,width:"100%",position:"relative",maxHeight:"92vh",overflowY:"auto"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${token.col},${C.copper})`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+
+        {bought && record ? (
+          <div style={{textAlign:"center",padding:"16px 0"}}>
+            <div style={{fontSize:38,marginBottom:12,color:token.col,animation:"sway 2s ease-in-out infinite"}}>⬡</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:token.col,letterSpacing:3,marginBottom:8}}>PURCHASE CONFIRMED</div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.parch,marginBottom:10}}>+{record.qty} {token.sym}</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:16}}>Recorded on-chain. New token price: <span style={{color:token.col,fontFamily:"monospace",fontWeight:700}}>${record.newPrice.toFixed(2)}</span></p>
+            <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:10,padding:"11px 14px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left",marginBottom:14}}>
+              <div>⬡ <span style={{color:C.tan}}>Token:</span> <span style={{color:token.col}}>{token.sym}</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Quantity:</span> {record.qty.toLocaleString()}</div>
+              <div>⬡ <span style={{color:C.tan}}>Total paid:</span> <span style={{color:C.amber}}>${record.cost.toFixed(2)}</span></div>
+              <div>⬡ <span style={{color:C.tan}}>New supply:</span> {record.newSupply.toLocaleString()}</div>
+              <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>auto-routed · permanent</span></div>
+            </div>
+            <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"9px 13px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8,marginBottom:16,textAlign:"left"}}>
+              <span style={{color:C.sprout}}>✦</span> This token's price has <span style={{color:C.parch}}>zero effect</span> on the post's trust score. Price movements cannot discredit the research.
+            </div>
+            <button onClick={onClose} style={{width:"100%",background:`linear-gradient(135deg,${token.col}22,${C.vine}12)`,border:`1px solid ${token.col}55`,color:token.col,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+              BACK TO MARKET →
+            </button>
+          </div>
+        ) : buying ? (
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:38,marginBottom:14,animation:"pulse 1s infinite",color:token.col}}>⬡</div>
+            <div style={{fontSize:10,fontFamily:"monospace",color:token.col,letterSpacing:2,marginBottom:6}}>PROCESSING…</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Updating bonding curve · Routing author commission · Broadcasting to nodes</div>
+            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:280,margin:"0 auto"}}>
+              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${token.col},${C.copper})`,animation:"fadein 2s linear forwards"}}/>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:4}}>KNOWLEDGE TOKEN</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:token.col,boxShadow:`0 0 8px ${token.col}`,flexShrink:0}}/>
+              <span style={{fontSize:20,fontFamily:"monospace",fontWeight:700,color:token.col}}>⬡ {token.sym}</span>
+            </div>
+            <div style={{fontSize:10,color:C.dust,marginBottom:20}}>{token.name}</div>
+
+            {/* Bonding curve SVG */}
+            <div style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:12,padding:"14px",marginBottom:14}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:8}}>BONDING CURVE · P = 0.001 × S^1.38</div>
+              <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:"block",overflow:"visible"}}>
+                <path d={fillD} fill={`${token.col}25`}/>
+                <path d={curveD} fill="none" stroke={`${token.col}99`} strokeWidth="1.5"/>
+                <circle cx={cx} cy={cy} r="4" fill={C.amber} stroke={C.bark} strokeWidth="1"/>
+                <circle cx={nx} cy={ny} r="3.5" fill={token.col} stroke={C.parch} strokeWidth="1"/>
+                <text x={cx} y={Math.max(cy - 7, 8)} textAnchor="middle" fontSize="7" fill={C.amber} fontFamily="monospace">${curPrice.toFixed(0)}</text>
+                {nx - cx > 24 && <text x={nx} y={Math.max(ny - 7, 8)} textAnchor="middle" fontSize="7" fill={token.col} fontFamily="monospace">${newPrice.toFixed(0)}</text>}
+                <line x1="10" y1={H - 10} x2={W - 10} y2={H - 10} stroke={`${C.shadow}99`} strokeWidth="0.5"/>
+              </svg>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:7,fontFamily:"monospace",color:C.dust,marginTop:4}}>
+                <span>S = 0</span>
+                <span style={{color:C.amber}}>● now: {token.supply.toLocaleString()}</span>
+                <span style={{color:token.col}}>● after: {newSupply.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Price grid */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+              {[
+                {l:"ENTRY PRICE",    v:`$${curPrice.toFixed(2)}`,  c:C.amber},
+                {l:"CURRENT SUPPLY", v:token.supply.toLocaleString(), c:C.tan},
+                {l:"PRICE AFTER",    v:`$${newPrice.toFixed(2)}`,  c:token.col},
+              ].map(({l,v,c}) => (
+                <div key={l} style={{background:C.wood,borderRadius:8,padding:"10px",textAlign:"center"}}>
+                  <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:.5,marginBottom:4}}>{l}</div>
+                  <div style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c}}>{v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quantity */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:6}}>QUANTITY</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <button onClick={() => setQty(q => Math.max(1, q - 1))}
+                  style={{width:32,height:32,borderRadius:7,background:C.wood,border:`1px solid ${C.shadow}`,color:C.dust,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+                <input type="number" value={qty} min={1} max={500}
+                  onChange={e => setQty(Math.max(1, Math.min(500, parseInt(e.target.value) || 1)))}
+                  style={{flex:1,background:C.wood,border:`1px solid ${token.col}44`,borderRadius:7,padding:"8px",color:C.parch,fontFamily:"monospace",fontSize:15,textAlign:"center",outline:"none"}}/>
+                <button onClick={() => setQty(q => Math.min(500, q + 1))}
+                  style={{width:32,height:32,borderRadius:7,background:C.wood,border:`1px solid ${C.shadow}`,color:C.dust,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+              </div>
+            </div>
+
+            {/* Total cost */}
+            <div style={{background:C.card,border:`1px solid ${token.col}28`,borderRadius:9,padding:"12px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:3}}>TOTAL COST</div>
+                <div style={{fontSize:20,fontFamily:"monospace",fontWeight:700,color:token.col}}>${totalCost.toFixed(2)}</div>
+              </div>
+              <div style={{textAlign:"right",fontSize:8,fontFamily:"monospace",color:C.dust,lineHeight:1.7}}>
+                <div>Author commission</div>
+                <div style={{color:C.sprout,fontWeight:700}}>5–8% auto-routed</div>
+              </div>
+            </div>
+
+            {/* Critical principle */}
+            <div style={{background:C.amberD,border:`1px solid ${C.amber}33`,borderRadius:9,padding:"10px 13px",marginBottom:14,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
+              <span style={{color:C.amber}}>⬡</span> Token price has <span style={{color:C.parch}}>zero effect</span> on this post's trust score or content integrity. A crashed price cannot discredit the research. Financial manipulation cannot touch the consensus record.
+            </div>
+
+            {user ? (
+              <button onClick={handleBuy}
+                style={{width:"100%",background:`linear-gradient(135deg,${token.col}22,${C.vine}12)`,border:`1px solid ${token.col}55`,color:token.col,borderRadius:9,padding:"13px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,fontWeight:700}}>
+                BUY {qty} {token.sym} — ${totalCost.toFixed(2)} →
+              </button>
+            ) : (
+              <div style={{textAlign:"center",padding:"12px",border:`1px solid ${C.shadow}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:C.dust}}>
+                Sign in to buy knowledge tokens.
+              </div>
+            )}
+
+            <div style={{marginTop:10,fontSize:7,fontFamily:"monospace",color:C.dust,textAlign:"center",lineHeight:1.9,letterSpacing:.5}}>
+              No pre-mine · No VC allocation · No privileged early access<br/>
+              The math determines every price transparently and automatically
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   {id:"home",label:"Home"},
   {id:"discover",label:"Discover"},
@@ -1535,6 +1722,7 @@ export default function Veridax() {
   const [userVotes,    setUserVotes]    = useState({});
   const [validatingPost, setValidatingPost] = useState(null);
   const [tokenizePost,   setTokenizePost]   = useState(null);
+  const [buyToken,       setBuyToken]       = useState(null);
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
 
   const handleVote = (postId, type) => {
@@ -1873,10 +2061,45 @@ export default function Veridax() {
                   <div style={{fontSize:12,fontFamily:"monospace",color:C.parch,fontWeight:700}}>${t.price.toFixed(2)}</div>
                   <div style={{fontSize:11,fontFamily:"monospace",color:t.ch>0?C.sprout:C.bloom}}>{t.ch>0?"+":""}{t.ch}%</div>
                   <div style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>5–8%</div>
-                  <button style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
+                  <button onClick={() => setBuyToken(t)} style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
                 </div>
               ))}
             </div>
+            {/* Bonding Curve Mechanics */}
+            <div style={{background:C.bark,border:`1px solid ${C.sky}28`,borderRadius:14,padding:"22px",marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.sky,letterSpacing:3}}>BONDING CURVE MECHANICS</span>
+                <div style={{flex:1,height:1,background:`${C.sky}22`}}/>
+              </div>
+              <div style={{background:C.earth,border:`1px solid ${C.sky}22`,borderRadius:10,padding:"16px",marginBottom:14,textAlign:"center"}}>
+                <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:3,marginBottom:8}}>PRICING FORMULA</div>
+                <div style={{fontFamily:"monospace",fontSize:19,color:C.parch,fontWeight:700,letterSpacing:-0.5}}>
+                  Price = 0.001 × Supply<sup style={{fontSize:11}}>1.38</sup>
+                </div>
+                <div style={{fontSize:10,color:C.dust,marginTop:10,lineHeight:1.75}}>
+                  Price rises automatically as more people buy in. Falls as people sell.<br/>
+                  No human decides the price — the math does, at every moment, transparently.
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(185px,1fr))",gap:8,marginBottom:14}}>
+                {[
+                  {icon:"⬡",color:C.amber,title:"No Pre-Mine",body:"Zero tokens are created at launch for founders, VCs, or insiders. The very first buyer pays the same mathematical price as everyone else. No privileged early access."},
+                  {icon:"📈",color:C.sky,title:"Early Believers Win",body:"The first people to recognize a discovery's importance get in cheapest. Price automatically rewards conviction before the mainstream catches on. No backdoor allocations."},
+                  {icon:"🔗",color:C.sprout,title:"Author Earns Forever",body:"Every purchase automatically routes 5–8% commission to the original author's wallet. No invoices. No platform intermediary. No negotiations. The contract handles it."},
+                ].map(({icon,color,title,body}) => (
+                  <div key={title} style={{background:C.earth,border:`1px solid ${color}18`,borderRadius:9,padding:"13px"}}>
+                    <div style={{fontSize:18,marginBottom:6}}>{icon}</div>
+                    <div style={{fontSize:8,fontFamily:"monospace",color,letterSpacing:.5,marginBottom:5}}>{title.toUpperCase()}</div>
+                    <div style={{fontSize:10,color:C.dust,lineHeight:1.65}}>{body}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{background:`${C.bloom}0a`,border:`1px solid ${C.bloom}30`,borderRadius:9,padding:"13px 15px",fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.85}}>
+                <div style={{color:C.bloom,marginBottom:6,letterSpacing:1,fontSize:8}}>CRITICAL DESIGN PRINCIPLE</div>
+                Token price has <span style={{color:C.parch}}>absolutely zero effect</span> on the truth score or content integrity of the underlying post. If a well-funded actor tried to buy up all tokens and dump them to crash the price — the chain's consensus record remains <span style={{color:C.parch}}>completely unchanged</span>. A crashed token does not discredit the research. This severs the link between <span style={{color:C.bloom}}>financial manipulation</span> and <span style={{color:C.parch}}>reputational damage</span>.
+              </div>
+            </div>
+
             {/* AND-gate section */}
             <div style={{background:C.bark,border:`1px solid ${C.amber}33`,borderRadius:14,padding:"22px",marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
@@ -2154,6 +2377,7 @@ export default function Veridax() {
           onClose={() => setTokenizePost(null)}
         />
       )}
+      {buyToken && <BuyModal token={buyToken} user={user} onClose={() => setBuyToken(null)}/>}
       {validatingPost && postVotes[validatingPost.id] && (
         <ValidationModal
           post={validatingPost}
