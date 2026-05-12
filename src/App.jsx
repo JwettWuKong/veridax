@@ -292,7 +292,7 @@ function DonateSection() {
   );
 }
 
-function JoinModal({ onClose, onJoin }) {
+function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -359,9 +359,13 @@ function JoinModal({ onClose, onJoin }) {
             </div>
 
             <button onClick={() => step1Ready && setStep(2)} disabled={!step1Ready}
-              style={{width:"100%",background:step1Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step1Ready?C.amber+"55":C.shadow}`,color:step1Ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:step1Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
+              style={{width:"100%",background:step1Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step1Ready?C.amber+"55":C.shadow}`,color:step1Ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:step1Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s",marginBottom:14}}>
               CONTINUE →
             </button>
+            <div style={{textAlign:"center",fontSize:9,fontFamily:"monospace",color:C.dust}}>
+              Already have an account?{" "}
+              <span onClick={() => { onClose(); onSwitchToLogin(); }} style={{color:C.amber,cursor:"pointer",textDecoration:"underline"}}>Sign in →</span>
+            </div>
           </>
         )}
 
@@ -393,7 +397,7 @@ function JoinModal({ onClose, onJoin }) {
                 style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>
                 ← BACK
               </button>
-              <button onClick={() => { if(step2Ready){ setStep(3); onJoin(username); }}} disabled={!step2Ready}
+              <button onClick={() => { if(step2Ready){ setStep(3); onJoin({ username, email, field, joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) }); }}} disabled={!step2Ready}
                 style={{flex:2,background:step2Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step2Ready?C.amber+"55":C.shadow}`,color:step2Ready?C.amber:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:step2Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
                 CREATE PROFILE →
               </button>
@@ -493,6 +497,100 @@ function SubModal({ onClose }) {
   );
 }
 
+function LoginModal({ onClose, onLogin, onSwitchToJoin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const ready = email.includes("@") && password.length >= 8;
+
+  const inputStyle = (val) => ({
+    width:"100%", background:C.wood, border:`1px solid ${val ? C.amber+"33" : C.shadow}`,
+    borderRadius:8, padding:"10px 13px", color:C.parch, fontSize:12, fontFamily:"monospace",
+    outline:"none", boxSizing:"border-box", transition:"border-color .2s",
+  });
+
+  const handleLogin = async () => {
+    if (!ready) return;
+    setLoading(true);
+    await new Promise(r => setTimeout(r, 900));
+    setLoading(false);
+    onLogin({ username: email.split("@")[0], email, field:"Expert", joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) });
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
+        <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Welcome back.</h2>
+        <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:20}}>Sign in to your VERIDAX expert profile.</p>
+
+        <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>EMAIL</label>
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"
+          style={{...inputStyle(email.includes("@")), marginBottom:12}}/>
+
+        <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>PASSWORD</label>
+        <div style={{position:"relative",marginBottom:20}}>
+          <input type={showPw?"text":"password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password"
+            style={{...inputStyle(password.length>=8), paddingRight:50}}/>
+          <button onClick={() => setShowPw(s=>!s)}
+            style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:11,fontFamily:"monospace"}}>
+            {showPw?"HIDE":"SHOW"}
+          </button>
+        </div>
+
+        <button onClick={handleLogin} disabled={!ready || loading}
+          style={{width:"100%",background:ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${ready?C.amber+"55":C.shadow}`,color:ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:ready?"pointer":"not-allowed",letterSpacing:2,marginBottom:14,transition:"all .2s"}}>
+          {loading?"SIGNING IN…":"SIGN IN →"}
+        </button>
+        <div style={{textAlign:"center",fontSize:9,fontFamily:"monospace",color:C.dust}}>
+          No account?{" "}
+          <span onClick={() => { onClose(); onSwitchToJoin(); }} style={{color:C.amber,cursor:"pointer",textDecoration:"underline"}}>Create one →</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileModal({ user, onClose, onLogout }) {
+  return (
+    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:20}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+          <div style={{width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber}33,${C.vine}22)`,border:`2px solid ${C.amber}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:C.amber,fontWeight:700,flexShrink:0}}>
+            {user.username[0].toUpperCase()}
+          </div>
+          <div>
+            <div style={{fontSize:16,fontFamily:"'Palatino Linotype',serif",color:C.parch,fontWeight:700}}>@{user.username}</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,marginBottom:2}}>✓ Verified Expert</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{user.field}</div>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+          {[{l:"POSTS",v:"0"},{l:"VALIDATED",v:"0"},{l:"TOKENS",v:"0"}].map(({l,v}) => (
+            <div key={l} style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"10px",textAlign:"center"}}>
+              <div style={{fontSize:15,fontFamily:"monospace",fontWeight:700,color:C.amber}}>{v}</div>
+              <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginTop:2}}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"11px 14px",marginBottom:16,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2}}>
+          <div>⬡ <span style={{color:C.tan}}>Email:</span> {user.email}</div>
+          <div>⬡ <span style={{color:C.tan}}>Field:</span> {user.field}</div>
+          <div>⬡ <span style={{color:C.tan}}>Member since:</span> {user.joined}</div>
+        </div>
+        <button onClick={() => { onLogout(); onClose(); }}
+          style={{width:"100%",background:"transparent",border:`1px solid ${C.bloom}44`,color:C.bloom,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,transition:"all .2s"}}>
+          LOG OUT
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   {id:"home",label:"Home"},
   {id:"discover",label:"Discover"},
@@ -506,6 +604,8 @@ export default function Veridax() {
   const [section, setSection] = useState("home");
   const [user, setUser] = useState(null);
   const [showJoin, setShowJoin] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
 
@@ -575,15 +675,21 @@ export default function Veridax() {
               📰 IMPORT
             </button>
             {user ? (
-              <div style={{display:"flex",alignItems:"center",gap:5,background:C.vineD,border:`1px solid ${C.vine}30`,borderRadius:7,padding:"6px 10px"}}>
+              <div onClick={() => setShowProfile(true)} style={{display:"flex",alignItems:"center",gap:5,background:C.vineD,border:`1px solid ${C.vine}30`,borderRadius:7,padding:"6px 10px",cursor:"pointer"}}>
                 <span style={{fontSize:6,color:C.sprout,animation:"pulse 2s infinite"}}>●</span>
-                <span style={{fontSize:9,fontFamily:"monospace",color:C.tan,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user}</span>
+                <span style={{fontSize:9,fontFamily:"monospace",color:C.tan,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>@{user.username}</span>
               </div>
             ) : (
-              <button onClick={() => setShowJoin(true)}
-                style={{background:`linear-gradient(135deg,${C.amber}20,${C.vine}10)`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:7,padding:"6px 13px",fontSize:9,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
-                JOIN →
-              </button>
+              <>
+                <button onClick={() => setShowLogin(true)}
+                  style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 13px",fontSize:9,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
+                  LOG IN
+                </button>
+                <button onClick={() => setShowJoin(true)}
+                  style={{background:`linear-gradient(135deg,${C.amber}20,${C.vine}10)`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:7,padding:"6px 13px",fontSize:9,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
+                  JOIN →
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -893,7 +999,9 @@ export default function Veridax() {
         </div>
       </footer>
 
-      {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={v => { setUser(v); setShowJoin(false); }}/>}
+      {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={v => { setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
+      {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
     </div>
   );
