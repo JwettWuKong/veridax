@@ -270,7 +270,7 @@ function DonateSection() {
             </div>
             <div style={{background:C.sproutD,border:`1px solid ${C.sprout}20`,borderRadius:9,padding:"10px 14px",marginBottom:14,fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.9}}>
               <div style={{color:C.sprout,marginBottom:2,letterSpacing:1}}>100% goes toward:</div>
-              {["Node infrastructure & hosting","Security audits & improvements","Open-source development","Keeping VERIDEX free for everyone"].map(s => (
+              {["Node infrastructure & hosting","Security audits & improvements","Open-source development","Keeping VERIDAX free for everyone"].map(s => (
                 <div key={s} style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:C.sprout}}>✦</span>{s}</div>
               ))}
             </div>
@@ -299,7 +299,7 @@ function JoinModal({ onClose, onJoin }) {
       <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
-        <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:8}}>Join VERIDEX</h2>
+        <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:8}}>Join VERIDAX</h2>
         <p style={{color:C.dust,fontSize:12,lineHeight:1.75,marginBottom:16}}>Build your verified expert profile. Publish without gatekeepers. Earn when your ideas change the world.</p>
         <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>YOUR FIELD</label>
         <input value={field} onChange={e => setField(e.target.value)} placeholder="e.g. Climate Engineering, Molecular Biology…"
@@ -397,7 +397,7 @@ const NAV_ITEMS = [
   {id:"network",label:"Network"},
 ];
 
-export default function Veridex() {
+export default function Veridax() {
   const [section, setSection] = useState("home");
   const [user, setUser] = useState(null);
   const [showJoin, setShowJoin] = useState(false);
@@ -452,7 +452,7 @@ export default function Veridex() {
               <span style={{position:"absolute",top:-5,right:-5,fontSize:10,animation:"sway 4s ease-in-out infinite"}}>🌿</span>
             </div>
             <div>
-              <div style={{fontSize:14,fontFamily:"'Playfair Display',serif",fontWeight:900,color:C.parch,letterSpacing:-.5,lineHeight:1}}>VERIDEX</div>
+              <div style={{fontSize:14,fontFamily:"'Playfair Display',serif",fontWeight:900,color:C.parch,letterSpacing:-.5,lineHeight:1}}>VERIDAX</div>
               <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:3}}>KNOWLEDGE · TRUTH · PROGRESS</div>
             </div>
           </div>
@@ -747,7 +747,7 @@ export default function Veridex() {
           <div>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
               <div style={{width:24,height:24,borderRadius:6,background:`linear-gradient(135deg,${C.amber}28,${C.copper}18)`,border:`1px solid ${C.amber}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>⛓</div>
-              <span style={{fontFamily:"'Palatino Linotype',serif",fontSize:13,fontWeight:700,color:C.parch}}>VERIDEX</span>
+              <span style={{fontFamily:"'Palatino Linotype',serif",fontSize:13,fontWeight:700,color:C.parch}}>VERIDAX</span>
             </div>
             <p style={{fontSize:9,color:C.dust,fontFamily:"monospace",lineHeight:1.7}}>Decentralized knowledge. Verified truth. Power returned to the people.</p>
           </div>
@@ -783,7 +783,7 @@ export default function Veridex() {
 
         <div style={{borderTop:`1px solid ${C.shadow}`,padding:"11px 24px",textAlign:"center"}}>
           <div style={{fontSize:7,fontFamily:"monospace",color:"#181828",letterSpacing:3}}>
-            VERIDEX PROTOCOL · OPEN SOURCE · DECENTRALIZED · P2P · NO KILL SWITCH · NO ADS · NO CORPORATE FUNDING
+            VERIDAX PROTOCOL · OPEN SOURCE · DECENTRALIZED · P2P · NO KILL SWITCH · NO ADS · NO CORPORATE FUNDING
           </div>
         </div>
       </footer>
