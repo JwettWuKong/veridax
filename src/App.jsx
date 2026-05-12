@@ -842,6 +842,279 @@ function ProfileModal({ user, onClose, onLogout }) {
   );
 }
 
+const EVIDENCE_TYPES = ["DOI Reference","IPFS Hash","Archived Page","External Source"];
+
+function PublishModal({ user, onClose }) {
+  const [step, setStep] = useState(1);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [catSearch, setCatSearch] = useState("");
+  const [body, setBody] = useState("");
+  const [evidenceType, setEvidenceType] = useState("DOI Reference");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [evidenceLinks, setEvidenceLinks] = useState([]);
+  const [signing, setSigning] = useState(false);
+  const [txHash, setTxHash] = useState("");
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!signing) return;
+    const t = setTimeout(() => {
+      setSigning(false);
+      const h = "0x" + Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join("");
+      setTxHash(h);
+      setStep(4);
+    }, 2800);
+    return () => clearTimeout(t);
+  }, [signing]);
+
+  const inputStyle = {
+    width:"100%", background:C.wood, border:`1px solid ${C.shadow}`,
+    borderRadius:8, padding:"10px 13px", color:C.parch, fontSize:12, fontFamily:"monospace",
+    outline:"none", boxSizing:"border-box", transition:"border-color .2s",
+  };
+
+  const FieldError = ({ msg }) => msg ? (
+    <div style={{fontSize:9,fontFamily:"monospace",color:C.bloom,marginTop:4,marginBottom:8}}>✕ {msg}</div>
+  ) : <div style={{marginBottom:10}}/>;
+
+  const addEvidence = () => {
+    if (!evidenceUrl.trim()) return;
+    setEvidenceLinks(prev => [...prev, { type: evidenceType, url: evidenceUrl.trim() }]);
+    setEvidenceUrl("");
+  };
+
+  const handleStep1 = () => {
+    const e = {};
+    if (!title.trim()) e.title = "Title is required.";
+    if (!category) e.category = "Please select a category.";
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setErrors({});
+    setStep(2);
+  };
+
+  const handleStep2 = () => {
+    if (body.trim().length < 80) { setErrors({ body: "Content must be at least 80 characters." }); return; }
+    setErrors({});
+    setStep(3);
+  };
+
+  const filteredCats = catSearch.trim()
+    ? CATS.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()))
+    : CATS;
+
+  const walletAddr = "0x" + (user.username + "veridax").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40,"0").slice(0,40);
+
+  const Steps = () => (
+    <div style={{display:"flex",alignItems:"center",gap:3,marginBottom:20}}>
+      {[1,2,3,4].map(n => (
+        <div key={n} style={{display:"flex",alignItems:"center",gap:3}}>
+          <div style={{width:20,height:20,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontFamily:"monospace",fontWeight:700,
+            background: step>n ? C.sprout : step===n ? C.amber : "transparent",
+            border:`1px solid ${step>n ? C.sprout : step===n ? C.amber : C.shadow}`,
+            color: step>=n ? C.bark : C.dust,
+          }}>{step>n?"✓":n}</div>
+          {n<4 && <div style={{width:14,height:1,background:step>n?C.sprout:C.shadow}}/>}
+        </div>
+      ))}
+      <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,marginLeft:6}}>
+        {step===1?"METADATA":step===2?"CONTENT":step===3?"REVIEW & SIGN":"PUBLISHED"}
+      </span>
+    </div>
+  );
+
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:520,width:"100%",position:"relative",maxHeight:"92vh",overflowY:"auto"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
+
+        <Steps/>
+
+        {/* STEP 1 — Metadata */}
+        {step === 1 && (
+          <>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Publish to VERIDAX</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.75,marginBottom:18}}>
+              Once submitted, this post is <span style={{color:C.parch}}>permanent and immutable</span>. It cannot be edited or deleted. Immutability is what makes suppression impossible.
+            </p>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>TITLE</label>
+            <input value={title} onChange={e => { setTitle(e.target.value); setErrors(v=>({...v,title:""})); }}
+              placeholder="A clear, specific title for your discovery or information"
+              style={{...inputStyle, border:`1px solid ${errors.title ? C.bloom+"88" : title.trim() ? C.sprout+"44" : C.shadow}`}}/>
+            <FieldError msg={errors.title}/>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>CATEGORY</label>
+            <input value={catSearch} onChange={e => { setCatSearch(e.target.value); setErrors(v=>({...v,category:""})); }}
+              placeholder="Search 90+ domains…"
+              style={{...inputStyle, border:`1px solid ${errors.category ? C.bloom+"88" : C.shadow}`, marginBottom:8}}/>
+            <div style={{maxHeight:160,overflowY:"auto",display:"flex",flexWrap:"wrap",gap:5,marginBottom:4,padding:"2px 0"}}>
+              {filteredCats.map(c => (
+                <button key={c.id} onClick={() => { setCategory(c.name); setCatSearch(c.name); setErrors(v=>({...v,category:""})); }}
+                  style={{background:category===c.name?`${c.color}22`:C.wood,border:`1px solid ${category===c.name?c.color+"55":C.shadow}`,color:category===c.name?c.color:C.dust,borderRadius:20,padding:"3px 10px",fontSize:8,fontFamily:"monospace",cursor:"pointer",transition:"all .15s",whiteSpace:"nowrap"}}>
+                  {c.icon} {c.name}
+                </button>
+              ))}
+            </div>
+            <FieldError msg={errors.category}/>
+
+            <button onClick={handleStep1}
+              style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,marginTop:6}}>
+              CONTINUE →
+            </button>
+          </>
+        )}
+
+        {/* STEP 2 — Content + Evidence */}
+        {step === 2 && (
+          <>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Content & evidence</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.75,marginBottom:16}}>
+              Write the full content of your discovery or information. Attach evidence links — IPFS hashes, DOI references, archived pages, or any external source.
+            </p>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>FULL CONTENT</label>
+            <textarea value={body} onChange={e => { setBody(e.target.value); setErrors({}); }}
+              placeholder="Write your full discovery, report, or information here. Be thorough — this record is permanent."
+              rows={9}
+              style={{...inputStyle, resize:"vertical", lineHeight:1.7, border:`1px solid ${errors.body ? C.bloom+"88" : body.trim().length>=80 ? C.sprout+"44" : C.shadow}`}}/>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <FieldError msg={errors.body}/>
+              <span style={{fontSize:8,fontFamily:"monospace",color:body.trim().length>=80?C.sprout:C.dust,marginLeft:"auto"}}>{body.trim().length} chars</span>
+            </div>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:7}}>EVIDENCE LINKS</label>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
+              {EVIDENCE_TYPES.map(t => (
+                <button key={t} onClick={() => setEvidenceType(t)}
+                  style={{background:evidenceType===t?`${C.sky}18`:C.wood,border:`1px solid ${evidenceType===t?C.sky+"55":C.shadow}`,color:evidenceType===t?C.sky:C.dust,borderRadius:20,padding:"3px 9px",fontSize:7,fontFamily:"monospace",cursor:"pointer",transition:"all .2s"}}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:10}}>
+              <input value={evidenceUrl} onChange={e => setEvidenceUrl(e.target.value)}
+                onKeyDown={e => { if(e.key==="Enter") addEvidence(); }}
+                placeholder={evidenceType==="DOI Reference"?"10.1038/example.doi":evidenceType==="IPFS Hash"?"ipfs://QmHash…":evidenceType==="Archived Page"?"https://web.archive.org/…":"https://source-url.com"}
+                style={{flex:1, background:C.wood, border:`1px solid ${C.shadow}`, borderRadius:8, padding:"9px 12px", color:C.parch, fontSize:10, fontFamily:"monospace", outline:"none"}}/>
+              <button onClick={addEvidence} disabled={!evidenceUrl.trim()}
+                style={{background:evidenceUrl?`${C.sky}18`:"transparent",border:`1px solid ${evidenceUrl?C.sky+"55":C.shadow}`,color:evidenceUrl?C.sky:C.dust,borderRadius:8,padding:"9px 14px",fontFamily:"monospace",fontSize:9,cursor:evidenceUrl?"pointer":"not-allowed",letterSpacing:1,flexShrink:0}}>
+                ADD
+              </button>
+            </div>
+
+            {evidenceLinks.length > 0 && (
+              <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"10px 13px",marginBottom:12}}>
+                {evidenceLinks.map((e, i) => (
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 0",borderBottom:i<evidenceLinks.length-1?`1px solid ${C.shadow}`:undefined}}>
+                    <span style={{fontSize:7,fontFamily:"monospace",color:C.sky,minWidth:90,flexShrink:0}}>{e.type}</span>
+                    <span style={{fontSize:9,fontFamily:"monospace",color:C.dust,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.url}</span>
+                    <button onClick={() => setEvidenceLinks(p=>p.filter((_,j)=>j!==i))} style={{background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:11,padding:"0 2px",flexShrink:0}}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{display:"flex",gap:8,marginTop:6}}>
+              <button onClick={() => setStep(1)} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>← BACK</button>
+              <button onClick={handleStep2} style={{flex:2,background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>REVIEW →</button>
+            </div>
+          </>
+        )}
+
+        {/* STEP 3 — Review & Sign */}
+        {step === 3 && !signing && (
+          <>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Review & sign</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.75,marginBottom:16}}>
+              Your wallet address will be cryptographically signed to this post — permanently establishing who published what and when. This creates an immutable record of intellectual priority.
+            </p>
+
+            <div style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:12,padding:"16px",marginBottom:12}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>POST PREVIEW</div>
+              <div style={{fontSize:13,fontFamily:"'Palatino Linotype',serif",color:C.parch,marginBottom:6,fontWeight:700,lineHeight:1.4}}>{title}</div>
+              <div style={{display:"inline-flex",alignItems:"center",gap:6,background:`${CATS.find(c=>c.name===category)?.color||C.amber}14`,border:`1px solid ${CATS.find(c=>c.name===category)?.color||C.amber}33`,borderRadius:20,padding:"2px 9px",marginBottom:10}}>
+                <span style={{fontSize:9}}>{CATS.find(c=>c.name===category)?.icon}</span>
+                <span style={{fontSize:7,fontFamily:"monospace",color:CATS.find(c=>c.name===category)?.color||C.amber,letterSpacing:1}}>{category.toUpperCase()}</span>
+              </div>
+              <p style={{fontSize:10,color:C.dust,lineHeight:1.7,marginBottom:10,display:"-webkit-box",WebkitLineClamp:4,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{body}</p>
+              {evidenceLinks.length > 0 && (
+                <div style={{fontSize:8,fontFamily:"monospace",color:C.sky}}>{evidenceLinks.length} evidence link{evidenceLinks.length>1?"s":""} attached</div>
+              )}
+            </div>
+
+            <div style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:10,padding:"12px 14px",marginBottom:12,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2}}>
+              <div style={{color:C.tan,marginBottom:4,letterSpacing:1,fontSize:7}}>SIGNING AS</div>
+              <div>⬡ <span style={{color:C.tan}}>Author:</span> @{user.username}</div>
+              <div>⬡ <span style={{color:C.tan}}>Cluster:</span> {CLUSTERS.find(c=>c.id===user.cluster)?.label || "—"}</div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span>⬡ <span style={{color:C.tan}}>Wallet:</span></span>
+                <span style={{color:C.amber,fontSize:8}}>{walletAddr.slice(0,10)}…{walletAddr.slice(-6)}</span>
+              </div>
+              {user.pohMethod && <div>⬡ <span style={{color:C.tan}}>Humanity proof:</span> <span style={{color:C.sprout}}>✓ on-chain</span></div>}
+            </div>
+
+            <div style={{background:`${C.bloom}0c`,border:`1px solid ${C.bloom}33`,borderRadius:9,padding:"10px 13px",marginBottom:16,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
+              <span style={{color:C.bloom}}>⬡</span> Once submitted, this post <span style={{color:C.parch}}>cannot be edited or deleted</span>. This is not a limitation — it is the protection. If you later believe you made an error, submit a new block addressing it. The original record remains permanent.
+            </div>
+
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={() => setStep(2)} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>← BACK</button>
+              <button onClick={() => setSigning(true)} style={{flex:2,background:`linear-gradient(135deg,${C.amber}28,${C.vine}18)`,border:`1px solid ${C.amber}66`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,fontWeight:700}}>SIGN & PUBLISH →</button>
+            </div>
+          </>
+        )}
+
+        {/* Signing overlay */}
+        {step === 3 && signing && (
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:38,marginBottom:14,animation:"pulse 1s infinite"}}>⛓</div>
+            <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:6}}>SIGNING & BROADCASTING…</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Cryptographically signing to your wallet · broadcasting to 19,203 nodes</div>
+            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:300,margin:"0 auto"}}>
+              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${C.amber},${C.vine})`,animation:"fadein 2.8s linear forwards"}}/>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4 — On-chain confirmation */}
+        {step === 4 && (
+          <div style={{textAlign:"center",padding:"6px 0"}}>
+            <div style={{width:60,height:60,borderRadius:"50%",background:C.sproutD,border:`2px solid ${C.sprout}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,margin:"0 auto 16px",color:C.sprout,fontWeight:700}}>✓</div>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Published to the chain.</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>Your post is now permanently recorded across 19,203 nodes worldwide. It cannot be edited, deleted, or suppressed — by anyone.</p>
+
+            <div style={{background:C.card,border:`1px solid ${C.sprout}28`,borderRadius:12,padding:"14px 16px",marginBottom:20,textAlign:"left",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1}}>
+              <div style={{color:C.tan,marginBottom:4,letterSpacing:1,fontSize:7}}>ON-CHAIN RECORD</div>
+              <div>⬡ <span style={{color:C.tan}}>Post:</span> {title.slice(0,48)}{title.length>48?"…":""}</div>
+              <div>⬡ <span style={{color:C.tan}}>Author:</span> @{user.username} · {walletAddr.slice(0,10)}…</div>
+              <div>⬡ <span style={{color:C.tan}}>Tx hash:</span> <span style={{color:C.amber,fontSize:8}}>{txHash.slice(0,22)}…</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Block:</span> #{(89403 + Math.floor(Math.random()*10)).toLocaleString()}</div>
+              <div>⬡ <span style={{color:C.tan}}>Nodes confirmed:</span> <span style={{color:C.sprout}}>19,203</span></div>
+              {evidenceLinks.length > 0 && <div>⬡ <span style={{color:C.tan}}>Evidence:</span> {evidenceLinks.length} link{evidenceLinks.length>1?"s":""} on-chain</div>}
+            </div>
+
+            <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"10px 13px",marginBottom:18,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8,textAlign:"left"}}>
+              <span style={{color:C.sprout}}>✦</span> The record is immutable. The intellectual priority timestamp is permanently established. No corporation, government, or court order can change what was published here and when.
+            </div>
+
+            <button onClick={onClose} style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+              BACK TO VERIDAX →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   {id:"home",label:"Home"},
   {id:"discover",label:"Discover"},
@@ -859,6 +1132,7 @@ export default function Veridax() {
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSub, setShowSub] = useState(false);
+  const [showPublish, setShowPublish] = useState(false);
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
   const [liveStats, setLiveStats] = useState({ experts:24182, works:89403, nodes:19203, imports:3841, tokens:3401 });
 
@@ -944,10 +1218,16 @@ export default function Veridax() {
               📰 IMPORT
             </button>
             {user ? (
-              <div onClick={() => setShowProfile(true)} style={{display:"flex",alignItems:"center",gap:5,background:C.vineD,border:`1px solid ${C.vine}30`,borderRadius:7,padding:"6px 10px",cursor:"pointer"}}>
-                <span style={{fontSize:6,color:C.sprout,animation:"pulse 2s infinite"}}>●</span>
-                <span style={{fontSize:9,fontFamily:"monospace",color:C.tan,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>@{user.username}</span>
-              </div>
+              <>
+                <button onClick={() => setShowPublish(true)}
+                  style={{display:"flex",alignItems:"center",gap:5,background:`${C.sky}14`,border:`1px solid ${C.sky}40`,color:C.sky,borderRadius:7,padding:"6px 11px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
+                  ✦ PUBLISH
+                </button>
+                <div onClick={() => setShowProfile(true)} style={{display:"flex",alignItems:"center",gap:5,background:C.vineD,border:`1px solid ${C.vine}30`,borderRadius:7,padding:"6px 10px",cursor:"pointer"}}>
+                  <span style={{fontSize:6,color:C.sprout,animation:"pulse 2s infinite"}}>●</span>
+                  <span style={{fontSize:9,fontFamily:"monospace",color:C.tan,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>@{user.username}</span>
+                </div>
+              </>
             ) : (
               <>
                 <button onClick={() => setShowLogin(true)}
@@ -1334,6 +1614,7 @@ export default function Veridax() {
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
+      {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)}/>}
     </div>
   );
 }
