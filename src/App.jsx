@@ -397,7 +397,7 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
                 style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>
                 ← BACK
               </button>
-              <button onClick={() => { if(step2Ready){ setStep(3); onJoin({ username, email, field, joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) }); }}} disabled={!step2Ready}
+              <button onClick={() => { if(step2Ready){ setStep(3); onJoin({ username, email, password, field, joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) }); }}} disabled={!step2Ready}
                 style={{flex:2,background:step2Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step2Ready?C.amber+"55":C.shadow}`,color:step2Ready?C.amber:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:step2Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
                 CREATE PROFILE →
               </button>
@@ -414,7 +414,7 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
               <div style={{color:C.sprout,marginBottom:4,letterSpacing:1}}>YOUR ACCOUNT</div>
               <div>⬡ <span style={{color:C.tan}}>Username:</span> {username}</div>
               <div>⬡ <span style={{color:C.tan}}>Field:</span> {field}</div>
-              <div>⬡ <span style={{color:C.tan}}>Status:</span> <span style={{color:C.sprout}}>Verified ✓</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Status:</span> <span style={{color:C.dust}}>Member</span></div>
             </div>
             <button onClick={onClose}
               style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
@@ -497,12 +497,13 @@ function SubModal({ onClose }) {
   );
 }
 
-function LoginModal({ onClose, onLogin, onSwitchToJoin }) {
+function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const ready = email.includes("@") && password.length >= 8;
+  const [error, setError] = useState("");
+  const ready = email.includes("@") && password.length > 0;
 
   const inputStyle = (val) => ({
     width:"100%", background:C.wood, border:`1px solid ${val ? C.amber+"33" : C.shadow}`,
@@ -512,10 +513,16 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin }) {
 
   const handleLogin = async () => {
     if (!ready) return;
+    setError("");
     setLoading(true);
-    await new Promise(r => setTimeout(r, 900));
+    await new Promise(r => setTimeout(r, 700));
     setLoading(false);
-    onLogin({ username: email.split("@")[0], email, field:"Expert", joined: new Date().toLocaleDateString("en-US",{month:"short",year:"numeric"}) });
+    const match = accounts.find(a => a.email === email && a.password === password);
+    if (!match) {
+      setError(accounts.some(a => a.email === email) ? "Incorrect password." : "No account found with that email.");
+      return;
+    }
+    onLogin(match);
   };
 
   return (
@@ -540,6 +547,11 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin }) {
           </button>
         </div>
 
+        {error && (
+          <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+            ✕ {error}
+          </div>
+        )}
         <button onClick={handleLogin} disabled={!ready || loading}
           style={{width:"100%",background:ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${ready?C.amber+"55":C.shadow}`,color:ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:ready?"pointer":"not-allowed",letterSpacing:2,marginBottom:14,transition:"all .2s"}}>
           {loading?"SIGNING IN…":"SIGN IN →"}
@@ -565,7 +577,7 @@ function ProfileModal({ user, onClose, onLogout }) {
           </div>
           <div>
             <div style={{fontSize:16,fontFamily:"'Palatino Linotype',serif",color:C.parch,fontWeight:700}}>@{user.username}</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,marginBottom:2}}>✓ Verified Expert</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:2}}>Member</div>
             <div style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{user.field}</div>
           </div>
         </div>
@@ -603,6 +615,7 @@ const NAV_ITEMS = [
 export default function Veridax() {
   const [section, setSection] = useState("home");
   const [user, setUser] = useState(null);
+  const [accounts, setAccounts] = useState([]);
   const [showJoin, setShowJoin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -999,8 +1012,8 @@ export default function Veridax() {
         </div>
       </footer>
 
-      {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={v => { setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
+      {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
+      {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
     </div>
