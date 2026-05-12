@@ -66,6 +66,35 @@ const CATS = [
 
 const nf = n => n>=1e6?`${(n/1e6).toFixed(1)}M`:n>=1e3?`${(n/1e3).toFixed(1)}K`:`${n}`;
 
+const POST_VOTES = {
+  p1: { scientific:1240, civil:890, independent:1500, tech:670, grassroots:430, academic:980, journalism:340, legal:210 },
+  p2: { scientific:680,  civil:420, independent:980,  tech:1840, grassroots:210, academic:560, journalism:290, legal:140 },
+  p3: { scientific:2100, civil:580, independent:1200, tech:890,  grassroots:340, academic:1760, journalism:420, legal:310 },
+  p4: { scientific:920,  civil:1100, independent:840, tech:540,  grassroots:980, academic:620, journalism:310, legal:180 },
+};
+const POST_DISPUTES = {
+  p1: { scientific:45,  civil:120, independent:200, tech:30,  grassroots:80,  academic:15,  journalism:60,  legal:25  },
+  p2: { scientific:28,  civil:65,  independent:140, tech:90,  grassroots:30,  academic:42,  journalism:110, legal:35  },
+  p3: { scientific:85,  civil:210, independent:310, tech:120, grassroots:90,  academic:45,  journalism:180, legal:70  },
+  p4: { scientific:60,  civil:90,  independent:120, tech:40,  grassroots:70,  academic:50,  journalism:30,  legal:20  },
+};
+
+function shannonDiversity(counts) {
+  const vals = Object.values(counts);
+  const total = vals.reduce((s,v) => s+v, 0);
+  if (total === 0) return 0;
+  const H = vals.filter(v => v > 0).reduce((s,v) => { const p = v/total; return s - p * Math.log2(p); }, 0);
+  return H / Math.log2(8);
+}
+
+function calcTrustScore(ups, disps) {
+  const totalUp = Object.values(ups).reduce((s,v) => s+v, 0);
+  const totalDisp = Object.values(disps).reduce((s,v) => s+v, 0);
+  const total = totalUp + totalDisp;
+  if (total === 0) return 0;
+  return 0.65 * (totalUp / total) + 0.35 * shannonDiversity(ups);
+}
+
 function Ticker() {
   const ref = useRef(null);
   useEffect(() => {
@@ -155,8 +184,10 @@ function NetCanvas({ h = 130 }) {
   return <canvas ref={ref} width={880} height={h} style={{width:"100%",height:h,borderRadius:12,display:"block"}}/>;
 }
 
-function PostCard({ post }) {
+function PostCard({ post, user, votes, disputes, onValidate }) {
   const [hov, setHov] = useState(false);
+  const score = votes && disputes ? calcTrustScore(votes, disputes) : null;
+  const scoreColor = score === null ? C.amber : score >= 0.8 ? C.sprout : score >= 0.6 ? C.amber : C.bloom;
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{background:`linear-gradient(160deg,${C.card},${C.earth})`,border:`1px solid ${hov ? post.color + "55" : C.border}`,borderRadius:16,overflow:"hidden",cursor:"pointer",transition:"border-color .3s,transform .22s,box-shadow .3s",transform:hov?"translateY(-3px)":"none",boxShadow:hov?`0 14px 40px ${post.color}12`:"none"}}>
@@ -190,16 +221,38 @@ function PostCard({ post }) {
             <span style={{fontSize:9,color:C.dust}}>{post.field}</span>
           </div>
         </div>
-        <div style={{display:"flex",gap:12,marginBottom:10}}>
-          <span style={{fontSize:9,fontFamily:"monospace",color:C.sprout}}>▲ {nf(post.up)}</span>
-          <span style={{fontSize:9,fontFamily:"monospace",color:C.sky}}>◎ {post.cite}</span>
-          <span style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>✓ {nf(post.valid)}</span>
+        <div style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+            <div style={{display:"flex",gap:10}}>
+              <span style={{fontSize:9,fontFamily:"monospace",color:C.sprout}}>▲ {nf(post.up)}</span>
+              <span style={{fontSize:9,fontFamily:"monospace",color:C.sky}}>◎ {post.cite}</span>
+            </div>
+            {score !== null && (
+              <span key={Math.round(score*1000)} style={{fontSize:8,fontFamily:"monospace",color:scoreColor,fontWeight:700,animation:"numtick .25s ease"}}>
+                TRUST {(score*100).toFixed(0)}%
+              </span>
+            )}
+          </div>
+          {score !== null && (
+            <div style={{height:3,background:C.shadow,borderRadius:2,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${score*100}%`,background:`linear-gradient(90deg,${C.sky},${scoreColor})`,borderRadius:2,transition:"width .6s ease"}}/>
+            </div>
+          )}
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 10px",background:`${post.color}0a`,border:`1px solid ${post.color}22`,borderRadius:7}}>
           <span style={{fontSize:11,fontFamily:"monospace",color:post.color,fontWeight:700}}>⬡ {post.token}</span>
           <span style={{fontSize:11,color:C.parch,fontFamily:"monospace"}}>${post.price.toFixed(2)}</span>
           <span style={{fontSize:9,color:C.sprout,fontFamily:"monospace"}}>+{post.change}%</span>
         </div>
+        {user && votes && onValidate && (
+          <button
+            onClick={e => { e.stopPropagation(); onValidate(post); }}
+            style={{width:"100%",marginTop:9,background:`${C.sky}0a`,border:`1px solid ${C.sky}33`,color:C.sky,borderRadius:7,padding:"7px",fontFamily:"monospace",fontSize:8,cursor:"pointer",letterSpacing:2,transition:"all .2s"}}
+            onMouseEnter={e => { e.currentTarget.style.background=`${C.sky}18`; e.currentTarget.style.borderColor=`${C.sky}55`; }}
+            onMouseLeave={e => { e.currentTarget.style.background=`${C.sky}0a`; e.currentTarget.style.borderColor=`${C.sky}33`; }}>
+            ◈ VALIDATE THIS POST
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1115,11 +1168,164 @@ function PublishModal({ user, onClose }) {
   );
 }
 
+function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVote }) {
+  const [localVotes, setLocalVotes] = useState({ ...votes });
+  const [localDisp,  setLocalDisp]  = useState({ ...disputes });
+  const [voted, setVoted] = useState(hasVoted || null);
+  const [animating, setAnimating] = useState(false);
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const score      = calcTrustScore(localVotes, localDisp);
+  const totalUp    = Object.values(localVotes).reduce((s,v) => s+v, 0);
+  const totalDisp  = Object.values(localDisp).reduce((s,v) => s+v, 0);
+  const total      = totalUp + totalDisp;
+  const rawRatio   = total === 0 ? 0 : totalUp / total;
+  const diversity  = shannonDiversity(localVotes);
+  const maxCluster = Math.max(...Object.values(localVotes));
+  const scoreColor = score >= 0.8 ? C.sprout : score >= 0.6 ? C.amber : C.bloom;
+
+  const handleVote = type => {
+    if (voted || animating || !user) return;
+    const cluster = user.cluster || "independent";
+    setAnimating(true);
+    setTimeout(() => {
+      if (type === "up") {
+        setLocalVotes(prev => ({ ...prev, [cluster]: (prev[cluster]||0) + 1 }));
+      } else {
+        setLocalDisp(prev => ({ ...prev, [cluster]: (prev[cluster]||0) + 1 }));
+      }
+      setVoted(type);
+      setAnimating(false);
+      onVote(type);
+    }, 700);
+  };
+
+  const repWeight = user?.credentials?.length > 0 ? "0.4×" : user ? "0.05×" : null;
+
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.sky}44`,borderRadius:20,padding:28,maxWidth:500,width:"100%",position:"relative",maxHeight:"92vh",overflowY:"auto"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.sky},${C.sprout})`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+
+        <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:4}}>VALIDATION & CONSENSUS</div>
+        <div style={{fontSize:13,fontFamily:"'Palatino Linotype',serif",color:C.parch,marginBottom:18,lineHeight:1.4,fontWeight:700,paddingRight:30}}>{post.title}</div>
+
+        {/* Trust score card */}
+        <div style={{background:C.card,border:`1px solid ${scoreColor}28`,borderRadius:12,padding:"16px",marginBottom:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>TRUST SCORE</span>
+            <span key={Math.round(score*1000)} style={{fontSize:22,fontFamily:"monospace",fontWeight:700,color:scoreColor,animation:"numtick .3s ease"}}>{(score*100).toFixed(1)}%</span>
+          </div>
+          <div style={{height:6,background:C.shadow,borderRadius:3,overflow:"hidden",marginBottom:12}}>
+            <div style={{height:"100%",width:`${score*100}%`,background:`linear-gradient(90deg,${C.sky},${scoreColor})`,borderRadius:3,transition:"width .6s ease"}}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div style={{background:C.wood,borderRadius:8,padding:"9px 11px"}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:4}}>RAW RATIO · 65%</div>
+              <div style={{fontSize:16,fontFamily:"monospace",fontWeight:700,color:C.amber}}>{(rawRatio*100).toFixed(1)}%</div>
+              <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginTop:2}}>{totalUp.toLocaleString()} validations</div>
+            </div>
+            <div style={{background:C.wood,borderRadius:8,padding:"9px 11px"}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:4}}>DIVERSITY INDEX · 35%</div>
+              <div style={{fontSize:16,fontFamily:"monospace",fontWeight:700,color:C.sky}}>{(diversity*100).toFixed(1)}%</div>
+              <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginTop:2}}>Shannon entropy</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Cluster distribution */}
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>CLUSTER DISTRIBUTION</div>
+          {CLUSTERS.map(cl => {
+            const v = localVotes[cl.id] || 0;
+            const d = localDisp[cl.id] || 0;
+            const isUser = user?.cluster === cl.id;
+            const barPct = maxCluster > 0 ? (v / maxCluster) * 100 : 0;
+            const disputePct = (v + d) > 0 ? (d / (v + d)) * 100 : 0;
+            return (
+              <div key={cl.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <span style={{fontSize:11,width:18,flexShrink:0,textAlign:"center"}}>{cl.icon}</span>
+                <span style={{fontSize:7,fontFamily:"monospace",color:isUser?C.amber:C.dust,width:64,flexShrink:0,letterSpacing:.5}}>{cl.label.toUpperCase()}</span>
+                <div style={{flex:1,position:"relative"}}>
+                  <div style={{height:5,background:C.shadow,borderRadius:2,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${barPct}%`,background:isUser?`linear-gradient(90deg,${C.amber},${C.copper})`:C.sky,borderRadius:2,transition:"width .5s ease"}}/>
+                  </div>
+                  {d > 0 && (
+                    <div style={{height:2,background:C.shadow,borderRadius:1,overflow:"hidden",marginTop:1}}>
+                      <div style={{height:"100%",width:`${disputePct}%`,background:C.bloom,borderRadius:1}}/>
+                    </div>
+                  )}
+                </div>
+                <span style={{fontSize:8,fontFamily:"monospace",color:isUser?C.amber:C.dust,minWidth:38,textAlign:"right"}}>{v.toLocaleString()}</span>
+                {d > 0 && <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom,minWidth:28,textAlign:"right"}}>-{d}</span>}
+              </div>
+            );
+          })}
+          <div style={{display:"flex",gap:10,marginTop:6}}>
+            <span style={{fontSize:7,fontFamily:"monospace",color:C.sky}}>█ validates</span>
+            <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom}}>█ disputes</span>
+            {user && <span style={{fontSize:7,fontFamily:"monospace",color:C.amber}}>█ your cluster</span>}
+          </div>
+        </div>
+
+        {/* Key mechanic callout */}
+        <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"10px 13px",marginBottom:14,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
+          <span style={{color:C.sprout}}>✦</span> 500 validations spread evenly across all 8 clusters scores <span style={{color:C.parch}}>higher</span> than 50,000 validations from a single cluster. Coordination campaigns <span style={{color:C.parch}}>lower</span> the trust score — the math punishes them.
+        </div>
+
+        {/* Vote buttons or result */}
+        {animating ? (
+          <div style={{textAlign:"center",padding:"16px",fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,animation:"pulse 1s infinite"}}>RECORDING ON-CHAIN…</div>
+        ) : voted ? (
+          <div style={{textAlign:"center",padding:"13px",background:voted==="up"?C.sproutD:`${C.bloom}0c`,border:`1px solid ${voted==="up"?C.sprout+"33":C.bloom+"33"}`,borderRadius:9}}>
+            <div style={{fontSize:11,fontFamily:"monospace",color:voted==="up"?C.sprout:C.bloom,marginBottom:5}}>
+              {voted==="up" ? "✓ Validated from your cluster" : "✗ Disputed from your cluster"}
+            </div>
+            {repWeight && (
+              <div style={{fontSize:8,fontFamily:"monospace",color:C.dust}}>
+                Reputation weight: {repWeight} · grows with each accurate validation
+              </div>
+            )}
+          </div>
+        ) : user ? (
+          <>
+            <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginBottom:8,textAlign:"center"}}>
+              Your vote is cast from the <span style={{color:C.amber}}>{CLUSTERS.find(c=>c.id===user.cluster)?.label || "Independent"}</span> cluster
+              {repWeight && <span style={{color:C.dust}}> · weight {repWeight}</span>}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={() => handleVote("up")}
+                style={{flex:1,background:`${C.sprout}14`,border:`1px solid ${C.sprout}44`,color:C.sprout,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+                ✓ VALIDATE
+              </button>
+              <button onClick={() => handleVote("dispute")}
+                style={{flex:1,background:`${C.bloom}0c`,border:`1px solid ${C.bloom}33`,color:C.bloom,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+                ✗ DISPUTE
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{textAlign:"center",padding:"12px",border:`1px solid ${C.shadow}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:C.dust}}>
+            Sign in to validate or dispute this post.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   {id:"home",label:"Home"},
   {id:"discover",label:"Discover"},
   {id:"psh",label:"★ Save Humanity"},
   {id:"market",label:"Knowledge Market"},
+  {id:"consensus",label:"Consensus"},
   {id:"security",label:"Security"},
   {id:"network",label:"Network"},
 ];
@@ -1133,7 +1339,22 @@ export default function Veridax() {
   const [showProfile, setShowProfile] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
+  const [postVotes,    setPostVotes]    = useState(POST_VOTES);
+  const [postDisputes, setPostDisputes] = useState(POST_DISPUTES);
+  const [userVotes,    setUserVotes]    = useState({});
+  const [validatingPost, setValidatingPost] = useState(null);
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
+
+  const handleVote = (postId, type) => {
+    if (!user || userVotes[postId]) return;
+    const cluster = user.cluster || "independent";
+    if (type === "up") {
+      setPostVotes(prev => ({ ...prev, [postId]: { ...prev[postId], [cluster]: (prev[postId]?.[cluster]||0) + 1 } }));
+    } else {
+      setPostDisputes(prev => ({ ...prev, [postId]: { ...prev[postId], [cluster]: (prev[postId]?.[cluster]||0) + 1 } }));
+    }
+    setUserVotes(prev => ({ ...prev, [postId]: type }));
+  };
   const [liveStats, setLiveStats] = useState({ experts:24182, works:89403, nodes:19203, imports:3841, tokens:3401 });
 
   const GOSSIPS = [
@@ -1317,7 +1538,7 @@ export default function Veridax() {
                 <button onClick={() => setSection("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-                {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p}/></div>)}
+                {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost}/></div>)}
               </div>
             </div>
 
@@ -1403,7 +1624,7 @@ export default function Veridax() {
               ))}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-              {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p}/></div>)}
+              {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost}/></div>)}
             </div>
           </div>
         )}
@@ -1433,7 +1654,7 @@ export default function Veridax() {
                 </button>
               ))}
             </div>
-            <PostCard post={POSTS[0]}/>
+            <PostCard post={POSTS[0]} user={user} votes={postVotes[POSTS[0].id]} disputes={postDisputes[POSTS[0].id]} onValidate={setValidatingPost}/>
           </div>
         )}
 
@@ -1473,6 +1694,93 @@ export default function Veridax() {
                   <div key={s.n} style={{background:C.earth,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"13px"}}>
                     <div style={{fontSize:9,fontFamily:"monospace",color:s.c,letterSpacing:1,marginBottom:5}}>{s.n} · {s.t.toUpperCase()}</div>
                     <div style={{fontSize:11,color:C.dust,lineHeight:1.65}}>{s.d}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {section === "consensus" && (
+          <div style={{maxWidth:960,margin:"0 auto",padding:"40px 24px"}}>
+            <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:6}}>Validation & Consensus</h1>
+            <p style={{color:C.dust,fontSize:12,fontFamily:"monospace",marginBottom:28}}>The most original mechanic in VERIDAX — where diversity of agreement matters more than volume.</p>
+
+            {/* Formula hero */}
+            <div style={{background:`linear-gradient(135deg,${C.card},${C.bark})`,border:`1px solid ${C.sky}33`,borderRadius:16,padding:"26px",marginBottom:20,textAlign:"center"}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:14}}>THE TRUST SCORE FORMULA</div>
+              <div style={{fontFamily:"monospace",fontSize:"clamp(13px,3vw,18px)",color:C.parch,fontWeight:700,marginBottom:8}}>
+                Trust Score = <span style={{color:C.amber}}>65%</span> × Raw Ratio + <span style={{color:C.sky}}>35%</span> × Diversity Index
+              </div>
+              <div style={{fontSize:10,color:C.dust,lineHeight:1.7,maxWidth:520,margin:"10px auto 0"}}>
+                The Diversity Index is calculated using <span style={{color:C.parch}}>Shannon entropy</span> — a mathematical measure of how evenly spread validations are across all 8 independent clusters.
+              </div>
+            </div>
+
+            {/* Two-column breakdown */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:12,padding:"18px"}}>
+                <div style={{fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:8}}>RAW RATIO · 65%</div>
+                <p style={{fontSize:11,color:C.dust,lineHeight:1.75}}>The simple approval percentage. What fraction of all validators chose to validate (versus dispute). Weighted by each validator's reputation score.</p>
+              </div>
+              <div style={{background:C.card,border:`1px solid ${C.sky}28`,borderRadius:12,padding:"18px"}}>
+                <div style={{fontSize:9,fontFamily:"monospace",color:C.sky,letterSpacing:2,marginBottom:8}}>DIVERSITY INDEX · 35%</div>
+                <p style={{fontSize:11,color:C.dust,lineHeight:1.75}}>Shannon entropy normalized across 8 clusters. Maximum score requires agreement spread evenly across <span style={{color:C.parch}}>all eight</span> — Scientific, Civil, Independent, Tech, Grassroots, Academic, Journalism, and Legal.</p>
+              </div>
+            </div>
+
+            {/* Anti-coordination callout */}
+            <div style={{background:`${C.bloom}08`,border:`1px solid ${C.bloom}30`,borderRadius:12,padding:"20px 22px",marginBottom:20}}>
+              <div style={{fontSize:9,fontFamily:"monospace",color:C.bloom,letterSpacing:2,marginBottom:8}}>WHY COORDINATION CAMPAIGNS BACKFIRE</div>
+              <p style={{fontSize:12,color:C.dust,lineHeight:1.8,marginBottom:10}}>
+                A corporation that deploys a bot army all tagged to one cluster would actually <span style={{color:C.parch}}>lower</span> the trust score of posts they target, not raise it. The math punishes coordination. 50,000 validations from one cluster scores <span style={{color:C.parch}}>lower</span> than 500 validations spread evenly across eight.
+              </p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{background:C.earth,borderRadius:9,padding:"12px"}}>
+                  <div style={{fontSize:9,fontFamily:"monospace",color:C.bloom,marginBottom:6}}>✗ COORDINATED ATTACK</div>
+                  <div style={{fontSize:10,fontFamily:"monospace",color:C.dust,marginBottom:3}}>50,000 votes · 1 cluster</div>
+                  <div style={{fontSize:12,fontFamily:"monospace",fontWeight:700,color:C.bloom}}>Trust: ~65%</div>
+                  <div style={{height:4,background:C.shadow,borderRadius:2,marginTop:6,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:"65%",background:C.bloom,borderRadius:2}}/>
+                  </div>
+                </div>
+                <div style={{background:C.earth,borderRadius:9,padding:"12px"}}>
+                  <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,marginBottom:6}}>✓ ORGANIC CONSENSUS</div>
+                  <div style={{fontSize:10,fontFamily:"monospace",color:C.dust,marginBottom:3}}>500 votes · 8 clusters</div>
+                  <div style={{fontSize:12,fontFamily:"monospace",fontWeight:700,color:C.sprout}}>Trust: ~92%</div>
+                  <div style={{height:4,background:C.shadow,borderRadius:2,marginTop:6,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:"92%",background:C.sprout,borderRadius:2}}/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Reputation weighting */}
+            <div style={{background:C.card,border:`1px solid ${C.amber}22`,borderRadius:12,padding:"18px",marginBottom:20}}>
+              <div style={{fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:8}}>REPUTATION WEIGHTING</div>
+              <p style={{fontSize:11,color:C.dust,lineHeight:1.75,marginBottom:12}}>
+                Each vote is weighted by the validator's reputation — earned over time through a track record of accurate validations. New accounts carry near-zero vote weight. You cannot buy reputation. You cannot transfer it. You cannot fake it with new wallets.
+              </p>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}}>
+                {[{label:"New wallet",weight:"0.01×",color:C.dust},{label:"6 months",weight:"0.1×",color:C.tan},{label:"1 year",weight:"0.4×",color:C.amber},{label:"2+ years",weight:"1.0×",color:C.sprout}].map(({label,weight,color}) => (
+                  <div key={label} style={{background:C.wood,borderRadius:8,padding:"10px",textAlign:"center"}}>
+                    <div style={{fontSize:14,fontFamily:"monospace",fontWeight:700,color}}>{weight}</div>
+                    <div style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginTop:3}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{marginTop:12,fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.7}}>
+                A wallet maintained for 2 years with consistently accurate validations carries enormously more weight than one created yesterday. Sybil attacks — thousands of fake identities — are <span style={{color:C.parch}}>economically irrational</span>: those accounts would need years of accurate validations before meaningfully moving any trust score.
+              </div>
+            </div>
+
+            {/* Live validation queue */}
+            <div>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:14}}>LIVE VALIDATION QUEUE</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+                {POSTS.map((p, i) => (
+                  <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}>
+                    <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost}/>
                   </div>
                 ))}
               </div>
@@ -1615,6 +1923,17 @@ export default function Veridax() {
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
       {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)}/>}
+      {validatingPost && postVotes[validatingPost.id] && (
+        <ValidationModal
+          post={validatingPost}
+          votes={postVotes[validatingPost.id]}
+          disputes={postDisputes[validatingPost.id]}
+          user={user}
+          hasVoted={userVotes[validatingPost.id] || null}
+          onClose={() => setValidatingPost(null)}
+          onVote={type => handleVote(validatingPost.id, type)}
+        />
+      )}
     </div>
   );
 }
