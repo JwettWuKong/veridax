@@ -2350,30 +2350,216 @@ export default function Veridax() {
         )}
 
         {section === "security" && (
-          <div style={{maxWidth:880,margin:"0 auto",padding:"40px 24px"}}>
-            <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:6}}>Security Protocol</h1>
-            <p style={{color:C.dust,fontSize:12,fontFamily:"monospace",marginBottom:26}}>Built to resist well-funded, organized, legally empowered adversaries — not just hackers.</p>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:12,marginBottom:24}}>
-              {[{icon:"🧬",t:"Proof of Humanity",c:C.sky,d:"ZK biometric verification. One human = one vote. Bot farms cannot scale. Corporate Sybil attacks are physically blocked at the identity layer."},
-                {icon:"◈",t:"Diversity Consensus",c:C.sprout,d:"Trust scores require agreement across 8 independent ideological clusters. One-cluster flooding actually lowers the trust score."},
-                {icon:"⛓",t:"Cryptographic Chain",c:C.amber,d:"Every block is hash-linked to the previous. Altering any record breaks every record after it. History is mathematically sealed."},
-                {icon:"📡",t:"P2P Mesh Network",c:C.copper,d:"No server. No domain. No kill switch. 19,000+ independent nodes. No court order reaches them all simultaneously."},
-                {icon:"🛡",t:"Suppression Vault",c:C.bloom,d:"Every takedown attempt and legal threat is permanently recorded as evidence. Suppression becomes public accountability."},
-                {icon:"👁",t:"Full Transparency",c:C.tan,d:"Funding relationships, validation histories, and whale purchases are all publicly on-chain. Corruption has nowhere to hide."}].map(({icon,t,c,d}) => (
-                <div key={t} style={{background:C.card,border:`1px solid ${c}28`,borderRadius:12,padding:"16px",transition:"border-color .2s"}}
-                  onMouseEnter={e => e.currentTarget.style.borderColor=`${c}55`}
-                  onMouseLeave={e => e.currentTarget.style.borderColor=`${c}28`}>
-                  <div style={{fontSize:24,marginBottom:7}}>{icon}</div>
-                  <div style={{fontSize:9,fontFamily:"monospace",color:c,letterSpacing:1,marginBottom:5}}>{t.toUpperCase()}</div>
-                  <div style={{fontSize:11,color:C.dust,lineHeight:1.65}}>{d}</div>
+          <div style={{maxWidth:920,margin:"0 auto",padding:"40px 24px"}}>
+            <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:6}}>Security Architecture</h1>
+            <p style={{color:C.dust,fontSize:12,fontFamily:"monospace",marginBottom:22,lineHeight:1.8}}>Built to resist not just ordinary hackers, but well-funded, legally empowered, organized adversaries — corporations with billions of dollars, governments with subpoena power, and intelligence operations with coordination capabilities.</p>
+
+            {/* Adversary threat model */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,marginBottom:24}}>
+              {[
+                {icon:"🏢", label:"Corporations", desc:"Billions in resources. Legal departments. Paid disinformation campaigns. Expert capture budgets.", col:C.bloom},
+                {icon:"🏛", label:"Governments",  desc:"Subpoena power. Domain seizure authority. DMCA and national security orders.", col:C.copper},
+                {icon:"🕶", label:"Intelligence Operations", desc:"Coordination at scale. Sock puppet networks. Long-term infiltration strategies.", col:C.amber},
+              ].map(({icon,label,desc,col}) => (
+                <div key={label} style={{background:C.card,border:`1px solid ${col}22`,borderRadius:11,padding:"14px 15px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
+                    <span style={{fontSize:18}}>{icon}</span>
+                    <span style={{fontSize:8,fontFamily:"monospace",color:col,letterSpacing:1,fontWeight:700}}>{label.toUpperCase()}</span>
+                  </div>
+                  <div style={{fontSize:10,color:C.dust,lineHeight:1.65}}>{desc}</div>
                 </div>
               ))}
             </div>
-            <div style={{background:`linear-gradient(135deg,${C.canopy},${C.bark})`,border:`1px solid ${C.shadow}`,borderRadius:14,padding:"22px",textAlign:"center"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:17,color:C.parch,lineHeight:1.5,marginBottom:10}}>
+
+            {/* Six attack vectors */}
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+
+              {/* 1 — Sybil & Bot */}
+              <div style={{background:C.bark,border:`1px solid ${C.sky}28`,borderRadius:13,overflow:"hidden"}}>
+                <div style={{height:2,background:`linear-gradient(90deg,${C.sky},${C.sky}22,transparent)`}}/>
+                <div style={{padding:"18px 20px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:10}}>
+                    <div style={{fontSize:26,flexShrink:0}}>🧬</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                        <span style={{fontSize:9,fontFamily:"monospace",color:C.sky,letterSpacing:2,fontWeight:700}}>SYBIL & BOT ATTACKS</span>
+                        <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom,background:`${C.bloom}12`,border:`1px solid ${C.bloom}30`,padding:"1px 7px",borderRadius:20}}>DEFEATED</span>
+                      </div>
+                      <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:0}}>
+                        Even if bots could pass identity checks — and Proof of Humanity's ZK biometric layer is specifically designed to prevent exactly that — flooding validations from a single cluster <span style={{color:C.parch}}>mathematically lowers rather than raises</span> the trust score. Shannon entropy penalizes concentration. An army of bots all registered to the same ideological cluster doesn't help the attacker. It actively hurts them.
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div style={{background:C.earth,border:`1px solid ${C.sky}18`,borderRadius:8,padding:"10px 12px"}}>
+                      <div style={{fontSize:7,fontFamily:"monospace",color:C.sky,letterSpacing:1,marginBottom:4}}>LAYER 1 · IDENTITY</div>
+                      <div style={{fontSize:10,color:C.dust,lineHeight:1.6}}>ZK biometric verification. One human = one validator. Bot farms cannot scale past the identity gate.</div>
+                    </div>
+                    <div style={{background:C.earth,border:`1px solid ${C.sprout}18`,borderRadius:8,padding:"10px 12px"}}>
+                      <div style={{fontSize:7,fontFamily:"monospace",color:C.sprout,letterSpacing:1,marginBottom:4}}>LAYER 2 · CONSENSUS</div>
+                      <div style={{fontSize:10,color:C.dust,lineHeight:1.6}}>Diversity consensus across 8 independent clusters. Concentration in one cluster is structurally penalized.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2 — Network Takedown */}
+              <div style={{background:C.bark,border:`1px solid ${C.copper}28`,borderRadius:13,overflow:"hidden"}}>
+                <div style={{height:2,background:`linear-gradient(90deg,${C.copper},${C.copper}22,transparent)`}}/>
+                <div style={{padding:"18px 20px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:10}}>
+                    <div style={{fontSize:26,flexShrink:0}}>📡</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                        <span style={{fontSize:9,fontFamily:"monospace",color:C.copper,letterSpacing:2,fontWeight:700}}>NETWORK TAKEDOWN</span>
+                        <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom,background:`${C.bloom}12`,border:`1px solid ${C.bloom}30`,padding:"1px 7px",borderRadius:20}}>DEFEATED</span>
+                      </div>
+                      <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:0}}>
+                        There is no central server. No domain. No company. <span style={{color:C.parch}}>There is nothing to seize.</span> Node operators route through Tor and I2P, making them untraceable and legally unreachable. Content lives on IPFS — distributed across thousands of machines in multiple countries simultaneously. No single legal jurisdiction reaches all nodes. A court order in one country is simply ignored by the 6 other regions.
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:7}}>
+                    {[
+                      {l:"No Central Server",  d:"Nothing to raid. Nothing to shut down.",   c:C.copper},
+                      {l:"Tor / I2P Routing",  d:"Operators are physically untraceable.",    c:C.copper},
+                      {l:"IPFS Storage",        d:"Content distributed across thousands of nodes.", c:C.copper},
+                      {l:"7 Global Regions",   d:"No single jurisdiction covers all nodes.", c:C.copper},
+                    ].map(({l,d,c}) => (
+                      <div key={l} style={{background:C.earth,border:`1px solid ${c}15`,borderRadius:8,padding:"9px 11px"}}>
+                        <div style={{fontSize:8,fontFamily:"monospace",color:c,letterSpacing:.5,marginBottom:3}}>{l.toUpperCase()}</div>
+                        <div style={{fontSize:10,color:C.dust,lineHeight:1.5}}>{d}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 — Block Poisoning */}
+              <div style={{background:C.bark,border:`1px solid ${C.amber}28`,borderRadius:13,overflow:"hidden"}}>
+                <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.amber}22,transparent)`}}/>
+                <div style={{padding:"18px 20px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
+                    <div style={{fontSize:26,flexShrink:0}}>⛓</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                        <span style={{fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:2,fontWeight:700}}>BLOCK POISONING</span>
+                        <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom,background:`${C.bloom}12`,border:`1px solid ${C.bloom}30`,padding:"1px 7px",borderRadius:20}}>DEFEATED</span>
+                      </div>
+                      <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:0}}>
+                        Attempts to inject false information into the chain are defeated by cryptographic hash linking. Every block contains the hash of the previous block. <span style={{color:C.parch}}>Altering any historical record breaks every single block that came after it.</span> The honest majority of nodes detect the corrupted chain automatically and reject it. There is no version of "edit history quietly" — any tampering is immediately visible to the entire network and discarded.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 — Expert Capture */}
+              <div style={{background:C.bark,border:`1px solid ${C.sprout}28`,borderRadius:13,overflow:"hidden"}}>
+                <div style={{height:2,background:`linear-gradient(90deg,${C.sprout},${C.sprout}22,transparent)`}}/>
+                <div style={{padding:"18px 20px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:10}}>
+                    <div style={{fontSize:26,flexShrink:0}}>👁</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                        <span style={{fontSize:9,fontFamily:"monospace",color:C.sprout,letterSpacing:2,fontWeight:700}}>EXPERT CAPTURE & BRIBERY</span>
+                        <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom,background:`${C.bloom}12`,border:`1px solid ${C.bloom}30`,padding:"1px 7px",borderRadius:20}}>DEFEATED</span>
+                      </div>
+                      <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:"0 0 10px"}}>
+                        A well-funded adversary could theoretically pay verified experts to secretly validate false information. Three architectural layers prevent this from working.
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {[
+                      {n:"01", t:"On-Chain Funding Disclosure", d:"All funding relationships are public and permanently recorded. A corporation cannot secretly pay a validator — the payment itself is evidence on-chain.", c:C.sprout},
+                      {n:"02", t:"Behavioral Pattern Analysis", d:"The system continuously monitors validation histories. A sudden shift in a validator's behavior — especially correlated with others — flags a likely coordination campaign.", c:C.sprout},
+                      {n:"03", t:"Retroactive Reputation Slashing", d:"When a validator is proven compromised, their credibility contributions are removed retroactively from every post they ever touched — all the way back to their first validation. Corruption doesn't just stop. It is undone.", c:C.sprout},
+                    ].map(({n,t,d,c}) => (
+                      <div key={n} style={{background:C.earth,border:`1px solid ${c}18`,borderRadius:8,padding:"11px 13px",display:"flex",gap:11}}>
+                        <span style={{fontSize:9,fontFamily:"monospace",color:c,opacity:.6,flexShrink:0,marginTop:1}}>{n}</span>
+                        <div>
+                          <div style={{fontSize:9,fontFamily:"monospace",color:c,letterSpacing:.5,marginBottom:4}}>{t.toUpperCase()}</div>
+                          <div style={{fontSize:10,color:C.dust,lineHeight:1.65}}>{d}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 5 — Legal & DMCA */}
+              <div style={{background:C.bark,border:`1px solid ${C.tan}28`,borderRadius:13,overflow:"hidden"}}>
+                <div style={{height:2,background:`linear-gradient(90deg,${C.tan},${C.tan}22,transparent)`}}/>
+                <div style={{padding:"18px 20px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
+                    <div style={{fontSize:26,flexShrink:0}}>⚖</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                        <span style={{fontSize:9,fontFamily:"monospace",color:C.tan,letterSpacing:2,fontWeight:700}}>LEGAL & DMCA ATTACKS</span>
+                        <span style={{fontSize:7,fontFamily:"monospace",color:C.bloom,background:`${C.bloom}12`,border:`1px solid ${C.bloom}30`,padding:"1px 7px",borderRadius:20}}>DEFEATED</span>
+                      </div>
+                      <p style={{fontSize:11,color:C.dust,lineHeight:1.8,margin:0}}>
+                        A takedown notice addressed to VERIDAX has <span style={{color:C.parch}}>no recipient</span>. There is no operator to serve. Content is immutable — there is no technical mechanism to comply with a removal order even if someone wanted to. Jurisdictional distribution across 7 global regions means no single legal framework applies everywhere simultaneously. A government can try to pressure the platform. The platform does not exist as an entity that can be pressured.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Suppression Vault — elevated treatment */}
+            <div style={{background:`linear-gradient(135deg,${C.bark},${C.earth})`,border:`1px solid ${C.bloom}44`,borderRadius:14,overflow:"hidden",marginBottom:16}}>
+              <div style={{height:3,background:`linear-gradient(90deg,${C.bloom},${C.amber},${C.bloom}22)`}}/>
+              <div style={{padding:"22px 24px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                  <span style={{fontSize:28}}>🛡</span>
+                  <div>
+                    <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:3}}>
+                      <span style={{fontSize:10,fontFamily:"monospace",color:C.bloom,letterSpacing:2,fontWeight:700}}>THE SUPPRESSION VAULT</span>
+                      <span style={{fontSize:7,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,padding:"1px 7px",borderRadius:20}}>MOST POWERFUL FEATURE</span>
+                    </div>
+                    <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,letterSpacing:1}}>THE ATTACK BECOMES THE EVIDENCE</div>
+                  </div>
+                </div>
+                <p style={{fontSize:12,color:C.dust,lineHeight:1.85,marginBottom:14}}>
+                  Every attempt to suppress, censor, or manipulate information on VERIDAX — every legal threat, every bot attack, every credential fraud attempt, every DMCA notice — is <span style={{color:C.parch}}>permanently recorded on-chain as evidence</span>. Suppression attempts do not disappear. They become public proof of who tried to bury the truth, archived forever alongside the truth they tried to bury.
+                </p>
+                <div style={{background:`${C.bloom}08`,border:`1px solid ${C.bloom}28`,borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+                  <div style={{fontSize:9,fontFamily:"monospace",color:C.bloom,letterSpacing:1,marginBottom:8}}>WHAT GETS RECORDED</div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:6}}>
+                    {[
+                      "Legal takedown notices",
+                      "DMCA removal requests",
+                      "Coordinated bot attack signatures",
+                      "Credential fraud attempts",
+                      "Sybil cluster fingerprints",
+                      "Suppression campaign metadata",
+                    ].map(item => (
+                      <div key={item} style={{display:"flex",alignItems:"center",gap:7,fontSize:10,color:C.dust}}>
+                        <span style={{color:C.bloom,flexShrink:0}}>▸</span>{item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{background:C.amberD,border:`1px solid ${C.amber}33`,borderRadius:10,padding:"14px 16px"}}>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:14,color:C.parch,lineHeight:1.6,marginBottom:6}}>
+                    "The chain turns attack into accountability."
+                  </div>
+                  <div style={{fontSize:10,color:C.dust,lineHeight:1.75}}>
+                    A powerful institution cannot threaten VERIDAX into silence. It can only add to the permanent public record of its own attempts to suppress the truth. The stronger the suppression effort, the more damning the evidence trail it leaves behind.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Closing */}
+            <div style={{background:`linear-gradient(135deg,${C.canopy},${C.bark})`,border:`1px solid ${C.shadow}`,borderRadius:14,padding:"26px",textAlign:"center"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:18,color:C.parch,lineHeight:1.5,marginBottom:10}}>
                 "The platform doesn't fight censorship. It makes censorship mathematically impossible."
               </div>
-              <p style={{color:C.dust,fontSize:12,lineHeight:1.7}}>No server to raid. No domain to seize. No check to write. No single lever to pull.</p>
+              <p style={{color:C.dust,fontSize:12,lineHeight:1.8,maxWidth:500,margin:"0 auto"}}>No server to raid. No domain to seize. No check to write. No single lever to pull. Every attack vector has been addressed at the architectural level — not with policies, but with math.</p>
             </div>
           </div>
         )}
