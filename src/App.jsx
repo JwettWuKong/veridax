@@ -30,6 +30,11 @@ const POSTS = [
     summary:"Protocol for distributed biochar production. 10-12x more efficient per hectare than reforestation. Tested in 14 communities.",
     author:"Marcus Velde", field:"Climate Systems", verified:true, substack:false,
     token:"BIOCARB", price:67.40, change:12.8, up:9840, cite:198, valid:2340 },
+  { id:"p5", cat:"Neuroscience", icon:"🍄", color:"#d0a068",
+    title:"Psychedelic-Assisted PTSD Treatment: Open-Source Protocol",
+    summary:"Peer-reviewed protocol for psilocybin-assisted PTSD therapy. Tested across 847 veterans — 76% remission rate at 12 months. No pharma funding. All data open.",
+    author:"Dr. Kenji Morales", field:"Clinical Neuroscience", verified:true, substack:false,
+    up:14820, cite:267, valid:3901 },
 ];
 
 const TOKENS = [
@@ -71,12 +76,14 @@ const POST_VOTES = {
   p2: { scientific:680,  civil:420, independent:980,  tech:1840, grassroots:210, academic:560, journalism:290, legal:140 },
   p3: { scientific:2100, civil:580, independent:1200, tech:890,  grassroots:340, academic:1760, journalism:420, legal:310 },
   p4: { scientific:920,  civil:1100, independent:840, tech:540,  grassroots:980, academic:620, journalism:310, legal:180 },
+  p5: { scientific:780,  civil:560, independent:940, tech:420,  grassroots:610, academic:880, journalism:380, legal:330 },
 };
 const POST_DISPUTES = {
   p1: { scientific:45,  civil:120, independent:200, tech:30,  grassroots:80,  academic:15,  journalism:60,  legal:25  },
   p2: { scientific:28,  civil:65,  independent:140, tech:90,  grassroots:30,  academic:42,  journalism:110, legal:35  },
   p3: { scientific:85,  civil:210, independent:310, tech:120, grassroots:90,  academic:45,  journalism:180, legal:70  },
   p4: { scientific:60,  civil:90,  independent:120, tech:40,  grassroots:70,  academic:50,  journalism:30,  legal:20  },
+  p5: { scientific:40,  civil:85,  independent:120, tech:55,  grassroots:70,  academic:30,  journalism:90,  legal:45  },
 };
 
 function shannonDiversity(counts) {
@@ -93,6 +100,22 @@ function calcTrustScore(ups, disps) {
   const total = totalUp + totalDisp;
   if (total === 0) return 0;
   return 0.65 * (totalUp / total) + 0.35 * shannonDiversity(ups);
+}
+
+const TOKEN_GATES = { upvotes:10000, citations:200, validations:2500, diversity:0.72, trustScore:0.88 };
+
+function checkGates(post, votes, disputes) {
+  const trust = calcTrustScore(votes, disputes);
+  const diversity = shannonDiversity(votes);
+  const items = [
+    { key:"upvotes",     label:"UPVOTES",                    val:post.up,    req:TOKEN_GATES.upvotes,     fmt:v => nf(v) },
+    { key:"citations",   label:"PEER CITATIONS",             val:post.cite,  req:TOKEN_GATES.citations,   fmt:v => v.toLocaleString() },
+    { key:"validations", label:"CROSS-CLUSTER VALIDATIONS",  val:post.valid, req:TOKEN_GATES.validations, fmt:v => nf(v) },
+    { key:"diversity",   label:"DIVERSITY INDEX",            val:diversity,  req:TOKEN_GATES.diversity,   fmt:v => `${(v*100).toFixed(1)}%` },
+    { key:"trustScore",  label:"TRUST SCORE",                val:trust,      req:TOKEN_GATES.trustScore,  fmt:v => `${(v*100).toFixed(1)}%` },
+  ];
+  const metCount = items.filter(g => g.val >= g.req).length;
+  return { items, metCount, allMet: metCount === 5 };
 }
 
 function Ticker() {
@@ -184,10 +207,11 @@ function NetCanvas({ h = 130 }) {
   return <canvas ref={ref} width={880} height={h} style={{width:"100%",height:h,borderRadius:12,display:"block"}}/>;
 }
 
-function PostCard({ post, user, votes, disputes, onValidate }) {
+function PostCard({ post, user, votes, disputes, onValidate, onTokenize }) {
   const [hov, setHov] = useState(false);
   const score = votes && disputes ? calcTrustScore(votes, disputes) : null;
   const scoreColor = score === null ? C.amber : score >= 0.8 ? C.sprout : score >= 0.6 ? C.amber : C.bloom;
+  const gateInfo = votes && disputes ? checkGates(post, votes, disputes) : null;
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{background:`linear-gradient(160deg,${C.card},${C.earth})`,border:`1px solid ${hov ? post.color + "55" : C.border}`,borderRadius:16,overflow:"hidden",cursor:"pointer",transition:"border-color .3s,transform .22s,box-shadow .3s",transform:hov?"translateY(-3px)":"none",boxShadow:hov?`0 14px 40px ${post.color}12`:"none"}}>
@@ -239,11 +263,33 @@ function PostCard({ post, user, votes, disputes, onValidate }) {
             </div>
           )}
         </div>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 10px",background:`${post.color}0a`,border:`1px solid ${post.color}22`,borderRadius:7}}>
-          <span style={{fontSize:11,fontFamily:"monospace",color:post.color,fontWeight:700}}>⬡ {post.token}</span>
-          <span style={{fontSize:11,color:C.parch,fontFamily:"monospace"}}>${post.price.toFixed(2)}</span>
-          <span style={{fontSize:9,color:C.sprout,fontFamily:"monospace"}}>+{post.change}%</span>
-        </div>
+        {gateInfo && (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 8px",background:gateInfo.allMet?`${C.amber}0a`:C.wood,border:`1px solid ${gateInfo.allMet?C.amber+"33":C.shadow}`,borderRadius:7,marginBottom:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust,letterSpacing:.5}}>TOKEN GATE</span>
+              <div style={{display:"flex",gap:2}}>
+                {gateInfo.items.map(g => (
+                  <div key={g.key} style={{width:5,height:5,borderRadius:"50%",background:g.val>=g.req?C.sprout:C.shadow,boxShadow:g.val>=g.req?`0 0 4px ${C.sprout}88`:undefined}}/>
+                ))}
+              </div>
+              <span style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust}}>{gateInfo.metCount}/5</span>
+            </div>
+            {gateInfo.allMet && post.token && <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout}}>✓ TOKENIZED</span>}
+            {gateInfo.allMet && !post.token && user && onTokenize && (
+              <button onClick={e=>{e.stopPropagation();onTokenize(post);}}
+                style={{background:`${C.amber}18`,border:`1px solid ${C.amber}44`,color:C.amber,borderRadius:5,padding:"2px 7px",fontSize:7,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
+                ★ VOTE
+              </button>
+            )}
+          </div>
+        )}
+        {post.token && (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 10px",background:`${post.color}0a`,border:`1px solid ${post.color}22`,borderRadius:7}}>
+            <span style={{fontSize:11,fontFamily:"monospace",color:post.color,fontWeight:700}}>⬡ {post.token}</span>
+            <span style={{fontSize:11,color:C.parch,fontFamily:"monospace"}}>${post.price?.toFixed(2)}</span>
+            <span style={{fontSize:9,color:C.sprout,fontFamily:"monospace"}}>+{post.change}%</span>
+          </div>
+        )}
         {user && votes && onValidate && (
           <button
             onClick={e => { e.stopPropagation(); onValidate(post); }}
@@ -1168,6 +1214,151 @@ function PublishModal({ user, onClose }) {
   );
 }
 
+function TokenizeModal({ post, votes, disputes, user, onClose }) {
+  const [yesVotes, setYesVotes] = useState(1316);
+  const [noVotes,  setNoVotes]  = useState(684);
+  const [voted, setVoted] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState(false);
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const { items: gateItems, allMet } = checkGates(post, votes, disputes);
+  const total = yesVotes + noVotes;
+  const yesPct = total === 0 ? 0 : yesVotes / total;
+  const passed = yesPct >= 0.66;
+
+  const handleVote = type => {
+    if (voted || !user) return;
+    if (type === "yes") { setYesVotes(y => y + 1); } else { setNoVotes(n => n + 1); }
+    setVoted(type);
+    if (type === "yes") {
+      setTimeout(() => { setCreating(true); }, 600);
+      setTimeout(() => { setCreating(false); setCreated(true); }, 3400);
+    }
+  };
+
+  const suggestedSymbol = post.title.split(" ").slice(0,2).map(w => w[0]).join("") + "X";
+
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:500,width:"100%",position:"relative",maxHeight:"92vh",overflowY:"auto"}}>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.copper})`,borderRadius:2,marginBottom:18}}/>
+        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
+
+        {created ? (
+          <div style={{textAlign:"center",padding:"20px 0"}}>
+            <div style={{fontSize:44,marginBottom:14,animation:"sway 2s ease-in-out infinite"}}>⬡</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:3,marginBottom:8}}>TOKEN CREATED</div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:12}}>⬡ {suggestedSymbol}</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>The community has voted to tokenize this discovery. A bonding curve token has been created. The author will earn a commission on every future purchase — automatically and forever.</p>
+            <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:10,padding:"12px 14px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left",marginBottom:20}}>
+              <div>⬡ <span style={{color:C.tan}}>Symbol:</span> <span style={{color:C.amber}}>⬡ {suggestedSymbol}</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>5–8% per purchase · permanent</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Pricing:</span> Bonding curve · rises with demand</div>
+              <div>⬡ <span style={{color:C.tan}}>Community YES vote:</span> {yesVotes.toLocaleString()} ({(yesVotes/(yesVotes+noVotes)*100).toFixed(0)}%)</div>
+            </div>
+            <button onClick={onClose} style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+              VIEW IN MARKET →
+            </button>
+          </div>
+        ) : creating ? (
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:38,marginBottom:14,animation:"pulse 1s infinite"}}>⬡</div>
+            <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:6}}>CREATING TOKEN…</div>
+            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Deploying bonding curve · Locking author commission · Broadcasting to nodes</div>
+            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:280,margin:"0 auto"}}>
+              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${C.amber},${C.copper})`,animation:"fadein 2.8s linear forwards"}}/>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:4}}>TOKENIZATION VOTE</div>
+            <div style={{fontSize:13,fontFamily:"'Palatino Linotype',serif",color:C.parch,marginBottom:18,lineHeight:1.4,fontWeight:700,paddingRight:30}}>{post.title}</div>
+
+            {/* Five gates */}
+            <div style={{background:C.card,border:`1px solid ${C.amber}22`,borderRadius:12,padding:"16px",marginBottom:14}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:10}}>ALL 5 GATES MUST BE MET SIMULTANEOUSLY</div>
+              {gateItems.map(g => {
+                const met = g.val >= g.req;
+                const pct = Math.min((g.val / g.req) * 100, 100);
+                return (
+                  <div key={g.key} style={{marginBottom:8}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                      <div style={{display:"flex",alignItems:"center",gap:5}}>
+                        <span style={{fontSize:9,color:met?C.sprout:C.dust,width:12}}>{met?"✓":"·"}</span>
+                        <span style={{fontSize:7,fontFamily:"monospace",color:met?C.sprout:C.dust,letterSpacing:.5}}>{g.label}</span>
+                      </div>
+                      <div style={{fontSize:8,fontFamily:"monospace",color:met?C.sprout:C.dust}}>
+                        {g.fmt(g.val)} <span style={{color:C.shadow}}>/ {g.fmt(g.req)}</span>
+                      </div>
+                    </div>
+                    <div style={{height:4,background:C.shadow,borderRadius:2,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${pct}%`,background:met?C.sprout:C.amber,borderRadius:2,transition:"width .5s ease"}}/>
+                    </div>
+                  </div>
+                );
+              })}
+              {allMet && (
+                <div style={{marginTop:10,padding:"8px 10px",background:C.sproutD,border:`1px solid ${C.sprout}30`,borderRadius:7,fontSize:8,fontFamily:"monospace",color:C.sprout,letterSpacing:1}}>
+                  ✓ ALL 5 GATES CLEARED — ELIGIBLE FOR TOKENIZATION
+                </div>
+              )}
+            </div>
+
+            {/* AND-gate warning */}
+            <div style={{background:C.amberD,border:`1px solid ${C.amber}25`,borderRadius:9,padding:"10px 13px",marginBottom:14,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
+              <span style={{color:C.amber}}>⬡</span> Meeting four out of five gates does nothing. All five must be met <span style={{color:C.parch}}>simultaneously</span>. You cannot game any single metric in isolation.
+            </div>
+
+            {/* Community vote */}
+            <div style={{marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>COMMUNITY TOKENIZATION VOTE</span>
+                <span style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{(yesVotes+noVotes).toLocaleString()} votes cast</span>
+              </div>
+              <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",marginBottom:6}}>
+                <div style={{width:`${yesPct*100}%`,background:C.sprout,transition:"width .4s ease"}}/>
+                <div style={{flex:1,background:C.bloom}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:8,fontFamily:"monospace",color:C.sprout}}>YES {(yesPct*100).toFixed(0)}% · {yesVotes.toLocaleString()}</span>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>Threshold: 66% YES</span>
+                <span style={{fontSize:8,fontFamily:"monospace",color:C.bloom}}>NO {((1-yesPct)*100).toFixed(0)}% · {noVotes.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {voted ? (
+              <div style={{textAlign:"center",padding:"11px",background:voted==="yes"?C.sproutD:`${C.bloom}0c`,border:`1px solid ${voted==="yes"?C.sprout+"33":C.bloom+"33"}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:voted==="yes"?C.sprout:C.bloom}}>
+                {voted==="yes" ? "✓ Voted YES — processing token creation…" : "✗ Voted NO — recorded on-chain"}
+              </div>
+            ) : user ? (
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={() => handleVote("yes")}
+                  style={{flex:2,background:`${C.sprout}14`,border:`1px solid ${C.sprout}44`,color:C.sprout,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+                  ★ YES — TOKENIZE
+                </button>
+                <button onClick={() => handleVote("no")}
+                  style={{flex:1,background:`${C.bloom}0c`,border:`1px solid ${C.bloom}33`,color:C.bloom,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+                  NO
+                </button>
+              </div>
+            ) : (
+              <div style={{textAlign:"center",padding:"12px",border:`1px solid ${C.shadow}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:C.dust}}>
+                Sign in to vote on tokenization.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVote }) {
   const [localVotes, setLocalVotes] = useState({ ...votes });
   const [localDisp,  setLocalDisp]  = useState({ ...disputes });
@@ -1343,6 +1534,7 @@ export default function Veridax() {
   const [postDisputes, setPostDisputes] = useState(POST_DISPUTES);
   const [userVotes,    setUserVotes]    = useState({});
   const [validatingPost, setValidatingPost] = useState(null);
+  const [tokenizePost,   setTokenizePost]   = useState(null);
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
 
   const handleVote = (postId, type) => {
@@ -1538,7 +1730,7 @@ export default function Veridax() {
                 <button onClick={() => setSection("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-                {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost}/></div>)}
+                {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
               </div>
             </div>
 
@@ -1624,7 +1816,7 @@ export default function Veridax() {
               ))}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-              {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost}/></div>)}
+              {POSTS.map((p, i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/></div>)}
             </div>
           </div>
         )}
@@ -1654,7 +1846,8 @@ export default function Veridax() {
                 </button>
               ))}
             </div>
-            <PostCard post={POSTS[0]} user={user} votes={postVotes[POSTS[0].id]} disputes={postDisputes[POSTS[0].id]} onValidate={setValidatingPost}/>
+            <PostCard post={POSTS[0]} user={user} votes={postVotes[POSTS[0].id]} disputes={postDisputes[POSTS[0].id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>
+
           </div>
         )}
 
@@ -1684,13 +1877,42 @@ export default function Veridax() {
                 </div>
               ))}
             </div>
+            {/* AND-gate section */}
+            <div style={{background:C.bark,border:`1px solid ${C.amber}33`,borderRadius:14,padding:"22px",marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.amber,letterSpacing:3}}>THE FIVE TOKENIZATION GATES</span>
+                <div style={{flex:1,height:1,background:`${C.amber}22`}}/>
+              </div>
+              <p style={{fontSize:11,color:C.dust,lineHeight:1.8,marginBottom:16}}>
+                When a post climbs high enough in community trust it becomes eligible for tokenization. But it cannot be tokenized by clearing just one or two metrics — it must simultaneously clear <span style={{color:C.parch}}>all five of these gates at the same time.</span>
+              </p>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+                {[
+                  {label:"10,000 upvotes",     icon:"▲", color:C.sprout,  sub:"minimum community endorsement"},
+                  {label:"200 peer citations",  icon:"◎", color:C.sky,     sub:"other published works referencing this one"},
+                  {label:"2,500 validations",   icon:"✓", color:C.amber,   sub:"cross-cluster, reputation-weighted"},
+                  {label:"72% diversity index", icon:"◈", color:C.copper,  sub:"Shannon entropy across all 8 clusters"},
+                  {label:"88% trust score",     icon:"⬡", color:"#d0a068", sub:"65% raw ratio + 35% diversity"},
+                ].map(g => (
+                  <div key={g.label} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:C.earth,border:`1px solid ${g.color}22`,borderRadius:8}}>
+                    <span style={{fontSize:12,color:g.color,flexShrink:0}}>{g.icon}</span>
+                    <span style={{fontSize:11,fontFamily:"monospace",color:C.parch,fontWeight:700,minWidth:160}}>{g.label}</span>
+                    <span style={{fontSize:9,color:C.dust}}>{g.sub}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{background:`${C.bloom}08`,border:`1px solid ${C.bloom}28`,borderRadius:9,padding:"11px 14px",fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
+                <span style={{color:C.bloom}}>⬡</span> Meeting four out of five gates does nothing. <span style={{color:C.parch}}>All five must be met simultaneously.</span> This AND-gate design means you cannot game any single metric in isolation. Once a post crosses all five thresholds simultaneously, the community votes on whether to launch a knowledge token for it.
+              </div>
+            </div>
+
             <div style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:12,padding:"18px"}}>
-              <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:12}}>HOW TOKENIZATION WORKS</div>
+              <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:12}}>HOW IT PLAYS OUT</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:10}}>
-                {[{n:"01",t:"Cross Indisputable Threshold",c:C.sky,d:"10K upvotes · 200 citations · 2,500 validations · 72% diversity · 88% trust. All five must be met simultaneously."},
-                  {n:"02",t:"Community Votes to Tokenize",c:C.amber,d:"Verified humans vote to launch a token. Symbol assigned. Author commission rate locked by category."},
-                  {n:"03",t:"Bonding Curve Pricing",c:C.copper,d:"Price rises as more people buy in. Early recognizers of important discoveries get in cheapest."},
-                  {n:"04",t:"Author Earns Forever",c:C.sprout,d:"Every purchase automatically routes commission to the author's wallet. No invoices. No negotiations."}].map(s => (
+                {[{n:"01",t:"All Five Gates Clear",c:C.sky,d:"The post has simultaneously cleared all five thresholds. No shortcuts, no workarounds. The AND-gate design makes gaming any single metric futile."},
+                  {n:"02",t:"Community Votes",c:C.amber,d:"Verified humans vote YES or NO to launch a token. Threshold: 66% YES. Symbol assigned. Author commission rate locked in by category."},
+                  {n:"03",t:"Bonding Curve Launch",c:C.copper,d:"Price rises as more people buy in. Early recognizers of important discoveries get in cheapest. No fixed supply."},
+                  {n:"04",t:"Author Earns Forever",c:C.sprout,d:"Every purchase automatically routes commission to the author's wallet. No invoices. No negotiations. No platform taking a cut."}].map(s => (
                   <div key={s.n} style={{background:C.earth,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"13px"}}>
                     <div style={{fontSize:9,fontFamily:"monospace",color:s.c,letterSpacing:1,marginBottom:5}}>{s.n} · {s.t.toUpperCase()}</div>
                     <div style={{fontSize:11,color:C.dust,lineHeight:1.65}}>{s.d}</div>
@@ -1780,7 +2002,7 @@ export default function Veridax() {
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
                 {POSTS.map((p, i) => (
                   <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}>
-                    <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost}/>
+                    <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost}/>
                   </div>
                 ))}
               </div>
@@ -1923,6 +2145,15 @@ export default function Veridax() {
       {showProfile && user && <ProfileModal user={user} onClose={() => setShowProfile(false)} onLogout={() => setUser(null)}/>}
       {showSub && <SubModal onClose={() => setShowSub(false)}/>}
       {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)}/>}
+      {tokenizePost && postVotes[tokenizePost.id] && (
+        <TokenizeModal
+          post={tokenizePost}
+          votes={postVotes[tokenizePost.id]}
+          disputes={postDisputes[tokenizePost.id]}
+          user={user}
+          onClose={() => setTokenizePost(null)}
+        />
+      )}
       {validatingPost && postVotes[validatingPost.id] && (
         <ValidationModal
           post={validatingPost}
