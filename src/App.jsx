@@ -293,26 +293,131 @@ function DonateSection() {
 }
 
 function JoinModal({ onClose, onJoin }) {
+  const [step, setStep] = useState(1);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [field, setField] = useState("");
+
+  const step1Ready = username.trim() && email.includes("@") && password.length >= 8;
+  const step2Ready = field.trim().length > 0;
+
+  const inputStyle = (val) => ({
+    width:"100%", background:C.wood, border:`1px solid ${val ? C.amber+"33" : C.shadow}`,
+    borderRadius:8, padding:"10px 13px", color:C.parch, fontSize:12, fontFamily:"monospace",
+    outline:"none", boxSizing:"border-box", transition:"border-color .2s",
+  });
+
+  const Steps = () => (
+    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:20}}>
+      {[1,2,3].map(n => (
+        <div key={n} style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontFamily:"monospace",fontWeight:700,
+            background: step>n ? C.sprout : step===n ? C.amber : "transparent",
+            border: `1px solid ${step>n ? C.sprout : step===n ? C.amber : C.shadow}`,
+            color: step>=n ? C.bark : C.dust,
+          }}>{step>n?"✓":n}</div>
+          {n<3 && <div style={{width:24,height:1,background:step>n?C.sprout:C.shadow}}/>}
+        </div>
+      ))}
+      <span style={{fontSize:8,fontFamily:"monospace",color:C.dust,marginLeft:4}}>
+        {step===1?"ACCOUNT":step===2?"EXPERTISE":"DONE"}
+      </span>
+    </div>
+  );
+
   return (
     <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:400,width:"100%",position:"relative"}}>
+      <div style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:28,maxWidth:420,width:"100%",position:"relative",maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.vine})`,borderRadius:2,marginBottom:18}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10,zIndex:1}}>✕</button>
-        <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:8}}>Join VERIDAX</h2>
-        <p style={{color:C.dust,fontSize:12,lineHeight:1.75,marginBottom:16}}>Build your verified expert profile. Publish without gatekeepers. Earn when your ideas change the world.</p>
-        <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>YOUR FIELD</label>
-        <input value={field} onChange={e => setField(e.target.value)} placeholder="e.g. Climate Engineering, Molecular Biology…"
-          style={{width:"100%",background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:7,padding:"10px 13px",color:C.parch,fontSize:12,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:14,transition:"border-color .2s"}}/>
-        <div style={{padding:"10px 12px",background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:8,marginBottom:16,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.9}}>
-          ✦ Credentials verified via ZK attestation — your identity stays private<br/>
-          ✦ Import your Substack posts automatically<br/>
-          ✦ Earn tokens when your discoveries are validated
-        </div>
-        <button onClick={() => field && onJoin(field)} disabled={!field}
-          style={{width:"100%",background:field?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${field ? C.amber + "55" : C.shadow}`,color:field?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:field?"pointer":"not-allowed",letterSpacing:2}}>
-          CREATE EXPERT PROFILE →
-        </button>
+
+        <Steps/>
+
+        {step === 1 && (
+          <>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Create your account</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>Build your verified expert profile. Publish without gatekeepers. Earn when your ideas change the world.</p>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>USERNAME</label>
+            <input value={username} onChange={e => setUsername(e.target.value)} placeholder="e.g. drfatima"
+              style={{...inputStyle(username), marginBottom:12}}/>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>EMAIL</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"
+              style={{...inputStyle(email.includes("@")), marginBottom:12}}/>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>PASSWORD</label>
+            <div style={{position:"relative",marginBottom:18}}>
+              <input type={showPw?"text":"password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters"
+                style={{...inputStyle(password.length>=8), paddingRight:44}}/>
+              <button onClick={() => setShowPw(s=>!s)}
+                style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.dust,cursor:"pointer",fontSize:11,fontFamily:"monospace"}}>
+                {showPw?"HIDE":"SHOW"}
+              </button>
+            </div>
+
+            <button onClick={() => step1Ready && setStep(2)} disabled={!step1Ready}
+              style={{width:"100%",background:step1Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step1Ready?C.amber+"55":C.shadow}`,color:step1Ready?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:step1Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
+              CONTINUE →
+            </button>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Your expertise</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.7,marginBottom:18}}>This shapes how your profile is shown and which discoveries you're invited to validate.</p>
+
+            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>YOUR FIELD</label>
+            <input value={field} onChange={e => setField(e.target.value)} placeholder="e.g. Climate Engineering, Molecular Biology…"
+              style={{...inputStyle(field.trim()), marginBottom:10}}/>
+
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:16}}>
+              {["Medicine","Climate Science","AI & Ethics","Physics","Biology","Economics"].map(f => (
+                <button key={f} onClick={() => setField(f)}
+                  style={{background:field===f?`${C.amber}18`:C.wood,border:`1px solid ${field===f?C.amber+"55":C.shadow}`,color:field===f?C.amber:C.dust,borderRadius:20,padding:"4px 10px",fontSize:8,fontFamily:"monospace",cursor:"pointer",transition:"all .2s"}}>
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <div style={{padding:"10px 12px",background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:8,marginBottom:16,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.9}}>
+              ✦ Credentials verified via ZK attestation — your identity stays private<br/>
+              ✦ Earn tokens when your discoveries are validated
+            </div>
+
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={() => setStep(1)}
+                style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>
+                ← BACK
+              </button>
+              <button onClick={() => { if(step2Ready){ setStep(3); onJoin(username); }}} disabled={!step2Ready}
+                style={{flex:2,background:step2Ready?`linear-gradient(135deg,${C.amber}22,${C.vine}12)`:"transparent",border:`1px solid ${step2Ready?C.amber+"55":C.shadow}`,color:step2Ready?C.amber:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:step2Ready?"pointer":"not-allowed",letterSpacing:2,transition:"all .2s"}}>
+                CREATE PROFILE →
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <div style={{textAlign:"center",padding:"10px 0 6px"}}>
+            <div style={{fontSize:44,marginBottom:14}}>🌱</div>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Welcome, {username}.</h2>
+            <p style={{color:C.dust,fontSize:12,lineHeight:1.8,marginBottom:6}}>Your expert profile has been created.</p>
+            <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2,textAlign:"left"}}>
+              <div style={{color:C.sprout,marginBottom:4,letterSpacing:1}}>YOUR ACCOUNT</div>
+              <div>⬡ <span style={{color:C.tan}}>Username:</span> {username}</div>
+              <div>⬡ <span style={{color:C.tan}}>Field:</span> {field}</div>
+              <div>⬡ <span style={{color:C.tan}}>Status:</span> <span style={{color:C.sprout}}>Verified ✓</span></div>
+            </div>
+            <button onClick={onClose}
+              style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
+              ENTER VERIDAX →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
