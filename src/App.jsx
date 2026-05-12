@@ -14,22 +14,22 @@ const INITIAL_POSTS = [
     title:"Open-Source Desalination Unit: $40/Family, 48hr Deploy",
     summary:"Modular solar-powered desalination for disaster zones. Full schematics, BOM, and deployment protocol. Field-tested on 3 continents.",
     author:"Dr. Amara Osei", field:"Humanitarian Engineering", verified:true, substack:false,
-    up:18203, cite:341, tokenData:{sym:"H2OPEN", supply:5400, col:"#f5d060", change:18.4} },
+    up:18203, cite:341, tokenData:{sym:"H2OPEN", supply:5400, col:"#f5d060", change:18.4, commission:8} },
   { id:"p2", cat:"Artificial Intelligence", icon:"⚙", color:"#5aabaa",
     title:"Bias Detection Framework for LLM Governance",
     summary:"Open standard for auditing AI systems for systemic bias and corporate capture. Community-run audit protocol included.",
     author:"Prof. Yuki Tanaka", field:"AI Ethics", verified:true, substack:true,
-    up:12401, cite:289, tokenData:{sym:"AISAFE", supply:3900, col:"#e8a830", change:7.1} },
+    up:12401, cite:289, tokenData:{sym:"AISAFE", supply:3900, col:"#e8a830", change:7.1, commission:5} },
   { id:"p3", cat:"Medicine", icon:"🌿", color:"#88d068",
     title:"mRNA Reprogramming for Cellular Senescence Reversal",
     summary:"3-year independent study: modified mRNA vectors reduce inflammatory markers in aged tissue by 40%. No pharma funding. All data open.",
     author:"Dr. Fatima Al-Rashid", field:"Molecular Biology", verified:true, substack:true,
-    up:21890, cite:512, tokenData:{sym:"LONGEVX", supply:7400, col:"#88d068", change:31.2} },
+    up:21890, cite:512, tokenData:{sym:"LONGEVX", supply:7400, col:"#88d068", change:31.2, commission:8} },
   { id:"p4", cat:"Climate Science", icon:"🌦", color:"#72c44a",
     title:"Biochar Distributed Grid: Scalable Carbon Sequestration",
     summary:"Protocol for distributed biochar production. 10-12x more efficient per hectare than reforestation. Tested in 14 communities.",
     author:"Marcus Velde", field:"Climate Systems", verified:true, substack:false,
-    up:9840, cite:198, tokenData:{sym:"BIOCARB", supply:3100, col:"#72c44a", change:12.8} },
+    up:9840, cite:198, tokenData:{sym:"BIOCARB", supply:3100, col:"#72c44a", change:12.8, commission:7.5} },
   { id:"p5", cat:"Neuroscience", icon:"🍄", color:"#d0a068",
     title:"Psychedelic-Assisted PTSD Treatment: Open-Source Protocol",
     summary:"Peer-reviewed protocol for psilocybin-assisted PTSD therapy. Tested across 847 veterans — 76% remission rate at 12 months. No pharma funding. All data open.",
@@ -39,12 +39,12 @@ const INITIAL_POSTS = [
     title:"Decentralized Mesh Internet Protocol",
     summary:"Open-source protocol for building censorship-resistant mesh networks. Deployed in 12 countries. 340,000+ nodes active. No central authority.",
     author:"Dr. Priya Nair", field:"Network Engineering", verified:true, substack:false,
-    up:15430, cite:298, tokenData:{sym:"MESHNET", supply:6400, col:"#5aabaa", change:22.6} },
+    up:15430, cite:298, tokenData:{sym:"MESHNET", supply:6400, col:"#5aabaa", change:22.6, commission:5.5} },
   { id:"p7", cat:"Physics", icon:"⚛", color:"#c87941",
     title:"Quantum Error Correction: Universal Framework",
     summary:"A universal framework for fault-tolerant quantum computation. Open-source implementation across 3 hardware platforms. No government or defense funding.",
     author:"Dr. Kai Lindström", field:"Quantum Computing", verified:true, substack:false,
-    up:32100, cite:687, tokenData:{sym:"QUANTM", supply:9600, col:"#c87941", change:44.1} },
+    up:32100, cite:687, tokenData:{sym:"QUANTM", supply:9600, col:"#c87941", change:44.1, commission:5.5} },
 ];
 
 const CATS = [
@@ -130,6 +130,33 @@ function bondingPrice(supply) {
 
 function bondingCost(s1, s2) {
   return (0.001 / 2.38) * (Math.pow(s2, 2.38) - Math.pow(s1, 2.38));
+}
+
+const COMMISSION_RATES = {
+  "Project Save Humanity": 8,
+  "Medicine":              8,
+  "Neuroscience":          7,
+  "Biology":               7,
+  "Climate Science":       7.5,
+  "Energy":                6.5,
+  "Agriculture":           6,
+  "Engineering":           5.5,
+  "Physics":               5.5,
+  "Robotics":              5.5,
+  "Artificial Intelligence": 5,
+  "Space Exploration":     5,
+  "Cybersecurity":         5,
+  "Economics":             4,
+  "Social Innovation":     4,
+  "Psychology":            4,
+  "Law & Governance":      3.5,
+  "Philosophy":            2.5,
+  "Education":             2.5,
+  "Ethics":                2.5,
+};
+
+function commissionRate(cat) {
+  return COMMISSION_RATES[cat] ?? 5;
 }
 
 function Ticker({ tokens }) {
@@ -1286,7 +1313,7 @@ function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
             <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>The community has voted to tokenize this discovery. A bonding curve token has been created. The author will earn a commission on every future purchase — automatically and forever.</p>
             <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:10,padding:"12px 14px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left",marginBottom:20}}>
               <div>⬡ <span style={{color:C.tan}}>Symbol:</span> <span style={{color:C.amber}}>⬡ {suggestedSymbol}</span></div>
-              <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>5–8% per purchase · permanent</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>{commissionRate(post.cat)}% per purchase · locked forever</span></div>
               <div>⬡ <span style={{color:C.tan}}>Pricing:</span> Bonding curve · rises with demand</div>
               <div>⬡ <span style={{color:C.tan}}>Community YES vote:</span> {yesVotes.toLocaleString()} ({(yesVotes/(yesVotes+noVotes)*100).toFixed(0)}%)</div>
             </div>
@@ -1605,7 +1632,7 @@ function BuyModal({ token, user, onClose, onBought }) {
               <div>⬡ <span style={{color:C.tan}}>Quantity:</span> {record.qty.toLocaleString()}</div>
               <div>⬡ <span style={{color:C.tan}}>Total paid:</span> <span style={{color:C.amber}}>${record.cost.toFixed(2)}</span></div>
               <div>⬡ <span style={{color:C.tan}}>New supply:</span> {record.newSupply.toLocaleString()}</div>
-              <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>auto-routed · permanent</span></div>
+              <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>{token.commission}% · ${(record.cost * token.commission / 100).toFixed(2)} auto-routed</span></div>
             </div>
             <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"9px 13px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8,marginBottom:16,textAlign:"left"}}>
               <span style={{color:C.sprout}}>✦</span> This token's price has <span style={{color:C.parch}}>zero effect</span> on the post's trust score. Price movements cannot discredit the research.
@@ -1687,7 +1714,7 @@ function BuyModal({ token, user, onClose, onBought }) {
               </div>
               <div style={{textAlign:"right",fontSize:8,fontFamily:"monospace",color:C.dust,lineHeight:1.7}}>
                 <div>Author commission</div>
-                <div style={{color:C.sprout,fontWeight:700}}>5–8% auto-routed</div>
+                <div style={{color:C.sprout,fontWeight:700}}>{token.commission}% auto-routed</div>
               </div>
             </div>
 
@@ -1747,7 +1774,7 @@ export default function Veridax() {
 
   const tokens = posts
     .filter(p => p.tokenData)
-    .map(p => ({ sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply }));
+    .map(p => ({ sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply, commission:p.tokenData.commission ?? commissionRate(p.cat) }));
   const buyToken = buyTokenSym ? tokens.find(t => t.sym === buyTokenSym) : null;
   const [gossip, setGossip] = useState("19,203 nodes syncing · Chain height #89,403");
 
@@ -1764,7 +1791,7 @@ export default function Veridax() {
 
   const handleTokenized = (postId, sym) => {
     setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, tokenData: { sym, supply: 1000, col: p.color, change: 0 } } : p
+      p.id === postId ? { ...p, tokenData: { sym, supply: 1000, col: p.color, change: 0, commission: commissionRate(p.cat) } } : p
     ));
     setPostVotes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
     setPostDisputes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
@@ -2109,7 +2136,7 @@ export default function Veridax() {
                   </div>
                   <div style={{fontSize:12,fontFamily:"monospace",color:C.parch,fontWeight:700}}>${t.price.toFixed(2)}</div>
                   <div style={{fontSize:11,fontFamily:"monospace",color:t.ch>0?C.sprout:C.bloom}}>{t.ch>0?"+":""}{t.ch}%</div>
-                  <div style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>5–8%</div>
+                  <div style={{fontSize:9,fontFamily:"monospace",color:C.amber}}>{t.commission}%</div>
                   <button onClick={() => setBuyTokenSym(t.sym)} style={{fontSize:8,fontFamily:"monospace",color:C.amber,background:C.amberD,border:`1px solid ${C.amber}30`,borderRadius:6,padding:"4px 9px",cursor:"pointer",letterSpacing:1}}>BUY</button>
                 </div>
               ))}
@@ -2134,7 +2161,7 @@ export default function Veridax() {
                 {[
                   {icon:"⬡",color:C.amber,title:"No Pre-Mine",body:"Zero tokens are created at launch for founders, VCs, or insiders. The very first buyer pays the same mathematical price as everyone else. No privileged early access."},
                   {icon:"📈",color:C.sky,title:"Early Believers Win",body:"The first people to recognize a discovery's importance get in cheapest. Price automatically rewards conviction before the mainstream catches on. No backdoor allocations."},
-                  {icon:"🔗",color:C.sprout,title:"Author Earns Forever",body:"Every purchase automatically routes 5–8% commission to the original author's wallet. No invoices. No platform intermediary. No negotiations. The contract handles it."},
+                  {icon:"🔗",color:C.sprout,title:"Author Earns Forever",body:"Every purchase automatically routes a category-locked commission directly to the original author's wallet. No invoices. No platform intermediary. No negotiations. The contract handles it, on every transaction, forever."},
                 ].map(({icon,color,title,body}) => (
                   <div key={title} style={{background:C.earth,border:`1px solid ${color}18`,borderRadius:9,padding:"13px"}}>
                     <div style={{fontSize:18,marginBottom:6}}>{icon}</div>
@@ -2146,6 +2173,46 @@ export default function Veridax() {
               <div style={{background:`${C.bloom}0a`,border:`1px solid ${C.bloom}30`,borderRadius:9,padding:"13px 15px",fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.85}}>
                 <div style={{color:C.bloom,marginBottom:6,letterSpacing:1,fontSize:8}}>CRITICAL DESIGN PRINCIPLE</div>
                 Token price has <span style={{color:C.parch}}>absolutely zero effect</span> on the truth score or content integrity of the underlying post. If a well-funded actor tried to buy up all tokens and dump them to crash the price — the chain's consensus record remains <span style={{color:C.parch}}>completely unchanged</span>. A crashed token does not discredit the research. This severs the link between <span style={{color:C.bloom}}>financial manipulation</span> and <span style={{color:C.parch}}>reputational damage</span>.
+              </div>
+            </div>
+
+            {/* Commission Rate Table */}
+            <div style={{background:C.bark,border:`1px solid ${C.sprout}28`,borderRadius:14,padding:"22px",marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout,letterSpacing:3}}>AUTHOR COMMISSION RATES BY CATEGORY</span>
+                <div style={{flex:1,height:1,background:`${C.sprout}22`}}/>
+              </div>
+              <p style={{fontSize:11,color:C.dust,lineHeight:1.8,marginBottom:14}}>
+                Commission rates are <span style={{color:C.parch}}>locked permanently at the moment of tokenization</span>. They reflect proximity to human survival — the more directly a field impacts life, the higher the rate. No platform can change them. No contract can renegotiate them.
+              </p>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:7,marginBottom:14}}>
+                {[
+                  {cat:"Medicine",          rate:8,    icon:"🌿", color:"#88d068"},
+                  {cat:"Project Save Humanity", rate:8, icon:"🌍", color:"#f5d060"},
+                  {cat:"Climate Science",   rate:7.5,  icon:"🌦", color:"#72c44a"},
+                  {cat:"Neuroscience",      rate:7,    icon:"🍄", color:"#d0a068"},
+                  {cat:"Biology",           rate:7,    icon:"🦋", color:"#72c44a"},
+                  {cat:"Energy",            rate:6.5,  icon:"☀",  color:"#e8a830"},
+                  {cat:"Agriculture",       rate:6,    icon:"🌾", color:"#a0c860"},
+                  {cat:"Engineering",       rate:5.5,  icon:"🔩", color:"#c87941"},
+                  {cat:"Physics",           rate:5.5,  icon:"⚛",  color:"#5aabaa"},
+                  {cat:"Artificial Intelligence", rate:5, icon:"⚙", color:"#5aabaa"},
+                  {cat:"Economics",         rate:4,    icon:"⚖",  color:"#c87941"},
+                  {cat:"Law & Governance",  rate:3.5,  icon:"🏛", color:"#e8a830"},
+                  {cat:"Philosophy",        rate:2.5,  icon:"🪴", color:"#a09070"},
+                  {cat:"Education",         rate:2.5,  icon:"📜", color:"#a09070"},
+                ].map(({cat,rate,icon,color}) => (
+                  <div key={cat} style={{background:C.earth,border:`1px solid ${color}18`,borderRadius:8,padding:"10px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:13}}>{icon}</span>
+                      <span style={{fontSize:9,color:C.dust,fontFamily:"monospace"}}>{cat}</span>
+                    </div>
+                    <span style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color,flexShrink:0}}>{rate}%</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{background:C.sproutD,border:`1px solid ${C.sprout}22`,borderRadius:9,padding:"10px 14px",fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.85}}>
+                <span style={{color:C.sprout}}>✦</span> A medical researcher whose discovery generates $1M in token volume automatically receives <span style={{color:C.parch}}>$80,000</span> — directly to their wallet, with no middlemen, no invoices, no delay. At $10M volume over a decade: <span style={{color:C.parch}}>$800,000</span>. The idea earns what it deserves, at the scale of its impact.
               </div>
             </div>
 
