@@ -1140,8 +1140,13 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
   );
 }
 
-function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, postDisputes, onClose, onLogout, onPublish }) {
-  const [tab, setTab] = useState("works");
+function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, postDisputes, balance, transactions, onDeposit, onWithdraw, onClose, onLogout, onPublish }) {
+  const [tab,             setTab]             = useState("works");
+  const [walletMode,      setWalletMode]      = useState(null); // null | "deposit" | "withdraw"
+  const [walletAmount,    setWalletAmount]    = useState("");
+  const [depositMethod,   setDepositMethod]   = useState("Credit Card");
+  const [walletWorking,   setWalletWorking]   = useState(false);
+  const [walletDone,      setWalletDone]      = useState(false);
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
@@ -1165,7 +1170,22 @@ function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, 
   const walletAddr = "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40, "0").slice(0, 40);
   const clusterInfo = CLUSTERS.find(cl => cl.id === user.cluster) || { icon:"🌐", label:"Independent" };
 
-  const TABS = [{k:"works",l:"MY WORKS"},{k:"portfolio",l:"PORTFOLIO"},{k:"activity",l:"ACTIVITY"},{k:"account",l:"ACCOUNT"}];
+  const confirmWalletAction = () => {
+    const amt = parseFloat(walletAmount);
+    if (!amt || amt <= 0) return;
+    if (walletMode === "withdraw" && amt > (balance || 0)) return;
+    setWalletWorking(true);
+    setTimeout(() => {
+      if (walletMode === "deposit") onDeposit(amt, depositMethod);
+      else onWithdraw(amt);
+      setWalletWorking(false);
+      setWalletDone(true);
+      setWalletAmount("");
+      setTimeout(() => { setWalletDone(false); setWalletMode(null); }, 2400);
+    }, 2000);
+  };
+
+  const TABS = [{k:"works",l:"WORKS"},{k:"portfolio",l:"PORTFOLIO"},{k:"wallet",l:"WALLET"},{k:"activity",l:"ACTIVITY"},{k:"account",l:"ACCOUNT"}];
 
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -1207,12 +1227,13 @@ function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, 
           {/* Stats grid */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>
             {[
-              {l:"WORKS",     v:myPosts.length,                                                c:C.sky},
-              {l:"VALIDATED", v:myValidationIds.length,                                        c:C.sprout},
-              {l:"PORTFOLIO", v:`$${totalPortfolioValue.toFixed(2)}`,                          c:C.copper},
-              {l:"AVG TRUST", v:avgTrust !== null ? `${(avgTrust*100).toFixed(0)}%` : "—",    c:C.amber},
+              {l:"WORKS",     v:myPosts.length,                                             c:C.sky},
+              {l:"VALIDATED", v:myValidationIds.length,                                     c:C.sprout},
+              {l:"BALANCE",   v:`$${(balance||0).toFixed(2)}`,                              c:C.amber},
+              {l:"AVG TRUST", v:avgTrust !== null ? `${(avgTrust*100).toFixed(0)}%` : "—", c:C.copper},
             ].map(({l,v,c}) => (
-              <div key={l} style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"10px 6px",textAlign:"center"}}>
+              <div key={l} onClick={l==="BALANCE" ? () => setTab("wallet") : undefined}
+                style={{background:C.card,border:`1px solid ${l==="BALANCE"?C.amber+"33":C.shadow}`,borderRadius:9,padding:"10px 6px",textAlign:"center",cursor:l==="BALANCE"?"pointer":"default"}}>
                 <div style={{fontSize:13,fontFamily:"monospace",fontWeight:700,color:c,marginBottom:2}}>{v}</div>
                 <div style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:.5}}>{l}</div>
               </div>
@@ -1342,6 +1363,125 @@ function DashboardModal({ user, posts, portfolio, tokens, userVotes, postVotes, 
               ))}
             </div>
           ))}
+
+          {/* WALLET */}
+          {tab === "wallet" && (
+            <div>
+              {/* Balance card */}
+              <div style={{background:`linear-gradient(135deg,${C.amber}12,${C.copper}08)`,border:`1px solid ${C.amber}44`,borderRadius:14,padding:"22px",marginBottom:14,textAlign:"center"}}>
+                <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:3,marginBottom:6}}>ACCOUNT BALANCE</div>
+                <div style={{fontSize:36,fontFamily:"monospace",fontWeight:700,color:C.amber,marginBottom:16,letterSpacing:-1}}>${(balance||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                {walletMode === null && !walletDone && (
+                  <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+                    <button onClick={() => setWalletMode("deposit")}
+                      style={{background:`${C.sprout}14`,border:`1px solid ${C.sprout}44`,color:C.sprout,borderRadius:9,padding:"8px 18px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:1.5,display:"flex",alignItems:"center",gap:6}}>
+                      ↑ DEPOSIT
+                    </button>
+                    <button onClick={() => setWalletMode("withdraw")}
+                      disabled={(balance||0) <= 0}
+                      style={{background:`${C.sky}14`,border:`1px solid ${(balance||0)>0?C.sky+"44":C.shadow}`,color:(balance||0)>0?C.sky:C.dust,borderRadius:9,padding:"8px 18px",fontFamily:"monospace",fontSize:9,cursor:(balance||0)>0?"pointer":"not-allowed",letterSpacing:1.5,display:"flex",alignItems:"center",gap:6}}>
+                      ↓ WITHDRAW
+                    </button>
+                  </div>
+                )}
+                {walletDone && (
+                  <div style={{fontSize:11,fontFamily:"monospace",color:C.sprout,letterSpacing:1,animation:"fadein .3s ease both"}}>
+                    ✓ {walletMode === "deposit" ? "Deposit" : "Withdrawal"} confirmed
+                  </div>
+                )}
+              </div>
+
+              {/* Deposit / Withdraw form */}
+              {walletMode && !walletDone && (
+                <div style={{background:C.card,border:`1px solid ${walletMode==="deposit"?C.sprout+"33":C.sky+"33"}`,borderRadius:12,padding:"18px 20px",marginBottom:14}}>
+                  <div style={{fontSize:8,fontFamily:"monospace",color:walletMode==="deposit"?C.sprout:C.sky,letterSpacing:2,marginBottom:14}}>
+                    {walletMode === "deposit" ? "↑ DEPOSIT FUNDS" : "↓ WITHDRAW FUNDS"}
+                  </div>
+                  {walletWorking ? (
+                    <div style={{textAlign:"center",padding:"20px 0"}}>
+                      <div style={{fontSize:22,marginBottom:8,animation:"pulse 1s infinite",color:walletMode==="deposit"?C.sprout:C.sky}}>
+                        {walletMode === "deposit" ? "↑" : "↓"}
+                      </div>
+                      <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,letterSpacing:1}}>
+                        {walletMode === "deposit" ? "Processing deposit…" : "Processing withdrawal…"}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:5}}>AMOUNT (USD)</div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:14,fontFamily:"monospace",color:C.amber}}>$</span>
+                          <input type="number" value={walletAmount} onChange={e => setWalletAmount(e.target.value)}
+                            placeholder="0.00" min="0.01" step="0.01"
+                            max={walletMode==="withdraw"?(balance||0):undefined}
+                            style={{flex:1,background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"9px 12px",color:C.parch,fontFamily:"monospace",fontSize:16,outline:"none"}}/>
+                        </div>
+                        {walletMode === "withdraw" && parseFloat(walletAmount) > (balance||0) && (
+                          <div style={{fontSize:8,fontFamily:"monospace",color:C.bloom,marginTop:5}}>✗ Exceeds available balance of ${(balance||0).toFixed(2)}</div>
+                        )}
+                      </div>
+                      {walletMode === "deposit" && (
+                        <div style={{marginBottom:14}}>
+                          <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:6}}>PAYMENT METHOD</div>
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                            {["Credit Card","Bank Transfer","Crypto"].map(m => (
+                              <button key={m} onClick={() => setDepositMethod(m)}
+                                style={{background:depositMethod===m?`${C.amber}22`:C.wood,border:`1px solid ${depositMethod===m?C.amber+"55":C.shadow}`,color:depositMethod===m?C.amber:C.dust,borderRadius:7,padding:"5px 11px",fontFamily:"monospace",fontSize:8,cursor:"pointer",letterSpacing:.5}}>
+                                {depositMethod===m?"● ":""}{m}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {walletMode === "withdraw" && (
+                        <div style={{marginBottom:14}}>
+                          <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:5}}>DESTINATION WALLET</div>
+                          <div style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:7,padding:"8px 12px",fontSize:8,fontFamily:"monospace",color:C.amber,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{walletAddr}</div>
+                        </div>
+                      )}
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={confirmWalletAction}
+                          disabled={!parseFloat(walletAmount) || parseFloat(walletAmount) <= 0 || (walletMode==="withdraw" && parseFloat(walletAmount) > (balance||0))}
+                          style={{flex:1,background:walletMode==="deposit"?`${C.sprout}18`:`${C.sky}18`,border:`1px solid ${walletMode==="deposit"?C.sprout+"44":C.sky+"44"}`,color:walletMode==="deposit"?C.sprout:C.sky,borderRadius:8,padding:"10px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:1.5}}>
+                          CONFIRM {walletMode==="deposit"?"DEPOSIT":"WITHDRAWAL"}
+                        </button>
+                        <button onClick={() => { setWalletMode(null); setWalletAmount(""); }}
+                          style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:8,padding:"10px 14px",fontFamily:"monospace",fontSize:9,cursor:"pointer"}}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Transaction history */}
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:10}}>TRANSACTION HISTORY</div>
+              {(!transactions || transactions.length === 0) ? (
+                <div style={{textAlign:"center",padding:"28px 16px",border:`1px dashed ${C.shadow}`,borderRadius:10}}>
+                  <p style={{fontSize:10,fontFamily:"monospace",color:C.dust}}>No transactions yet. Deposit funds to get started.</p>
+                </div>
+              ) : (
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  {(transactions||[]).map(tx => (
+                    <div key={tx.id} style={{background:C.card,border:`1px solid ${C.shadow}`,borderRadius:8,padding:"9px 13px",display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:14,flexShrink:0,color:tx.type==="deposit"?C.sprout:tx.type==="withdraw"?C.sky:C.amber}}>
+                        {tx.type==="deposit"?"↑":tx.type==="withdraw"?"↓":"⬡"}
+                      </span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:10,color:C.parch,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tx.desc}</div>
+                        <div style={{fontSize:8,fontFamily:"monospace",color:C.dust}}>{tx.date}</div>
+                      </div>
+                      <span style={{fontSize:11,fontFamily:"monospace",fontWeight:700,color:tx.amount>0?C.sprout:C.dust,flexShrink:0}}>
+                        {tx.amount>0?"+":""}{tx.amount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ACCOUNT */}
           {tab === "account" && (
@@ -1984,7 +2124,7 @@ function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVot
   );
 }
 
-function BuyModal({ token, user, onClose, onBought }) {
+function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
   const [qty, setQty] = useState(1);
   const [buying, setBuying] = useState(false);
   const [bought, setBought] = useState(false);
@@ -2026,11 +2166,13 @@ function BuyModal({ token, user, onClose, onBought }) {
   fillPts.push(`${cx.toFixed(1)},${(H - 10).toFixed(1)}`);
   const fillD = `M${fillPts[0]} L${fillPts.slice(1).join(" L")} Z`;
 
+  const sufficientBalance = (balance || 0) >= totalCost;
+
   const handleBuy = () => {
-    if (!user || buying || bought) return;
-    const rec = { qty, cost: bondingCost(token.supply, token.supply + qty), newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) };
+    if (!user || buying || bought || !sufficientBalance) return;
+    const rec = { qty, cost: totalCost, newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) };
     setBuying(true);
-    setTimeout(() => { setBuying(false); setBought(true); setRecord(rec); if (onBought) onBought(token.sym, qty); }, 2000);
+    setTimeout(() => { setBuying(false); setBought(true); setRecord(rec); if (onBought) onBought(token.sym, qty, totalCost); }, 2000);
   };
 
   return (
@@ -2141,10 +2283,28 @@ function BuyModal({ token, user, onClose, onBought }) {
               <span style={{color:C.amber}}>⬡</span> Token price has <span style={{color:C.parch}}>zero effect</span> on this post's trust score or content integrity. A crashed price cannot discredit the research. Financial manipulation cannot touch the consensus record.
             </div>
 
+            {user && (
+              <div style={{background:C.card,border:`1px solid ${sufficientBalance?C.shadow:C.bloom+"44"}`,borderRadius:9,padding:"10px 14px",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:2}}>YOUR BALANCE</div>
+                  <div style={{fontSize:14,fontFamily:"monospace",fontWeight:700,color:sufficientBalance?C.parch:C.bloom}}>${(balance||0).toFixed(2)}</div>
+                </div>
+                {!sufficientBalance && (
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:8,fontFamily:"monospace",color:C.bloom,marginBottom:4}}>Need ${(totalCost-(balance||0)).toFixed(2)} more</div>
+                    <button onClick={() => { onClose(); if (onNeedDeposit) onNeedDeposit(); }}
+                      style={{background:`${C.sprout}14`,border:`1px solid ${C.sprout}44`,color:C.sprout,borderRadius:7,padding:"4px 10px",fontFamily:"monospace",fontSize:8,cursor:"pointer",letterSpacing:1}}>
+                      ↑ DEPOSIT FUNDS
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {user ? (
-              <button onClick={handleBuy}
-                style={{width:"100%",background:`linear-gradient(135deg,${token.col}22,${C.vine}12)`,border:`1px solid ${token.col}55`,color:token.col,borderRadius:9,padding:"13px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,fontWeight:700}}>
-                BUY {qty} {token.sym} — ${totalCost.toFixed(2)} →
+              <button onClick={handleBuy} disabled={!sufficientBalance}
+                style={{width:"100%",background:sufficientBalance?`linear-gradient(135deg,${token.col}22,${C.vine}12)`:`${C.shadow}`,border:`1px solid ${sufficientBalance?token.col+"55":C.shadow}`,color:sufficientBalance?token.col:C.dust,borderRadius:9,padding:"13px",fontFamily:"monospace",fontSize:10,cursor:sufficientBalance?"pointer":"not-allowed",letterSpacing:2,fontWeight:700}}>
+                {sufficientBalance ? `BUY ${qty} ${token.sym} — $${totalCost.toFixed(2)} →` : `INSUFFICIENT BALANCE`}
               </button>
             ) : (
               <div style={{textAlign:"center",padding:"12px",border:`1px solid ${C.shadow}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:C.dust}}>
@@ -2324,11 +2484,15 @@ export default function Veridax() {
     setTokenizePost(null);
   };
 
-  const handleBought = (sym, qty) => {
+  const handleBought = (sym, qty, cost) => {
     setPosts(prev => prev.map(p =>
       p.tokenData?.sym === sym ? { ...p, tokenData: { ...p.tokenData, supply: p.tokenData.supply + qty } } : p
     ));
     setPortfolio(prev => ({ ...prev, [sym]: (prev[sym] || 0) + qty }));
+    if (cost > 0) {
+      setBalance(prev => prev - cost);
+      addTx("buy", -cost, `Bought ${qty.toLocaleString()} × ⬡ ${sym}`);
+    }
   };
 
   const handlePublish = (newPost) => {
@@ -2339,7 +2503,30 @@ export default function Veridax() {
     setPostDisputes(prev => ({ ...prev, [p.id]: { ...empty } }));
   };
 
+  const [balance,      setBalance]      = useState(() => LS.get('vdx_balance', 0));
+  const [transactions, setTransactions] = useState(() => LS.get('vdx_transactions', []));
+  useEffect(() => LS.set('vdx_balance', balance), [balance]);
+  useEffect(() => LS.set('vdx_transactions', transactions), [transactions]);
+
   const totalValidations = Object.values(postVotes).reduce((s,v) => s + Object.values(v).reduce((a,b) => a+b, 0), 0);
+
+  const addTx = (type, amount, desc) => {
+    setTransactions(prev => [{
+      id: `tx_${Date.now()}`,
+      type, amount, desc,
+      date: new Date().toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }),
+    }, ...prev]);
+  };
+
+  const handleDeposit = (amount, method) => {
+    setBalance(prev => prev + amount);
+    addTx("deposit", amount, `Deposit via ${method}`);
+  };
+
+  const handleWithdraw = (amount) => {
+    setBalance(prev => prev - amount);
+    addTx("withdraw", -amount, "Withdrawal to wallet");
+  };
 
   const navigate = (sectionId) => {
     setSection(sectionId);
@@ -3400,7 +3587,7 @@ export default function Veridax() {
 
       {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
-      {showProfile && user && <DashboardModal user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }}/>}
+      {showProfile && user && <DashboardModal user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} balance={balance} transactions={transactions} onDeposit={handleDeposit} onWithdraw={handleWithdraw} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }}/>}
       {showSub && <SubModal user={user} onClose={() => setShowSub(false)}/>}
       {detailPost && (
         <PostDetailModal
@@ -3426,7 +3613,7 @@ export default function Veridax() {
           onTokenized={handleTokenized}
         />
       )}
-      {buyToken && <BuyModal token={buyToken} user={user} onClose={() => setBuyTokenSym(null)} onBought={handleBought}/>}
+      {buyToken && <BuyModal token={buyToken} user={user} balance={balance} onClose={() => setBuyTokenSym(null)} onBought={handleBought} onNeedDeposit={() => setShowProfile(true)}/>}
       {validatingPost && postVotes[validatingPost.id] && (
         <ValidationModal
           post={validatingPost}
