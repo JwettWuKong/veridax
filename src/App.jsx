@@ -1069,6 +1069,35 @@ export default function Veridax() {
                 </div>
               ))}
             </div>
+
+            {/* How the Network Works */}
+            <div style={{marginTop:40}}>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:14}}>HOW THE NETWORK WORKS</div>
+              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                {[
+                  {icon:"📡",color:C.sky,title:"You Are the Network",body:"Every person who installs or runs VERIDAX becomes a node on a peer-to-peer mesh network. There is no central server. There is no company that owns the data. There is no single domain that can be seized. When you open VERIDAX, your device is literally part of the network itself. If a corporation tried to shut it down, they would need to simultaneously delete it from every single device running it worldwide — which is mathematically and logistically impossible."},
+                  {icon:"🗄",color:C.copper,title:"IPFS — Data Lives Everywhere",body:"Content is stored on IPFS — a decentralized file system where data lives across thousands of machines at once. Every piece of published information is cryptographically linked to the one before it in a blockchain, meaning no single block of information can be altered or deleted without breaking the entire chain and making the tampering immediately visible to every node."},
+                  {icon:"🔊",color:C.sprout,title:"Gossip Protocol — Instant Global Spread",body:"New information spreads across the network automatically through a gossip protocol — one node tells a few peers, those peers tell a few more, and within seconds the entire global network has a copy. There is no broadcast server. There is no publisher. The truth moves on its own."},
+                ].map(({icon,color,title,body}) => (
+                  <div key={title} style={{background:C.card,border:`1px solid ${color}22`,borderRadius:14,padding:"22px 24px",display:"flex",gap:18,alignItems:"flex-start",transition:"border-color .2s"}}
+                    onMouseEnter={e => e.currentTarget.style.borderColor=`${color}55`}
+                    onMouseLeave={e => e.currentTarget.style.borderColor=`${color}22`}>
+                    <div style={{fontSize:26,flexShrink:0,marginTop:2}}>{icon}</div>
+                    <div>
+                      <div style={{fontSize:9,fontFamily:"monospace",color,letterSpacing:1,marginBottom:8}}>{title.toUpperCase()}</div>
+                      <p style={{fontSize:12,color:C.dust,lineHeight:1.85}}>{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{marginTop:20,background:`linear-gradient(135deg,${C.canopy},${C.bark})`,border:`1px solid ${C.shadow}`,borderRadius:14,padding:"22px",textAlign:"center"}}>
+                <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:16,color:C.parch,lineHeight:1.5,marginBottom:10}}>
+                  "The chain lives as long as one person runs it."
+                </div>
+                <p style={{color:C.dust,fontSize:11,lineHeight:1.7}}>No server to raid. No domain to seize. No company to pressure. No single lever to pull. If a corporation tried to shut it down, they would need to simultaneously delete it from every device worldwide — which is mathematically and logistically impossible.</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
