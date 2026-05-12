@@ -2549,11 +2549,13 @@ export default function Veridax() {
   };
 
   const handlePublish = (newPost) => {
+    const cluster = user?.cluster || "independent";
     const empty = { scientific:0, civil:0, independent:0, tech:0, grassroots:0, academic:0, journalism:0, legal:0 };
-    const p = { ...newPost, up: newPost.up ?? 0, cite: newPost.cite ?? 0 };
+    const p = { ...newPost, up: 1, cite: newPost.cite ?? 0 };
     setPosts(prev => [...prev, p]);
-    setPostVotes(prev => ({ ...prev, [p.id]: { ...empty } }));
+    setPostVotes(prev => ({ ...prev, [p.id]: { ...empty, [cluster]: 1 } }));
     setPostDisputes(prev => ({ ...prev, [p.id]: { ...empty } }));
+    setUserVotes(prev => ({ ...prev, [p.id]: "up" }));
   };
 
   const [balance,      setBalance]      = useState(() => LS.get('vdx_balance', 0));
