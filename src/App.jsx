@@ -1154,9 +1154,9 @@ function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const myPosts = (posts || []).filter(p => p.author === user.username);
+  const myPosts = user ? (posts || []).filter(p => p.author === user.username) : [];
   const myValidationIds = Object.keys(userVotes || {});
-  const myValidatedPosts = (posts || []).filter(p => myValidationIds.includes(p.id));
+  const myValidatedPosts = user ? (posts || []).filter(p => myValidationIds.includes(p.id)) : [];
   const ownedSyms = Object.keys(portfolio || {}).filter(s => (portfolio[s] || 0) > 0);
   const ownedTokens = ownedSyms.map(sym => {
     const t = (tokens || []).find(t => t.sym === sym);
@@ -1167,8 +1167,8 @@ function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes
   const avgTrust = myPosts.length > 0
     ? myPosts.reduce((s, p) => s + calcTrustScore((postVotes||{})[p.id]||{}, (postDisputes||{})[p.id]||{}), 0) / myPosts.length
     : null;
-  const walletAddr = "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40, "0").slice(0, 40);
-  const clusterInfo = CLUSTERS.find(cl => cl.id === user.cluster) || { icon:"🌐", label:"Independent" };
+  const walletAddr = user ? "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40, "0").slice(0, 40) : "0x0000000000000000000000000000000000000000";
+  const clusterInfo = user ? (CLUSTERS.find(cl => cl.id === user.cluster) || { icon:"🌐", label:"Independent" }) : { icon:"🌐", label:"Independent" };
 
   const confirmWalletAction = () => {
     const amt = parseFloat(walletAmount);
