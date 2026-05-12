@@ -2155,6 +2155,11 @@ export default function Veridax() {
 
   const totalValidations = Object.values(postVotes).reduce((s,v) => s + Object.values(v).reduce((a,b) => a+b, 0), 0);
 
+  const navigate = (sectionId) => {
+    setSection(sectionId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div style={{minHeight:"100vh",background:C.soil,color:C.parch,fontFamily:"'Palatino Linotype',Palatino,Georgia,serif",display:"flex",flexDirection:"column"}}>
       <style>{`
@@ -2196,7 +2201,7 @@ export default function Veridax() {
           </div>
           <div style={{display:"flex",flex:1,overflowX:"auto"}}>
             {NAV_ITEMS.map(n => (
-              <button key={n.id} onClick={() => setSection(n.id)}
+              <button key={n.id} onClick={() => navigate(n.id)}
                 style={{background:"transparent",border:"none",borderBottom:`2px solid ${section===n.id?C.amber:"transparent"}`,color:section===n.id?C.amber:C.dust,padding:"0 12px",height:54,fontSize:9,fontFamily:"monospace",cursor:"pointer",letterSpacing:1,whiteSpace:"nowrap",transition:"color .2s,border-color .2s"}}>
                 {n.label}
               </button>
@@ -2262,7 +2267,7 @@ export default function Veridax() {
                     style={{background:`linear-gradient(135deg,${C.amber},${C.copper})`,border:"none",borderRadius:10,padding:"13px 22px",color:C.bark,fontWeight:700,fontSize:11,fontFamily:"monospace",cursor:"pointer",letterSpacing:2,boxShadow:`0 0 26px ${C.amber}28`}}>
                     📰 IMPORT FROM SUBSTACK
                   </button>
-                  <button onClick={() => setSection("psh")}
+                  <button onClick={() => navigate("psh")}
                     style={{background:"#f5d06010",border:"1px solid #f5d06044",borderRadius:10,padding:"13px 16px",color:"#f5d060",fontSize:11,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
                     ★ SAVE HUMANITY
                   </button>
@@ -2331,7 +2336,7 @@ export default function Veridax() {
                       <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:3}}>Recent Discoveries</h2>
                       <p style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>Latest · Most validated · Highest consensus</p>
                     </div>
-                    <button onClick={() => setSection("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
+                    <button onClick={() => navigate("discover")} style={{background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"6px 12px",fontSize:9,fontFamily:"monospace",cursor:"pointer"}}>VIEW ALL →</button>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
                     {[...posts].reverse().slice(0, 9).map((p, i) => (
@@ -2377,7 +2382,7 @@ export default function Veridax() {
                 <p style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>From medicine to philosophy to engineering — every field, open, censor-proof, permanently archived</p>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:7}}>
                   {CATS.map(cat => (
-                    <button key={cat.id} onClick={() => { setDiscoverFilter(cat.name); setSection("discover"); }}
+                    <button key={cat.id} onClick={() => { setDiscoverFilter(cat.name); navigate("discover"); }}
                       style={{background:cat.flagship?"#f5d06008":C.bark,border:`1px solid ${cat.flagship?"#f5d06033":C.shadow}`,borderRadius:10,padding:"10px 9px",cursor:"pointer",textAlign:"left",transition:"all .2s"}}
                       onMouseEnter={e => { e.currentTarget.style.background=`${cat.color}10`; e.currentTarget.style.borderColor=`${cat.color}44`; }}
                       onMouseLeave={e => { e.currentTarget.style.background=cat.flagship?"#f5d06008":C.bark; e.currentTarget.style.borderColor=cat.flagship?"#f5d06033":C.shadow; }}>
@@ -2554,7 +2559,7 @@ export default function Veridax() {
                   {i:"🧠",n:"Mental Health Access",      c:"#c090c0", d:"Open-source therapy protocols, crisis intervention systems, and global mental health infrastructure."},
                   {i:"🌒",n:"Civilization Technology",   c:"#8090d0", d:"Long-horizon systems for human flourishing at civilizational scale — the ideas that define the next century."},
                 ].map(({i,n,c,d}) => (
-                  <div key={n} onClick={() => { setDiscoverFilter("Project Save Humanity"); setSection("discover"); }}
+                  <div key={n} onClick={() => { setDiscoverFilter("Project Save Humanity"); navigate("discover"); }}
                     style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:11,padding:"14px 13px",transition:"all .2s",cursor:"pointer"}}
                     onMouseEnter={e => { e.currentTarget.style.background=`${c}0e`; e.currentTarget.style.borderColor=`${c}44`; }}
                     onMouseLeave={e => { e.currentTarget.style.background=C.bark; e.currentTarget.style.borderColor=C.shadow; }}>
@@ -3131,40 +3136,40 @@ export default function Veridax() {
           </div>
           {[
             {h:"Platform",ls:[
-              {label:"Discover",          action:() => setSection("discover")},
-              {label:"★ Save Humanity",   action:() => setSection("psh")},
-              {label:"Knowledge Market",  action:() => setSection("market")},
+              {label:"Discover",          action:() => navigate("discover")},
+              {label:"★ Save Humanity",   action:() => navigate("psh")},
+              {label:"Knowledge Market",  action:() => navigate("market")},
               {label:"Import Substack",   action:() => setShowSub(true)},
               {label:"Submit Research",   action:() => user ? setShowPublish(true) : setShowJoin(true)},
             ]},
             {h:"Security",ls:[
-              {label:"Proof of Humanity", action:() => setSection("security")},
-              {label:"Defense Layers",    action:() => setSection("security")},
-              {label:"Suppression Vault", action:() => setSection("security")},
-              {label:"Open Source",       action:() => setSection("security")},
-              {label:"Run a Node",        action:() => setSection("network")},
+              {label:"Proof of Humanity", action:() => navigate("security")},
+              {label:"Defense Layers",    action:() => navigate("security")},
+              {label:"Suppression Vault", action:() => navigate("security")},
+              {label:"Open Source",       action:() => navigate("security")},
+              {label:"Run a Node",        action:() => navigate("network")},
             ]},
             {h:"Network",ls:[
-              {label:"Node #1 Active",    action:() => setSection("network")},
-              {label:"P2P Protocol",      action:() => setSection("network")},
-              {label:"IPFS Storage",      action:() => setSection("network")},
-              {label:"Tor Support",       action:() => setSection("network")},
-              {label:"Light Node",        action:() => setSection("network")},
+              {label:"Node #1 Active",    action:() => navigate("network")},
+              {label:"P2P Protocol",      action:() => navigate("network")},
+              {label:"IPFS Storage",      action:() => navigate("network")},
+              {label:"Tor Support",       action:() => navigate("network")},
+              {label:"Light Node",        action:() => navigate("network")},
             ]},
             {h:"Mission",ls:[
-              {label:"About",             action:() => setSection("psh")},
-              {label:"Manifesto",         action:() => setSection("psh")},
-              {label:"Community",         action:() => setSection("psh")},
-              {label:"Consensus",         action:() => setSection("consensus")},
+              {label:"About",             action:() => navigate("psh")},
+              {label:"Manifesto",         action:() => navigate("psh")},
+              {label:"Community",         action:() => navigate("psh")},
+              {label:"Consensus",         action:() => navigate("consensus")},
               {label:"Contact",           action:() => {}},
             ]},
           ].map(col => (
             <div key={col.h}>
               <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:8}}>{col.h.toUpperCase()}</div>
               {col.ls.map(({label,action}) => (
-                <div key={label} onClick={action} style={{fontSize:10,fontFamily:"monospace",color:C.dust,padding:"2px 0",cursor:"pointer",transition:"color .2s"}}
-                  onMouseEnter={e => e.currentTarget.style.color=C.tan}
-                  onMouseLeave={e => e.currentTarget.style.color=C.dust}>{label}</div>
+                <div key={label} onClick={action} style={{fontSize:10,fontFamily:"monospace",color:C.dust,padding:"3px 0",cursor:"pointer",transition:"color .2s",textDecoration:"none"}}
+                  onMouseEnter={e => { e.currentTarget.style.color=C.parch; e.currentTarget.style.textDecoration="underline"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color=C.dust; e.currentTarget.style.textDecoration="none"; }}>{label}</div>
               ))}
             </div>
           ))}
