@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { nf, shannonDiversity, calcTrustScore, checkGates } from "./lib/scoring";
 
 const C = {
   soil:"#04050a", earth:"#07080e", bark:"#0d0e18", wood:"#111220",
@@ -125,42 +126,6 @@ const CATS = [
   {id:"oceant",name:"Ocean Technology",       icon:"🌊",color:"#5aabaa"},
   {id:"regen", name:"Regenerative Systems",   icon:"♻", color:"#3a7a28"},
 ];
-
-const nf = n => n>=1e6?`${(n/1e6).toFixed(1)}M`:n>=1e3?`${(n/1e3).toFixed(1)}K`:`${n}`;
-
-
-function shannonDiversity(counts) {
-  const vals = Object.values(counts);
-  const total = vals.reduce((s,v) => s+v, 0);
-  if (total === 0) return 0;
-  const H = vals.filter(v => v > 0).reduce((s,v) => { const p = v/total; return s - p * Math.log2(p); }, 0);
-  return H / Math.log2(8);
-}
-
-function calcTrustScore(ups, disps) {
-  const totalUp = Object.values(ups).reduce((s,v) => s+v, 0);
-  const totalDisp = Object.values(disps).reduce((s,v) => s+v, 0);
-  const total = totalUp + totalDisp;
-  if (total === 0) return 0;
-  return 0.65 * (totalUp / total) + 0.35 * shannonDiversity(ups);
-}
-
-const TOKEN_GATES = { upvotes:10000, citations:200, validations:2500, diversity:0.72, trustScore:0.88 };
-
-function checkGates(post, votes, disputes) {
-  const trust      = calcTrustScore(votes, disputes);
-  const diversity  = shannonDiversity(votes);
-  const validCount = Object.values(votes).reduce((s, v) => s + v, 0);
-  const items = [
-    { key:"upvotes",     label:"UPVOTES",                    val:post.up,    req:TOKEN_GATES.upvotes,     fmt:v => nf(v) },
-    { key:"citations",   label:"PEER CITATIONS",             val:post.cite,  req:TOKEN_GATES.citations,   fmt:v => v.toLocaleString() },
-    { key:"validations", label:"CROSS-CLUSTER VALIDATIONS",  val:validCount, req:TOKEN_GATES.validations, fmt:v => nf(v) },
-    { key:"diversity",   label:"DIVERSITY INDEX",            val:diversity,  req:TOKEN_GATES.diversity,   fmt:v => `${(v*100).toFixed(1)}%` },
-    { key:"trustScore",  label:"TRUST SCORE",                val:trust,      req:TOKEN_GATES.trustScore,  fmt:v => `${(v*100).toFixed(1)}%` },
-  ];
-  const metCount = items.filter(g => g.val >= g.req).length;
-  return { items, metCount, allMet: metCount === 5 };
-}
 
 function bondingPrice(supply) {
   return 0.001 * Math.pow(Math.max(supply, 0), 1.38);
