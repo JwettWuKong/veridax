@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { nf, shannonDiversity, calcTrustScore, checkGates } from "./lib/scoring";
+import { signUp, signIn, signOut, fetchProfile, fetchProfileCount, getSession, onAuthStateChange, toAppUser } from "./lib/auth";
 
 const C = {
   soil:"#04050a", earth:"#07080e", bark:"#0d0e18", wood:"#111220",
@@ -2446,12 +2447,11 @@ const NAV_ITEMS = [
 
 export default function Veridax() {
   const [section, setSection] = useState("home");
-  const [user, setUser]             = useState(() => LS.get('vdx_session', null));
-  const [accounts, setAccounts]     = useState(() => LS.get('vdx_accounts', []));
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [showJoin, setShowJoin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [showSub, setShowSub] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
   const [posts, setPosts]               = useState(() => LS.get('vdx_posts', []));
   const [postVotes,    setPostVotes]    = useState(() => LS.get('vdx_votes', {}));
@@ -2472,14 +2472,33 @@ export default function Veridax() {
     .map(p => ({ sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply, commission:p.tokenData.commission ?? commissionRate(p.cat) }));
   const buyToken = buyTokenSym ? tokens.find(t => t.sym === buyTokenSym) : null;
 
-  // Persistence effects
-  useEffect(() => LS.set('vdx_posts', posts), [posts]);
-  useEffect(() => LS.set('vdx_votes', postVotes), [postVotes]);
-  useEffect(() => LS.set('vdx_disputes', postDisputes), [postDisputes]);
-  useEffect(() => LS.set('vdx_accounts', accounts), [accounts]);
-  useEffect(() => { if (user) LS.set('vdx_session', user); else LS.del('vdx_session'); }, [user]);
+  // Auth: load the current session on mount, then stay in sync with
+  // sign-in/sign-out events for the rest of the app's lifetime.
+  useEffect(() => {
+    let active = true;
+    const loadUserFromSession = async (session) => {
+      if (!session) { if (active) setUser(null); return; }
+      try {
+        const profile = await fetchProfile(session.user.id);
+        if (active) setUser(toAppUser(session, profile));
+      } catch (err) {
+        console.error("Failed to load profile for session:", err);
+        if (active) setUser(null);
+      }
+    };
+    getSession()
+      .then(session => loadUserFromSession(session))
+      .catch(() => { if (active) setUser(null); })
+      .finally(() => { if (active) setAuthLoading(false); });
+    const unsubscribe = onAuthStateChange(loadUserFromSession);
+    return () => { active = false; unsubscribe(); };
+  }, []);
+
+  const handleJoin = async (profile) => { await signUp(profile); };
+  const handleLogin = async ({ email, password }) => { await signIn({ email, password }); };
+  const handleLogout = async () => { await signOut(); };
+
   useEffect(() => LS.set('vdx_portfolio', portfolio), [portfolio]);
-  useEffect(() => LS.set('vdx_uservotes', userVotes), [userVotes]);
 
   const handleVote = (postId, type) => {
     if (!user || userVotes[postId]) return;
@@ -3611,9 +3630,9 @@ export default function Veridax() {
         </div>
       </footer>
 
-      {showJoin && <JoinModal accounts={accounts} onClose={() => setShowJoin(false)} onJoin={v => { setAccounts(prev => [...prev, v]); setUser(v); setShowJoin(false); }} onSwitchToLogin={() => setShowLogin(true)}/>}
-      {showLogin && <LoginModal accounts={accounts} onClose={() => setShowLogin(false)} onLogin={v => { setUser(v); setShowLogin(false); }} onSwitchToJoin={() => setShowJoin(true)}/>}
-      {showProfile && <DashboardSidebar user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} balance={balance} transactions={transactions} onDeposit={handleDeposit} onWithdraw={handleWithdraw} onClose={() => setShowProfile(false)} onLogout={() => { setUser(null); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }} onJoin={() => { setShowProfile(false); setShowJoin(true); }} onLogin={() => { setShowProfile(false); setShowLogin(true); }}/>}
+      {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={handleJoin} onSwitchToLogin={() => setShowLogin(true)}/>}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleLogin} onSwitchToJoin={() => setShowJoin(true)}/>}
+      {showProfile && <DashboardSidebar user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} balance={balance} transactions={transactions} onDeposit={handleDeposit} onWithdraw={handleWithdraw} onClose={() => setShowProfile(false)} onLogout={() => { handleLogout(); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }} onJoin={() => { setShowProfile(false); setShowJoin(true); }} onLogin={() => { setShowProfile(false); setShowLogin(true); }}/>}
       {showSub && <SubModal user={user} onClose={() => setShowSub(false)}/>}
       {detailPost && (
         <PostDetailModal
