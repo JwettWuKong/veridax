@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { nf, shannonDiversity, calcTrustScore, checkGates } from "./lib/scoring";
 import { signUp, signIn, signOut, fetchProfile, fetchProfileCount, getSession, onAuthStateChange, toAppUser } from "./lib/auth";
+import { fetchPosts, createPost } from "./lib/posts";
+import { fetchVotes, castVote, aggregateVotes } from "./lib/votes";
 
 const C = {
   soil:"#04050a", earth:"#07080e", bark:"#0d0e18", wood:"#111220",
@@ -2453,10 +2455,15 @@ export default function Veridax() {
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
-  const [posts, setPosts]               = useState(() => LS.get('vdx_posts', []));
-  const [postVotes,    setPostVotes]    = useState(() => LS.get('vdx_votes', {}));
-  const [postDisputes, setPostDisputes] = useState(() => LS.get('vdx_disputes', {}));
-  const [userVotes,    setUserVotes]    = useState(() => LS.get('vdx_uservotes', {}));
+  const [postRows,     setPostRows]     = useState([]);
+  const [rawVotes,      setRawVotes]     = useState([]);
+  const [expertCount,   setExpertCount]  = useState(0);
+  const [dataLoading,   setDataLoading]  = useState(true);
+  const [dataError,     setDataError]    = useState("");
+  // Tokenization is Phase 2 — until posts have a real tokenData column,
+  // any tokenized/bought state stays local-only, same as before, keyed by
+  // post id so it survives reloads within this browser.
+  const [localTokenData, setLocalTokenData] = useState(() => LS.get('vdx_tokendata', {}));
   const [portfolio,    setPortfolio]    = useState(() => LS.get('vdx_portfolio', {}));
   const [validatingPost,  setValidatingPost]  = useState(null);
   const [tokenizePost,    setTokenizePost]    = useState(null);
@@ -2466,6 +2473,29 @@ export default function Veridax() {
   const [discoverSearch,  setDiscoverSearch]  = useState("");
   const [discoverSort,    setDiscoverSort]    = useState("newest");
   const [showProposecat,  setShowProposecat]  = useState(false);
+
+  const { postVotes, postDisputes, userVotes, upCounts } = aggregateVotes(rawVotes, user?.id);
+
+  const posts = postRows.map(row => {
+    const catInfo = CATS.find(c => c.name === row.cat);
+    const base = {
+      id: row.id,
+      cat: row.cat,
+      icon: catInfo?.icon || "📄",
+      color: catInfo?.color || C.amber,
+      title: row.title,
+      body: row.body,
+      summary: row.summary,
+      author: row.profiles?.username || "unknown",
+      field: row.profiles?.field || "",
+      verified: false,
+      substack: false,
+      flagship: row.flagship,
+      up: upCounts[row.id] || 0,
+      cite: 0,
+    };
+    return localTokenData[row.id] ? { ...base, tokenData: localTokenData[row.id] } : base;
+  });
 
   const tokens = posts
     .filter(p => p.tokenData)
@@ -2500,31 +2530,49 @@ export default function Veridax() {
 
   useEffect(() => LS.set('vdx_portfolio', portfolio), [portfolio]);
 
-  const handleVote = (postId, type) => {
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setDataLoading(true);
+      setDataError("");
+      try {
+        const [posts, votes, profileCount] = await Promise.all([fetchPosts(), fetchVotes(), fetchProfileCount()]);
+        if (!active) return;
+        setPostRows(posts);
+        setRawVotes(votes);
+        setExpertCount(profileCount);
+      } catch {
+        if (active) setDataError("Couldn't load VERIDAX data. Check your connection and refresh.");
+      } finally {
+        if (active) setDataLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => LS.set('vdx_tokendata', localTokenData), [localTokenData]);
+
+  const handleVote = async (postId, type) => {
     if (!user || userVotes[postId]) return;
     const cluster = user.cluster || "independent";
-    if (type === "up") {
-      setPostVotes(prev => ({ ...prev, [postId]: { ...prev[postId], [cluster]: (prev[postId]?.[cluster]||0) + 1 } }));
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, up: (p.up||0) + 1 } : p));
-    } else {
-      setPostDisputes(prev => ({ ...prev, [postId]: { ...prev[postId], [cluster]: (prev[postId]?.[cluster]||0) + 1 } }));
-    }
-    setUserVotes(prev => ({ ...prev, [postId]: type }));
+    const vote = await castVote({ postId, userId: user.id, cluster, type });
+    setRawVotes(prev => [...prev, vote]);
   };
 
   const handleTokenized = (postId, sym) => {
-    setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, tokenData: { sym, supply: 1000, col: p.color || p.col || C.amber, change: 0, commission: commissionRate(p.cat) } } : p
-    ));
-    setPostVotes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
-    setPostDisputes(prev => ({ ...prev, [postId]: prev[postId] || {} }));
+    const post = posts.find(p => p.id === postId);
+    setLocalTokenData(prev => ({
+      ...prev,
+      [postId]: { sym, supply: 1000, col: post?.color || C.amber, change: 0, commission: commissionRate(post?.cat) },
+    }));
     setTokenizePost(null);
   };
 
   const handleBought = (sym, qty, cost) => {
-    setPosts(prev => prev.map(p =>
-      p.tokenData?.sym === sym ? { ...p, tokenData: { ...p.tokenData, supply: p.tokenData.supply + qty } } : p
-    ));
+    const postId = Object.keys(localTokenData).find(id => localTokenData[id].sym === sym);
+    if (postId) {
+      setLocalTokenData(prev => ({ ...prev, [postId]: { ...prev[postId], supply: prev[postId].supply + qty } }));
+    }
     setPortfolio(prev => ({ ...prev, [sym]: (prev[sym] || 0) + qty }));
     if (cost > 0) {
       setBalance(prev => prev - cost);
@@ -2532,14 +2580,23 @@ export default function Veridax() {
     }
   };
 
-  const handlePublish = (newPost) => {
-    const cluster = user?.cluster || "independent";
-    const empty = { scientific:0, civil:0, independent:0, tech:0, grassroots:0, academic:0, journalism:0, legal:0 };
-    const p = { ...newPost, up: 1, cite: newPost.cite ?? 0 };
-    setPosts(prev => [...prev, p]);
-    setPostVotes(prev => ({ ...prev, [p.id]: { ...empty, [cluster]: 1 } }));
-    setPostDisputes(prev => ({ ...prev, [p.id]: { ...empty } }));
-    setUserVotes(prev => ({ ...prev, [p.id]: "up" }));
+  const handlePublish = async ({ cat, title, body, summary }) => {
+    if (!user) throw new Error("You must be signed in to publish.");
+    const catInfo = CATS.find(c => c.name === cat);
+    const created = await createPost({
+      authorId: user.id,
+      cat,
+      title,
+      body,
+      summary,
+      evidenceLinks: [],
+      flagship: !!catInfo?.flagship,
+    });
+    setPostRows(prev => [...prev, created]);
+    const cluster = user.cluster || "independent";
+    const ownVote = await castVote({ postId: created.id, userId: user.id, cluster, type: "up" });
+    setRawVotes(prev => [...prev, ownVote]);
+    return created;
   };
 
   const [balance,      setBalance]      = useState(() => LS.get('vdx_balance', 0));
@@ -2594,7 +2651,7 @@ export default function Veridax() {
       <div style={{background:C.canopy,borderBottom:`1px solid ${C.shadow}`,padding:"5px 24px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout,letterSpacing:3,flexShrink:0,animation:"pulse 2s infinite"}}>● LIVE</span>
         <span style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>
-          {posts.length} works published · {totalValidations.toLocaleString()} validations · {tokens.length} tokens
+          {dataLoading ? "Loading…" : dataError ? dataError : `${posts.length} works published · ${totalValidations.toLocaleString()} validations · ${tokens.length} tokens`}
         </span>
         <span style={{marginLeft:"auto",fontSize:9,fontFamily:"monospace",color:"#181828",flexShrink:0,animation:"blink 1s infinite"}}>█</span>
       </div>
@@ -2704,7 +2761,7 @@ export default function Veridax() {
                     <span style={{fontSize:6,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>LIVE</span>
                   </div>
                   {[
-                    {l:"EXPERTS",   v:accounts.length,        c:C.amber},
+                    {l:"EXPERTS",   v:expertCount,             c:C.amber},
                     {l:"WORKS",     v:posts.length,            c:C.vine},
                     {l:"NODES",     v:1,                       c:C.sky},
                     {l:"VALIDATIONS",v:totalValidations,       c:C.copper},
@@ -2763,7 +2820,7 @@ export default function Veridax() {
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
                     {[...posts].reverse().slice(0, 9).map((p, i) => (
                       <div key={p.id} style={{animation:`fadein .4s ease ${i*.07}s both`}}>
-                        <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>
+                        <PostCard post={p} user={user} votes={postVotes[p.id] || {}} disputes={postDisputes[p.id] || {}} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>
                       </div>
                     ))}
                   </div>
@@ -2912,7 +2969,7 @@ export default function Veridax() {
               );
               return filtered.length > 0 ? (
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:14}}>
-                  {filtered.map((p,i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/></div>)}
+                  {filtered.map((p,i) => <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}><PostCard post={p} user={user} votes={postVotes[p.id] || {}} disputes={postDisputes[p.id] || {}} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/></div>)}
                 </div>
               ) : (
                 <div style={{textAlign:"center",padding:"60px 24px",color:C.dust,fontFamily:"monospace",fontSize:11}}>
@@ -2937,7 +2994,7 @@ export default function Veridax() {
               <div style={{display:"flex",gap:28,justifyContent:"center",flexWrap:"wrap",paddingTop:22,borderTop:`1px solid ${C.shadow}`}}>
                 {[
                   {l:"PROPOSALS",  v:posts.filter(p=>p.flagship).length,         c:"#f5d060"},
-                  {l:"CONTRIBUTORS",v:accounts.length,                            c:C.sprout},
+                  {l:"CONTRIBUTORS",v:expertCount,                                 c:C.sprout},
                   {l:"VALIDATIONS", v:totalValidations,                           c:C.sky},
                   {l:"ACTIVE TOKENS",v:tokens.filter(t=>posts.find(p=>p.flagship&&p.tokenData?.sym===t.sym)).length, c:C.copper},
                 ].map(({l,v,c}) => (
@@ -3017,7 +3074,7 @@ export default function Veridax() {
                     No PSH works yet — be the first to publish a Project Save Humanity work.
                   </div>
                 );
-                return <PostCard post={fp} user={user} votes={postVotes[fp.id]} disputes={postDisputes[fp.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>;
+                return <PostCard post={fp} user={user} votes={postVotes[fp.id] || {}} disputes={postDisputes[fp.id] || {}} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>;
               })()}
             </div>
 
@@ -3268,7 +3325,7 @@ export default function Veridax() {
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
                   {posts.map((p, i) => (
                     <div key={p.id} style={{animation:`fadein .35s ease ${i*.07}s both`}}>
-                      <PostCard post={p} user={user} votes={postVotes[p.id]} disputes={postDisputes[p.id]} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>
+                      <PostCard post={p} user={user} votes={postVotes[p.id] || {}} disputes={postDisputes[p.id] || {}} onValidate={setValidatingPost} onTokenize={setTokenizePost} onPostClick={setDetailPost}/>
                     </div>
                   ))}
                 </div>
@@ -3607,7 +3664,7 @@ export default function Veridax() {
           <div style={{maxWidth:1160,margin:"0 auto",display:"flex",gap:0,flexWrap:"wrap",justifyContent:"center"}}>
             {[
               {l:"NODES",       v:1,                c:C.sprout},
-              {l:"EXPERTS",     v:accounts.length,  c:C.amber},
+              {l:"EXPERTS",     v:expertCount,       c:C.amber},
               {l:"WORKS",       v:posts.length,      c:C.sky},
               {l:"VALIDATIONS", v:totalValidations,  c:C.copper},
               {l:"TOKENS",      v:tokens.length,     c:"#f5d060"},
@@ -3648,22 +3705,22 @@ export default function Veridax() {
       )}
       {showPublish && user && <PublishModal user={user} onClose={() => setShowPublish(false)} onPublish={handlePublish}/>}
       {showProposecat && <ProposeCategoryModal user={user} onClose={() => setShowProposecat(false)}/>}
-      {tokenizePost && postVotes[tokenizePost.id] && (
+      {tokenizePost && (
         <TokenizeModal
           post={tokenizePost}
-          votes={postVotes[tokenizePost.id]}
-          disputes={postDisputes[tokenizePost.id]}
+          votes={postVotes[tokenizePost.id] || {}}
+          disputes={postDisputes[tokenizePost.id] || {}}
           user={user}
           onClose={() => setTokenizePost(null)}
           onTokenized={handleTokenized}
         />
       )}
       {buyToken && <BuyModal token={buyToken} user={user} balance={balance} onClose={() => setBuyTokenSym(null)} onBought={handleBought} onNeedDeposit={() => setShowProfile(true)}/>}
-      {validatingPost && postVotes[validatingPost.id] && (
+      {validatingPost && (
         <ValidationModal
           post={validatingPost}
-          votes={postVotes[validatingPost.id]}
-          disputes={postDisputes[validatingPost.id]}
+          votes={postVotes[validatingPost.id] || {}}
+          disputes={postDisputes[validatingPost.id] || {}}
           user={user}
           hasVoted={userVotes[validatingPost.id] || null}
           onClose={() => setValidatingPost(null)}
