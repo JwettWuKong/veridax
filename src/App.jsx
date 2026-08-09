@@ -940,63 +940,6 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
   );
 }
 
-function SubModal({ onClose, user }) {
-  const [url, setUrl]           = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone]         = useState(false);
-
-  useEffect(() => {
-    const onKey = e => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  const handleSubmit = () => {
-    if (!url.trim() || submitting) return;
-    setSubmitting(true);
-    setTimeout(() => { setSubmitting(false); setDone(true); setTimeout(onClose, 3000); }, 2000);
-  };
-
-  return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000cc",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e => e.stopPropagation()} style={{background:`linear-gradient(160deg,${C.earth},${C.bark})`,border:`1px solid ${C.amber}44`,borderRadius:20,padding:26,maxWidth:440,width:"100%",position:"relative"}}>
-        <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-          <span style={{fontSize:24}}>📰</span>
-          <div>
-            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:17,color:C.parch,margin:0}}>Import from Substack</h2>
-            <p style={{margin:0,fontSize:9,fontFamily:"monospace",color:C.dust}}>Preserve your research permanently on the chain.</p>
-          </div>
-        </div>
-        {done ? (
-          <div style={{textAlign:"center",padding:"24px 0"}}>
-            <div style={{fontSize:32,marginBottom:12,animation:"sway 1.5s ease-in-out infinite"}}>🌱</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.sprout,letterSpacing:2,marginBottom:8}}>SUBMITTED FOR IMPORT</div>
-            <p style={{fontSize:11,color:C.dust,lineHeight:1.75}}>Your Substack has been received. Once verified, your work will appear in Discover — permanently archived and censor-proof.</p>
-          </div>
-        ) : (
-          <>
-            <div style={{background:C.canopy,border:`1px solid ${C.shadow}`,borderRadius:9,padding:"11px 13px",marginBottom:14,fontSize:10,fontFamily:"monospace",color:C.tan,lineHeight:1.8}}>
-              Your Substack stays live. This creates an <span style={{color:C.amber}}>immutable on-chain backup</span>. No corporation or government can erase it.
-            </div>
-            <label style={{display:"block",fontSize:8,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:5}}>YOUR SUBSTACK URL</label>
-            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="yourname.substack.com"
-              onKeyDown={e => { if(e.key==="Enter") handleSubmit(); }}
-              style={{width:"100%",background:C.wood,border:`1px solid ${url?C.amber+"44":C.shadow}`,borderRadius:8,padding:"10px 13px",color:C.parch,fontSize:13,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:14}}/>
-            <button onClick={handleSubmit} disabled={!url.trim() || submitting || !user}
-              style={{width:"100%",background:url&&user?`${C.amber}18`:"transparent",border:`1px solid ${url&&user?C.amber+"44":C.shadow}`,color:url&&user?C.amber:C.dust,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:url&&user?"pointer":"not-allowed",letterSpacing:2}}>
-              {submitting ? "SUBMITTING…" : "SUBMIT FOR IMPORT →"}
-            </button>
-            {!user && (
-              <p style={{fontSize:9,fontFamily:"monospace",color:C.dust,textAlign:"center",marginTop:10,opacity:.7}}>Sign in to import Substack content.</p>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function LoginModal({ onClose, onLogin, onSwitchToJoin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -2666,10 +2609,6 @@ export default function Veridax() {
             ))}
           </div>
           <div style={{display:"flex",gap:7,marginLeft:10,flexShrink:0}}>
-            <button onClick={() => setShowSub(true)}
-              style={{display:"flex",alignItems:"center",gap:5,background:C.amberD,border:`1px solid ${C.amber}40`,color:C.amber,borderRadius:7,padding:"6px 10px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
-              📰 IMPORT
-            </button>
             {user ? (
               <>
                 <button onClick={() => setShowPublish(true)}
@@ -2721,10 +2660,6 @@ export default function Veridax() {
                   Part <span style={{color:C.amber}}>knowledge marketplace</span>, part <span style={{color:C.sky}}>credibility system</span>, part <span style={{color:C.sprout}}>decentralized social network</span>, and part <span style={{color:C.copper}}>blockchain-backed archive</span> of human progress.
                 </p>
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:38}}>
-                  <button onClick={() => setShowSub(true)}
-                    style={{background:`linear-gradient(135deg,${C.amber},${C.copper})`,border:"none",borderRadius:10,padding:"13px 22px",color:C.bark,fontWeight:700,fontSize:11,fontFamily:"monospace",cursor:"pointer",letterSpacing:2,boxShadow:`0 0 26px ${C.amber}28`}}>
-                    📰 IMPORT FROM SUBSTACK
-                  </button>
                   <button onClick={() => navigate("psh")}
                     style={{background:"#f5d06010",border:"1px solid #f5d06044",borderRadius:10,padding:"13px 16px",color:"#f5d060",fontSize:11,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
                     ★ SAVE HUMANITY
@@ -3597,7 +3532,6 @@ export default function Veridax() {
               {label:"Discover",          action:() => navigate("discover")},
               {label:"★ Save Humanity",   action:() => navigate("psh")},
               {label:"Knowledge Market",  action:() => navigate("market")},
-              {label:"Import Substack",   action:() => setShowSub(true)},
               {label:"Submit Research",   action:() => user ? setShowPublish(true) : setShowJoin(true)},
             ]},
             {h:"Security",ls:[
@@ -3669,7 +3603,6 @@ export default function Veridax() {
       {showJoin && <JoinModal onClose={() => setShowJoin(false)} onJoin={handleJoin} onSwitchToLogin={() => setShowLogin(true)}/>}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleLogin} onSwitchToJoin={() => setShowJoin(true)}/>}
       {showProfile && <DashboardSidebar user={user} posts={posts} portfolio={portfolio} tokens={tokens} userVotes={userVotes} postVotes={postVotes} postDisputes={postDisputes} balance={balance} transactions={transactions} onDeposit={handleDeposit} onWithdraw={handleWithdraw} onClose={() => setShowProfile(false)} onLogout={() => { handleLogout(); setShowProfile(false); }} onPublish={() => { setShowProfile(false); setShowPublish(true); }} onJoin={() => { setShowProfile(false); setShowJoin(true); }} onLogin={() => { setShowProfile(false); setShowLogin(true); }}/>}
-      {showSub && <SubModal user={user} onClose={() => setShowSub(false)}/>}
       {detailPost && (
         <PostDetailModal
           post={detailPost}
