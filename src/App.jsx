@@ -630,7 +630,7 @@ const CLUSTERS = [
 
 const CRED_TYPES = ["Academic Degree","Published Paper (DOI)","Patent","Certification","Institutional Affiliation","Project Portfolio"];
 
-function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
+function JoinModal({ onClose, onJoin, onSwitchToLogin }) {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -638,27 +638,20 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [pohMethod, setPohMethod] = useState(null);
-  const [pohVerifying, setPohVerifying] = useState(false);
-  const [pohDone, setPohDone] = useState(false);
   const [cluster, setCluster] = useState("");
   const [field, setField] = useState("");
   const [credType, setCredType] = useState("Academic Degree");
   const [credValue, setCredValue] = useState("");
   const [creds, setCreds] = useState([]);
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  useEffect(() => {
-    if (!pohVerifying) return;
-    const t = setTimeout(() => { setPohVerifying(false); setPohDone(true); }, 2400);
-    return () => clearTimeout(t);
-  }, [pohVerifying]);
 
   const inputStyle = (valid, hasError) => ({
     width:"100%", background:C.wood,
@@ -681,7 +674,6 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
     else if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) e.username = "Letters, numbers, and underscores only.";
     if (!email.trim()) e.email = "Email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Enter a valid email address.";
-    else if (accounts.some(a => a.email === email.trim())) e.email = "An account with this email already exists.";
     if (password.length < 8) e.password = "Password must be at least 8 characters.";
     if (!confirmPw) e.confirmPw = "Please confirm your password.";
     else if (password !== confirmPw) e.confirmPw = "Passwords do not match.";
@@ -707,15 +699,29 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
     setCredValue("");
   };
 
-  const handleFinish = () => {
-    const profile = {
-      username: username.trim(), email: email.trim(), password,
-      cluster, field: field.trim() || cluster,
-      pohMethod, credentials: creds,
-      joined: new Date().toLocaleDateString("en-US", { month:"short", year:"numeric" }),
-    };
-    onJoin(profile);
-    setStep(5);
+  const handleFinish = async () => {
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const result = await onJoin({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        cluster,
+        field: field.trim() || cluster,
+        credentials: creds,
+      });
+      const createdAt = result?.user?.created_at ? new Date(result.user.created_at).getTime() : 0;
+      const isFreshSignup = createdAt > 0 && (Date.now() - createdAt) < 10000;
+      if (!isFreshSignup) {
+        throw new Error("An account with this email already exists. Try logging in instead, or use a different email.");
+      }
+      setStep(5);
+    } catch (err) {
+      setSubmitError(err.message || "Could not create your account. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const Steps = () => (
@@ -731,7 +737,7 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
         </div>
       ))}
       <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,marginLeft:6}}>
-        {step===1?"ACCOUNT":step===2?"PROOF OF HUMANITY":step===3?"CLUSTER":step===4?"CREDENTIALS":"COMPLETE"}
+        {step===1?"ACCOUNT":step===2?"IDENTITY":step===3?"CLUSTER":step===4?"CREDENTIALS":"COMPLETE"}
       </span>
     </div>
   );
@@ -800,61 +806,19 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
           </>
         )}
 
-        {/* STEP 2 — Proof of Humanity */}
+        {/* STEP 2 — Identity verification (deferred) */}
         {step === 2 && (
-          <>
-            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:6}}>Prove you're human</h2>
-            <p style={{color:C.dust,fontSize:11,lineHeight:1.75,marginBottom:18}}>
-              Zero-knowledge verification proves you are a unique, real human being — <span style={{color:C.parch}}>without revealing who you are.</span> One person, one identity. No bots. No duplicate accounts.
+          <div style={{textAlign:"center",padding:"20px 0 8px"}}>
+            <div style={{fontSize:36,marginBottom:14}}>🛡</div>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:19,color:C.parch,marginBottom:10}}>Identity verification — coming soon</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:22,maxWidth:340,margin:"0 auto 22px"}}>
+              VERIDAX plans to support real proof-of-humanity verification (World ID, Gitcoin Passport) in a future update. It isn't live yet, so this step is a placeholder — no verification happens here.
             </p>
-
-            {!pohDone ? (
-              pohVerifying ? (
-                <div style={{textAlign:"center",padding:"28px 0"}}>
-                  <div style={{fontSize:38,marginBottom:12,animation:"pulse 1s infinite"}}>{pohMethod==="worldid"?"🌐":"🛡"}</div>
-                  <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:6}}>VERIFYING…</div>
-                  <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:16}}>Generating zero-knowledge proof</div>
-                  <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${C.amber},${C.vine})`,animation:"fadein 2.4s linear forwards"}}/>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
-                    {[{id:"worldid",icon:"🌐",name:"World ID",sub:"via Worldcoin",desc:"Biometric orb verification. Proves you are a unique human globally — no data stored on VERIDAX."},
-                      {id:"gitcoin",icon:"🛡",name:"Gitcoin Passport",sub:"via Gitcoin",desc:"Social graph verification. Aggregates on-chain trust signals from multiple web3 sources."}].map(m => (
-                      <button key={m.id} onClick={() => { setPohMethod(m.id); setPohVerifying(true); }}
-                        style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:12,padding:"14px 16px",cursor:"pointer",textAlign:"left",transition:"all .2s",display:"flex",gap:14,alignItems:"center"}}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor=`${C.sky}55`; e.currentTarget.style.background=`${C.sky}0a`; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor=C.shadow; e.currentTarget.style.background=C.wood; }}>
-                        <span style={{fontSize:26,flexShrink:0}}>{m.icon}</span>
-                        <div>
-                          <div style={{fontSize:10,fontFamily:"monospace",color:C.sky,letterSpacing:1,marginBottom:2}}>{m.name}</div>
-                          <div style={{fontSize:10,color:C.dust,lineHeight:1.65,marginBottom:3}}>{m.desc}</div>
-                          <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,opacity:.55}}>{m.sub}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"10px 13px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
-                    <span style={{color:C.sprout}}>✦</span> Your cryptographic proof is recorded on-chain. VERIDAX never stores biometric data — only the proof of uniqueness.
-                  </div>
-                </>
-              )
-            ) : (
-              <div style={{textAlign:"center",padding:"8px 0"}}>
-                <div style={{width:56,height:56,borderRadius:"50%",background:C.sproutD,border:`2px solid ${C.sprout}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 14px",color:C.sprout,fontWeight:700}}>✓</div>
-                <div style={{fontSize:11,fontFamily:"monospace",color:C.sprout,letterSpacing:2,marginBottom:8}}>HUMANITY VERIFIED</div>
-                <p style={{color:C.dust,fontSize:11,lineHeight:1.75,marginBottom:20}}>
-                  Your zero-knowledge proof has been recorded on-chain. You are recognized as a unique real human on this network.
-                </p>
-                <button onClick={() => setStep(3)}
-                  style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
-                  CONTINUE →
-                </button>
-              </div>
-            )}
-          </>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={() => setStep(1)} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>← BACK</button>
+              <button onClick={() => setStep(3)} style={{flex:2,background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>CONTINUE →</button>
+            </div>
+          </div>
         )}
 
         {/* STEP 3 — Cluster */}
@@ -937,11 +901,17 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
               <span style={{color:C.amber}}>⬡</span> Credentials are signed by the issuing institution. They cannot be forged. Fraudulent submissions result in a permanent ban.
             </div>
 
+            {submitError && (
+              <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+                ✕ {submitError}
+              </div>
+            )}
+
             <div style={{display:"flex",gap:8}}>
-              <button onClick={() => setStep(3)} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>← BACK</button>
-              <button onClick={handleFinish}
-                style={{flex:2,background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:9,cursor:"pointer",letterSpacing:1}}>
-                {creds.length || field.trim() ? "SUBMIT →" : "SKIP FOR NOW →"}
+              <button onClick={() => { setStep(3); setSubmitError(""); }} disabled={submitting} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>← BACK</button>
+              <button onClick={handleFinish} disabled={submitting}
+                style={{flex:2,background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:9,cursor:submitting?"default":"pointer",letterSpacing:1,opacity:submitting?.6:1}}>
+                {submitting ? "CREATING ACCOUNT…" : (creds.length || field.trim() ? "SUBMIT →" : "SKIP FOR NOW →")}
               </button>
             </div>
           </>
@@ -951,18 +921,17 @@ function JoinModal({ onClose, onJoin, onSwitchToLogin, accounts }) {
         {step === 5 && (
           <div style={{textAlign:"center",padding:"10px 0 6px"}}>
             <div style={{fontSize:44,marginBottom:14}}>🌱</div>
-            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Welcome, {username}.</h2>
-            <p style={{color:C.dust,fontSize:12,lineHeight:1.8,marginBottom:16}}>You are now a verified node on the VERIDAX network. Your proof of humanity is recorded on-chain.</p>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Check your email, {username}.</h2>
+            <p style={{color:C.dust,fontSize:12,lineHeight:1.8,marginBottom:16}}>We sent a confirmation link to <span style={{color:C.parch}}>{email}</span>. Click it, then log in to start using VERIDAX.</p>
             <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left"}}>
               <div style={{color:C.tan,marginBottom:4,letterSpacing:1}}>IDENTITY SUMMARY</div>
               <div>⬡ <span style={{color:C.tan}}>@</span>{username}</div>
               <div>⬡ <span style={{color:C.tan}}>Cluster:</span> {CLUSTERS.find(c=>c.id===cluster)?.icon} {CLUSTERS.find(c=>c.id===cluster)?.label}</div>
               {field && <div>⬡ <span style={{color:C.tan}}>Field:</span> {field}</div>}
-              <div>⬡ <span style={{color:C.tan}}>Proof of Humanity:</span> <span style={{color:C.sprout}}>✓ {pohMethod==="worldid"?"World ID":"Gitcoin Passport"}</span></div>
               {creds.length > 0 && <div>⬡ <span style={{color:C.tan}}>Credentials:</span> {creds.length} submitted for review</div>}
             </div>
             <button onClick={onClose} style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
-              ENTER VERIDAX →
+              GOT IT →
             </button>
           </div>
         )}
@@ -2524,7 +2493,7 @@ export default function Veridax() {
     return () => { active = false; unsubscribe(); };
   }, []);
 
-  const handleJoin = async (profile) => { await signUp(profile); };
+  const handleJoin = async (profile) => signUp(profile);
   const handleLogin = async ({ email, password }) => { await signIn({ email, password }); };
   const handleLogout = async () => { await signOut(); };
 
