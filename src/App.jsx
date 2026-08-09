@@ -1542,7 +1542,8 @@ function PublishModal({ user, onClose, onPublish }) {
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [evidenceLinks, setEvidenceLinks] = useState([]);
   const [signing, setSigning] = useState(false);
-  const [txHash, setTxHash] = useState("");
+  const [publishError, setPublishError] = useState("");
+  const [publishedPost, setPublishedPost] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -1551,30 +1552,25 @@ function PublishModal({ user, onClose, onPublish }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    if (!signing) return;
-    const t = setTimeout(() => {
-      setSigning(false);
-      const h = "0x" + Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join("");
-      setTxHash(h);
-      setStep(4);
-      if (onPublish) onPublish({
-        id: `pub_${Date.now()}`,
+  const handleSign = async () => {
+    setSigning(true);
+    setPublishError("");
+    try {
+      const created = await onPublish({
         cat: category,
-        icon: CATS.find(c => c.name === category)?.icon || "📄",
-        color: CATS.find(c => c.name === category)?.color || C.amber,
         title,
+        body,
         summary: body.slice(0, 200) + (body.length > 200 ? "…" : ""),
-        author: user.username,
-        field: user.field || user.cluster,
-        verified: !!user.pohMethod,
-        substack: false,
-        up: 1,
-        cite: 0,
+        evidenceLinks,
       });
-    }, 2800);
-    return () => clearTimeout(t);
-  }, [signing]);
+      setPublishedPost(created);
+      setStep(4);
+    } catch (err) {
+      setPublishError(err.message || "Failed to publish. Please try again.");
+    } finally {
+      setSigning(false);
+    }
+  };
 
   const inputStyle = {
     width:"100%", background:C.wood, border:`1px solid ${C.shadow}`,
@@ -1767,9 +1763,15 @@ function PublishModal({ user, onClose, onPublish }) {
               <span style={{color:C.bloom}}>⬡</span> Once submitted, this post <span style={{color:C.parch}}>cannot be edited or deleted</span>. This is not a limitation — it is the protection. If you later believe you made an error, submit a new block addressing it. The original record remains permanent.
             </div>
 
+            {publishError && (
+              <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+                ✕ {publishError}
+              </div>
+            )}
+
             <div style={{display:"flex",gap:8}}>
               <button onClick={() => setStep(2)} style={{flex:1,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:1}}>← BACK</button>
-              <button onClick={() => setSigning(true)} style={{flex:2,background:`linear-gradient(135deg,${C.amber}28,${C.vine}18)`,border:`1px solid ${C.amber}66`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,fontWeight:700}}>SIGN & PUBLISH →</button>
+              <button onClick={handleSign} style={{flex:2,background:`linear-gradient(135deg,${C.amber}28,${C.vine}18)`,border:`1px solid ${C.amber}66`,color:C.amber,borderRadius:9,padding:"11px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2,fontWeight:700}}>SIGN & PUBLISH →</button>
             </div>
           </>
         )}
@@ -1778,29 +1780,23 @@ function PublishModal({ user, onClose, onPublish }) {
         {step === 3 && signing && (
           <div style={{textAlign:"center",padding:"32px 0"}}>
             <div style={{fontSize:38,marginBottom:14,animation:"pulse 1s infinite"}}>⛓</div>
-            <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:6}}>SIGNING & BROADCASTING…</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Cryptographically signing to your wallet · broadcasting to 19,203 nodes</div>
-            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:300,margin:"0 auto"}}>
-              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${C.amber},${C.vine})`,animation:"fadein 2.8s linear forwards"}}/>
-            </div>
+            <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2}}>PUBLISHING…</div>
           </div>
         )}
 
-        {/* STEP 4 — On-chain confirmation */}
+        {/* STEP 4 — Confirmation */}
         {step === 4 && (
           <div style={{textAlign:"center",padding:"6px 0"}}>
             <div style={{width:60,height:60,borderRadius:"50%",background:C.sproutD,border:`2px solid ${C.sprout}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,margin:"0 auto 16px",color:C.sprout,fontWeight:700}}>✓</div>
-            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Published to the chain.</h2>
-            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>Your post is now permanently recorded across 19,203 nodes worldwide. It cannot be edited, deleted, or suppressed — by anyone.</p>
+            <h2 style={{fontFamily:"'Palatino Linotype',serif",fontSize:21,color:C.parch,marginBottom:8}}>Published.</h2>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>Your post is now live and visible to every VERIDAX user. It cannot be edited or deleted.</p>
 
             <div style={{background:C.card,border:`1px solid ${C.sprout}28`,borderRadius:12,padding:"14px 16px",marginBottom:20,textAlign:"left",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1}}>
-              <div style={{color:C.tan,marginBottom:4,letterSpacing:1,fontSize:7}}>ON-CHAIN RECORD</div>
+              <div style={{color:C.tan,marginBottom:4,letterSpacing:1,fontSize:7}}>RECORD</div>
               <div>⬡ <span style={{color:C.tan}}>Post:</span> {title.slice(0,48)}{title.length>48?"…":""}</div>
-              <div>⬡ <span style={{color:C.tan}}>Author:</span> @{user.username} · {walletAddr.slice(0,10)}…</div>
-              <div>⬡ <span style={{color:C.tan}}>Tx hash:</span> <span style={{color:C.amber,fontSize:8}}>{txHash.slice(0,22)}…</span></div>
-              <div>⬡ <span style={{color:C.tan}}>Block:</span> #{(89403 + Math.floor(Math.random()*10)).toLocaleString()}</div>
-              <div>⬡ <span style={{color:C.tan}}>Nodes confirmed:</span> <span style={{color:C.sprout}}>19,203</span></div>
-              {evidenceLinks.length > 0 && <div>⬡ <span style={{color:C.tan}}>Evidence:</span> {evidenceLinks.length} link{evidenceLinks.length>1?"s":""} on-chain</div>}
+              <div>⬡ <span style={{color:C.tan}}>Author:</span> @{user.username}</div>
+              <div>⬡ <span style={{color:C.tan}}>Published:</span> {publishedPost ? new Date(publishedPost.created_at).toLocaleString() : "—"}</div>
+              {evidenceLinks.length > 0 && <div>⬡ <span style={{color:C.tan}}>Evidence:</span> {evidenceLinks.length} link{evidenceLinks.length>1?"s":""} attached</div>}
             </div>
 
             <div style={{background:C.vineD,border:`1px solid ${C.vine}20`,borderRadius:9,padding:"10px 13px",marginBottom:18,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8,textAlign:"left"}}>
@@ -1967,6 +1963,7 @@ function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVot
   const [localDisp,  setLocalDisp]  = useState({ ...disputes });
   const [voted, setVoted] = useState(hasVoted || null);
   const [animating, setAnimating] = useState(false);
+  const [voteError, setVoteError] = useState("");
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
@@ -1980,23 +1977,27 @@ function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVot
   const total      = totalUp + totalDisp;
   const rawRatio   = total === 0 ? 0 : totalUp / total;
   const diversity  = shannonDiversity(localVotes);
-  const maxCluster = Math.max(...Object.values(localVotes));
+  const maxCluster = Math.max(...Object.values(localVotes), 1);
   const scoreColor = score >= 0.8 ? C.sprout : score >= 0.6 ? C.amber : C.bloom;
 
-  const handleVote = type => {
+  const handleVote = async type => {
     if (voted || animating || !user) return;
     const cluster = user.cluster || "independent";
     setAnimating(true);
-    setTimeout(() => {
+    setVoteError("");
+    try {
+      await onVote(type);
       if (type === "up") {
         setLocalVotes(prev => ({ ...prev, [cluster]: (prev[cluster]||0) + 1 }));
       } else {
         setLocalDisp(prev => ({ ...prev, [cluster]: (prev[cluster]||0) + 1 }));
       }
       setVoted(type);
+    } catch (err) {
+      setVoteError(err.message || "Could not record your vote. Please try again.");
+    } finally {
       setAnimating(false);
-      onVote(type);
-    }, 700);
+    }
   };
 
   const repWeight = user?.credentials?.length > 0 ? "0.4×" : user ? "0.05×" : null;
@@ -2074,8 +2075,13 @@ function ValidationModal({ post, votes, disputes, user, hasVoted, onClose, onVot
         </div>
 
         {/* Vote buttons or result */}
+        {voteError && (
+          <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:10,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+            ✕ {voteError}
+          </div>
+        )}
         {animating ? (
-          <div style={{textAlign:"center",padding:"16px",fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,animation:"pulse 1s infinite"}}>RECORDING ON-CHAIN…</div>
+          <div style={{textAlign:"center",padding:"16px",fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,animation:"pulse 1s infinite"}}>RECORDING…</div>
         ) : voted ? (
           <div style={{textAlign:"center",padding:"13px",background:voted==="up"?C.sproutD:`${C.bloom}0c`,border:`1px solid ${voted==="up"?C.sprout+"33":C.bloom+"33"}`,borderRadius:9}}>
             <div style={{fontSize:11,fontFamily:"monospace",color:voted==="up"?C.sprout:C.bloom,marginBottom:5}}>
@@ -2549,7 +2555,7 @@ export default function Veridax() {
     }
   };
 
-  const handlePublish = async ({ cat, title, body, summary }) => {
+  const handlePublish = async ({ cat, title, body, summary, evidenceLinks }) => {
     if (!user) throw new Error("You must be signed in to publish.");
     const catInfo = CATS.find(c => c.name === cat);
     const created = await createPost({
@@ -2558,13 +2564,17 @@ export default function Veridax() {
       title,
       body,
       summary,
-      evidenceLinks: [],
+      evidenceLinks: evidenceLinks || [],
       flagship: !!catInfo?.flagship,
     });
     setPostRows(prev => [...prev, created]);
     const cluster = user.cluster || "independent";
-    const ownVote = await castVote({ postId: created.id, userId: user.id, cluster, type: "up" });
-    setRawVotes(prev => [...prev, ownVote]);
+    try {
+      const ownVote = await castVote({ postId: created.id, userId: user.id, cluster, type: "up" });
+      setRawVotes(prev => [...prev, ownVote]);
+    } catch (err) {
+      console.error("Post published, but recording the author's own upvote failed:", err);
+    }
     return created;
   };
 
