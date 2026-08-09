@@ -2609,7 +2609,7 @@ export default function Veridax() {
             ))}
           </div>
           <div style={{display:"flex",gap:7,marginLeft:10,flexShrink:0}}>
-            {user ? (
+            {!authLoading && (user ? (
               <>
                 <button onClick={() => setShowPublish(true)}
                   style={{display:"flex",alignItems:"center",gap:5,background:`${C.sky}14`,border:`1px solid ${C.sky}40`,color:C.sky,borderRadius:7,padding:"6px 11px",fontSize:8,fontFamily:"monospace",cursor:"pointer",letterSpacing:1}}>
@@ -2631,7 +2631,7 @@ export default function Veridax() {
                   JOIN →
                 </button>
               </>
-            )}
+            ))}
           </div>
         </div>
       </nav>
@@ -2703,7 +2703,12 @@ export default function Veridax() {
 
             {/* Posts */}
             <div style={{maxWidth:1160,margin:"0 auto",padding:"34px 24px"}}>
-              {posts.length === 0 ? (
+              {dataLoading ? (
+                <div style={{textAlign:"center",padding:"60px 24px",animation:"fadein .5s ease both"}}>
+                  <div style={{fontSize:40,marginBottom:16}}>◉</div>
+                  <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:10}}>Loading…</h2>
+                </div>
+              ) : posts.length === 0 ? (
                 <div style={{textAlign:"center",padding:"60px 24px",animation:"fadein .5s ease both"}}>
                   <div style={{fontSize:40,marginBottom:16}}>◉</div>
                   <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:C.parch,marginBottom:10}}>No works published yet.</h2>
@@ -2863,6 +2868,12 @@ export default function Veridax() {
                 return tb - ta;
               });
               else if (discoverSort === "upvotes") filtered = filtered.sort((a,b) => (b.up||0)-(a.up||0));
+              if (dataLoading) return (
+                <div style={{textAlign:"center",padding:"80px 24px",animation:"fadein .5s ease both"}}>
+                  <div style={{fontSize:36,marginBottom:14}}>◉</div>
+                  <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:10}}>Loading…</h2>
+                </div>
+              );
               if (posts.length === 0) return (
                 <div style={{textAlign:"center",padding:"80px 24px",animation:"fadein .5s ease both"}}>
                   <div style={{fontSize:36,marginBottom:14}}>◉</div>
@@ -2982,6 +2993,11 @@ export default function Veridax() {
                 <div style={{flex:1,height:1,background:"#f5d06022"}}/>
               </div>
               {(() => {
+                if (dataLoading) return (
+                  <div style={{textAlign:"center",padding:"30px",border:`1px dashed #f5d06030`,borderRadius:12,color:C.dust,fontFamily:"monospace",fontSize:11}}>
+                    Loading…
+                  </div>
+                );
                 const fp = posts.find(p => p.flagship);
                 if (!fp) return (
                   <div style={{textAlign:"center",padding:"30px",border:`1px dashed #f5d06030`,borderRadius:12,color:C.dust,fontFamily:"monospace",fontSize:11}}>
@@ -3228,7 +3244,14 @@ export default function Veridax() {
             {/* Live validation queue */}
             <div>
               <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:4,marginBottom:14}}>LIVE VALIDATION QUEUE</div>
-              {posts.length === 0 ? (
+              {dataLoading ? (
+                <div style={{textAlign:"center",padding:"50px 24px",border:`1px dashed ${C.shadow}`,borderRadius:12,animation:"fadein .5s ease both"}}>
+                  <div style={{fontSize:28,marginBottom:12}}>◈</div>
+                  <p style={{fontSize:11,fontFamily:"monospace",color:C.dust,lineHeight:1.8,maxWidth:380,margin:"0 auto"}}>
+                    Loading…
+                  </p>
+                </div>
+              ) : posts.length === 0 ? (
                 <div style={{textAlign:"center",padding:"50px 24px",border:`1px dashed ${C.shadow}`,borderRadius:12,animation:"fadein .5s ease both"}}>
                   <div style={{fontSize:28,marginBottom:12}}>◈</div>
                   <p style={{fontSize:11,fontFamily:"monospace",color:C.dust,lineHeight:1.8,maxWidth:380,margin:"0 auto"}}>
