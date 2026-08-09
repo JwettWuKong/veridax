@@ -997,7 +997,7 @@ function SubModal({ onClose, user }) {
   );
 }
 
-function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
+function LoginModal({ onClose, onLogin, onSwitchToJoin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -1021,14 +1021,14 @@ function LoginModal({ onClose, onLogin, onSwitchToJoin, accounts }) {
     if (!email.trim() || !password) { setError("Please enter your email and password."); return; }
     setError("");
     setLoading(true);
-    await new Promise(r => setTimeout(r, 700));
-    setLoading(false);
-    const match = accounts.find(a => a.email === email.trim() && a.password === password);
-    if (!match) {
-      setError(accounts.some(a => a.email === email.trim()) ? "Incorrect password." : "No account found with that email.");
-      return;
+    try {
+      await onLogin({ email: email.trim(), password });
+      onClose();
+    } catch (err) {
+      setError(err.message || "Could not sign in. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    onLogin(match);
   };
 
   return (
