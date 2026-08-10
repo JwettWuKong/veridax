@@ -2511,6 +2511,8 @@ export default function Veridax() {
     if (!user || tokenizeUserVotes[postId]) return;
     const cast = await castTokenizeVote({ postId, userId: user.id, vote });
     setRawTokenizeVotes(prev => [...prev, cast]);
+    const refreshedTokens = await fetchTokens();
+    setTokenRows(refreshedTokens);
   };
 
   const handleBuyToken = async (postId, qty, cost) => {
