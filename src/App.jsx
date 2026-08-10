@@ -3,6 +3,8 @@ import { nf, shannonDiversity, calcTrustScore, checkGates } from "./lib/scoring"
 import { signUp, signIn, signOut, fetchProfile, fetchProfileCount, getSession, onAuthStateChange, toAppUser } from "./lib/auth";
 import { fetchPosts, createPost } from "./lib/posts";
 import { fetchVotes, castVote, aggregateVotes } from "./lib/votes";
+import { fetchTokenizeVotes, castTokenizeVote, aggregateTokenizeVotes } from "./lib/tokenizeVotes";
+import { fetchTokens, fetchPurchases, buyToken as recordTokenPurchase, aggregateMarket } from "./lib/market";
 
 const C = {
   soil:"#04050a", earth:"#07080e", bark:"#0d0e18", wood:"#111220",
@@ -2378,11 +2380,9 @@ export default function Veridax() {
   const [expertCount,   setExpertCount]  = useState(0);
   const [dataLoading,   setDataLoading]  = useState(true);
   const [dataError,     setDataError]    = useState("");
-  // Tokenization is Phase 2 — until posts have a real tokenData column,
-  // any tokenized/bought state stays local-only, same as before, keyed by
-  // post id so it survives reloads within this browser.
-  const [localTokenData, setLocalTokenData] = useState(() => LS.get('vdx_tokendata', {}));
-  const [portfolio,    setPortfolio]    = useState(() => LS.get('vdx_portfolio', {}));
+  const [tokenRows,        setTokenRows]        = useState([]);
+  const [rawTokenizeVotes, setRawTokenizeVotes] = useState([]);
+  const [rawPurchases,     setRawPurchases]     = useState([]);
   const [validatingPost,  setValidatingPost]  = useState(null);
   const [tokenizePost,    setTokenizePost]    = useState(null);
   const [buyTokenSym,     setBuyTokenSym]     = useState(null);
@@ -2393,6 +2393,10 @@ export default function Veridax() {
   const [showProposecat,  setShowProposecat]  = useState(false);
 
   const { postVotes, postDisputes, userVotes, upCounts } = aggregateVotes(rawVotes, user?.id);
+  const { yesCounts: tokenizeYes, noCounts: tokenizeNo, userVotes: tokenizeUserVotes } = aggregateTokenizeVotes(rawTokenizeVotes, user?.id);
+  const { tokenizedPostIds, supplyAddByPost, myPurchasesByPost } = aggregateMarket(tokenRows, rawPurchases, user?.id);
+
+  const tokenSymbolFor = title => title.split(" ").slice(0,2).map(w => w[0]).join("") + "X";
 
   const posts = postRows.map(row => {
     const catInfo = CATS.find(c => c.name === row.cat);
@@ -2412,13 +2416,28 @@ export default function Veridax() {
       up: upCounts[row.id] || 0,
       cite: 0,
     };
-    return localTokenData[row.id] ? { ...base, tokenData: localTokenData[row.id] } : base;
+    if (!tokenizedPostIds.has(row.id)) return base;
+    return {
+      ...base,
+      tokenData: {
+        sym: tokenSymbolFor(row.title),
+        supply: 1000 + (supplyAddByPost[row.id] || 0),
+        col: base.color,
+        change: 0,
+        commission: commissionRate(row.cat),
+      },
+    };
   });
 
   const tokens = posts
     .filter(p => p.tokenData)
-    .map(p => ({ sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply, commission:p.tokenData.commission ?? commissionRate(p.cat) }));
+    .map(p => ({ postId:p.id, sym:p.tokenData.sym, name:p.title, price:bondingPrice(p.tokenData.supply), ch:p.tokenData.change, col:p.tokenData.col, supply:p.tokenData.supply, commission:p.tokenData.commission }));
   const buyToken = buyTokenSym ? tokens.find(t => t.sym === buyTokenSym) : null;
+
+  const portfolio = {};
+  posts.forEach(p => {
+    if (p.tokenData && myPurchasesByPost[p.id]) portfolio[p.tokenData.sym] = myPurchasesByPost[p.id];
+  });
 
   // Auth: load the current session on mount, then stay in sync with
   // sign-in/sign-out events for the rest of the app's lifetime.
@@ -2446,19 +2465,22 @@ export default function Veridax() {
   const handleLogin = async ({ email, password }) => { await signIn({ email, password }); };
   const handleLogout = async () => { await signOut(); };
 
-  useEffect(() => LS.set('vdx_portfolio', portfolio), [portfolio]);
-
   useEffect(() => {
     let active = true;
     (async () => {
       setDataLoading(true);
       setDataError("");
       try {
-        const [posts, votes, profileCount] = await Promise.all([fetchPosts(), fetchVotes(), fetchProfileCount()]);
+        const [posts, votes, profileCount, tokenizeVotes, tokenRows, purchases] = await Promise.all([
+          fetchPosts(), fetchVotes(), fetchProfileCount(), fetchTokenizeVotes(), fetchTokens(), fetchPurchases(),
+        ]);
         if (!active) return;
         setPostRows(posts);
         setRawVotes(votes);
         setExpertCount(profileCount);
+        setRawTokenizeVotes(tokenizeVotes);
+        setTokenRows(tokenRows);
+        setRawPurchases(purchases);
       } catch {
         if (active) setDataError("Couldn't load VERIDAX data. Check your connection and refresh.");
       } finally {
@@ -2468,8 +2490,6 @@ export default function Veridax() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => LS.set('vdx_tokendata', localTokenData), [localTokenData]);
-
   const handleVote = async (postId, type) => {
     if (!user || userVotes[postId]) return;
     const cluster = user.cluster || "independent";
@@ -2477,23 +2497,19 @@ export default function Veridax() {
     setRawVotes(prev => [...prev, vote]);
   };
 
-  const handleTokenized = (postId, sym) => {
-    const post = posts.find(p => p.id === postId);
-    setLocalTokenData(prev => ({
-      ...prev,
-      [postId]: { sym, supply: 1000, col: post?.color || C.amber, change: 0, commission: commissionRate(post?.cat) },
-    }));
-    setTokenizePost(null);
+  const handleTokenizeVote = async (postId, vote) => {
+    if (!user || tokenizeUserVotes[postId]) return;
+    const cast = await castTokenizeVote({ postId, userId: user.id, vote });
+    setRawTokenizeVotes(prev => [...prev, cast]);
   };
 
-  const handleBought = (sym, qty, cost) => {
-    const postId = Object.keys(localTokenData).find(id => localTokenData[id].sym === sym);
-    if (postId) {
-      setLocalTokenData(prev => ({ ...prev, [postId]: { ...prev[postId], supply: prev[postId].supply + qty } }));
-    }
-    setPortfolio(prev => ({ ...prev, [sym]: (prev[sym] || 0) + qty }));
+  const handleBuyToken = async (postId, qty, cost) => {
+    if (!user) return;
+    const purchase = await recordTokenPurchase({ postId, userId: user.id, qty, cost });
+    setRawPurchases(prev => [...prev, purchase]);
     if (cost > 0) {
       setBalance(prev => prev - cost);
+      const sym = tokens.find(t => t.postId === postId)?.sym || "";
       addTx("buy", -cost, `Bought ${qty.toLocaleString()} × ⬡ ${sym}`);
     }
   };
@@ -3644,12 +3660,16 @@ export default function Veridax() {
           post={tokenizePost}
           votes={postVotes[tokenizePost.id] || {}}
           disputes={postDisputes[tokenizePost.id] || {}}
+          yesVotes={tokenizeYes[tokenizePost.id] || 0}
+          noVotes={tokenizeNo[tokenizePost.id] || 0}
+          hasVoted={tokenizeUserVotes[tokenizePost.id] || null}
+          isTokenized={!!tokens.find(t => t.postId === tokenizePost.id)}
           user={user}
           onClose={() => setTokenizePost(null)}
-          onTokenized={handleTokenized}
+          onVote={vote => handleTokenizeVote(tokenizePost.id, vote)}
         />
       )}
-      {buyToken && <BuyModal token={buyToken} user={user} balance={balance} onClose={() => setBuyTokenSym(null)} onBought={handleBought} onNeedDeposit={() => setShowProfile(true)}/>}
+      {buyToken && <BuyModal token={buyToken} user={user} balance={balance} onClose={() => setBuyTokenSym(null)} onBought={(qty, cost) => handleBuyToken(buyToken.postId, qty, cost)} onNeedDeposit={() => setShowProfile(true)}/>}
       {validatingPost && (
         <ValidationModal
           post={validatingPost}
