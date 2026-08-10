@@ -1758,12 +1758,10 @@ function PublishModal({ user, onClose, onPublish }) {
   );
 }
 
-function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
-  const [yesVotes, setYesVotes] = useState(1316);
-  const [noVotes,  setNoVotes]  = useState(684);
-  const [voted, setVoted] = useState(null);
-  const [creating, setCreating] = useState(false);
-  const [created, setCreated] = useState(false);
+function TokenizeModal({ post, votes, disputes, yesVotes, noVotes, hasVoted, isTokenized, user, onClose, onVote }) {
+  const [voted, setVoted] = useState(hasVoted || null);
+  const [voting, setVoting] = useState(false);
+  const [voteError, setVoteError] = useState("");
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
@@ -1774,19 +1772,21 @@ function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
   const { items: gateItems, allMet } = checkGates(post, votes, disputes);
   const total = yesVotes + noVotes;
   const yesPct = total === 0 ? 0 : yesVotes / total;
-  const passed = yesPct >= 0.66;
+  const suggestedSymbol = post.title.split(" ").slice(0,2).map(w => w[0]).join("") + "X";
 
-  const handleVote = type => {
-    if (voted || !user) return;
-    if (type === "yes") { setYesVotes(y => y + 1); } else { setNoVotes(n => n + 1); }
-    setVoted(type);
-    if (type === "yes") {
-      setTimeout(() => { setCreating(true); }, 600);
-      setTimeout(() => { setCreating(false); setCreated(true); if (onTokenized) onTokenized(post.id, suggestedSymbol); }, 3400);
+  const handleVote = async type => {
+    if (voted || voting || !user) return;
+    setVoting(true);
+    setVoteError("");
+    try {
+      await onVote(type);
+      setVoted(type);
+    } catch (err) {
+      setVoteError(err.message || "Could not record your vote. Please try again.");
+    } finally {
+      setVoting(false);
     }
   };
-
-  const suggestedSymbol = post.title.split(" ").slice(0,2).map(w => w[0]).join("") + "X";
 
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"#000000d0",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -1794,39 +1794,30 @@ function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
         <div style={{height:2,background:`linear-gradient(90deg,${C.amber},${C.copper})`,borderRadius:2,marginBottom:18}}/>
         <button onClick={onClose} style={{position:"absolute",top:15,right:15,background:"transparent",border:`1px solid ${C.shadow}`,color:C.dust,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontFamily:"monospace",fontSize:10}}>✕</button>
 
-        {created ? (
+        {isTokenized ? (
           <div style={{textAlign:"center",padding:"20px 0"}}>
             <div style={{fontSize:44,marginBottom:14,animation:"sway 2s ease-in-out infinite"}}>⬡</div>
             <div style={{fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:3,marginBottom:8}}>TOKEN CREATED</div>
             <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:C.parch,marginBottom:12}}>⬡ {suggestedSymbol}</h2>
-            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>The community has voted to tokenize this discovery. A bonding curve token has been created. The author will earn a commission on every future purchase — automatically and forever.</p>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:20}}>The community voted to tokenize this discovery. A bonding curve token exists. The author earns a commission on every purchase — automatically and forever.</p>
             <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:10,padding:"12px 14px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left",marginBottom:20}}>
               <div>⬡ <span style={{color:C.tan}}>Symbol:</span> <span style={{color:C.amber}}>⬡ {suggestedSymbol}</span></div>
               <div>⬡ <span style={{color:C.tan}}>Author commission:</span> <span style={{color:C.sprout}}>{commissionRate(post.cat)}% per purchase · locked forever</span></div>
               <div>⬡ <span style={{color:C.tan}}>Pricing:</span> Bonding curve · rises with demand</div>
-              <div>⬡ <span style={{color:C.tan}}>Community YES vote:</span> {yesVotes.toLocaleString()} ({(yesVotes/(yesVotes+noVotes)*100).toFixed(0)}%)</div>
+              <div>⬡ <span style={{color:C.tan}}>Community YES vote:</span> {yesVotes.toLocaleString()} ({total > 0 ? (yesPct*100).toFixed(0) : 0}%)</div>
             </div>
             <button onClick={onClose} style={{width:"100%",background:`linear-gradient(135deg,${C.amber}22,${C.vine}12)`,border:`1px solid ${C.amber}55`,color:C.amber,borderRadius:9,padding:"12px",fontFamily:"monospace",fontSize:10,cursor:"pointer",letterSpacing:2}}>
               VIEW IN MARKET →
             </button>
-          </div>
-        ) : creating ? (
-          <div style={{textAlign:"center",padding:"32px 0"}}>
-            <div style={{fontSize:38,marginBottom:14,animation:"pulse 1s infinite"}}>⬡</div>
-            <div style={{fontSize:10,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:6}}>CREATING TOKEN…</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Deploying bonding curve · Locking author commission · Broadcasting to nodes</div>
-            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:280,margin:"0 auto"}}>
-              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${C.amber},${C.copper})`,animation:"fadein 2.8s linear forwards"}}/>
-            </div>
           </div>
         ) : (
           <>
             <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:4}}>TOKENIZATION VOTE</div>
             <div style={{fontSize:13,fontFamily:"'Palatino Linotype',serif",color:C.parch,marginBottom:18,lineHeight:1.4,fontWeight:700,paddingRight:30}}>{post.title}</div>
 
-            {/* Five gates */}
+            {/* Four gates */}
             <div style={{background:C.card,border:`1px solid ${C.amber}22`,borderRadius:12,padding:"16px",marginBottom:14}}>
-              <div style={{fontSize:7,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:10}}>ALL 5 GATES MUST BE MET SIMULTANEOUSLY</div>
+              <div style={{fontSize:7,fontFamily:"monospace",color:C.amber,letterSpacing:2,marginBottom:10}}>ALL 4 GATES MUST BE MET SIMULTANEOUSLY</div>
               {gateItems.map(g => {
                 const met = g.val >= g.req;
                 const pct = Math.min((g.val / g.req) * 100, 100);
@@ -1849,21 +1840,21 @@ function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
               })}
               {allMet && (
                 <div style={{marginTop:10,padding:"8px 10px",background:C.sproutD,border:`1px solid ${C.sprout}30`,borderRadius:7,fontSize:8,fontFamily:"monospace",color:C.sprout,letterSpacing:1}}>
-                  ✓ ALL 5 GATES CLEARED — ELIGIBLE FOR TOKENIZATION
+                  ✓ ALL 4 GATES CLEARED — ELIGIBLE FOR TOKENIZATION
                 </div>
               )}
             </div>
 
             {/* AND-gate warning */}
             <div style={{background:C.amberD,border:`1px solid ${C.amber}25`,borderRadius:9,padding:"10px 13px",marginBottom:14,fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
-              <span style={{color:C.amber}}>⬡</span> Meeting four out of five gates does nothing. All five must be met <span style={{color:C.parch}}>simultaneously</span>. You cannot game any single metric in isolation.
+              <span style={{color:C.amber}}>⬡</span> Meeting three out of four gates does nothing. All four must be met <span style={{color:C.parch}}>simultaneously</span>. You cannot game any single metric in isolation.
             </div>
 
             {/* Community vote */}
             <div style={{marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                 <span style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:2}}>COMMUNITY TOKENIZATION VOTE</span>
-                <span style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{(yesVotes+noVotes).toLocaleString()} votes cast</span>
+                <span style={{fontSize:9,fontFamily:"monospace",color:C.dust}}>{total.toLocaleString()} votes cast · {Math.max(100 - total, 0).toLocaleString()} more needed for quorum</span>
               </div>
               <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",marginBottom:6}}>
                 <div style={{width:`${yesPct*100}%`,background:C.sprout,transition:"width .4s ease"}}/>
@@ -1871,15 +1862,23 @@ function TokenizeModal({ post, votes, disputes, user, onClose, onTokenized }) {
               </div>
               <div style={{display:"flex",justifyContent:"space-between"}}>
                 <span style={{fontSize:8,fontFamily:"monospace",color:C.sprout}}>YES {(yesPct*100).toFixed(0)}% · {yesVotes.toLocaleString()}</span>
-                <span style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>Threshold: 66% YES</span>
-                <span style={{fontSize:8,fontFamily:"monospace",color:C.bloom}}>NO {((1-yesPct)*100).toFixed(0)}% · {noVotes.toLocaleString()}</span>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>Threshold: 66% YES · 100 vote quorum</span>
+                <span style={{fontSize:8,fontFamily:"monospace",color:C.bloom}}>NO {total > 0 ? (100-yesPct*100).toFixed(0) : 0}% · {noVotes.toLocaleString()}</span>
               </div>
             </div>
 
+            {voteError && (
+              <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:10,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+                ✕ {voteError}
+              </div>
+            )}
+
             {voted ? (
               <div style={{textAlign:"center",padding:"11px",background:voted==="yes"?C.sproutD:`${C.bloom}0c`,border:`1px solid ${voted==="yes"?C.sprout+"33":C.bloom+"33"}`,borderRadius:9,fontSize:9,fontFamily:"monospace",color:voted==="yes"?C.sprout:C.bloom}}>
-                {voted==="yes" ? "✓ Voted YES — processing token creation…" : "✗ Voted NO — recorded on-chain"}
+                {voted==="yes" ? "✓ Voted YES to tokenize" : "✗ Voted NO"}
               </div>
+            ) : voting ? (
+              <div style={{textAlign:"center",padding:"11px",fontSize:9,fontFamily:"monospace",color:C.amber,letterSpacing:2,animation:"pulse 1s infinite"}}>RECORDING…</div>
             ) : user ? (
               <div style={{display:"flex",gap:8}}>
                 <button onClick={() => handleVote("yes")}
