@@ -19,7 +19,6 @@ describe("TOKEN_GATES", () => {
   it("exposes the expected threshold values", () => {
     expect(TOKEN_GATES).toEqual({
       upvotes: 10000,
-      citations: 200,
       validations: 2500,
       diversity: 0.72,
       trustScore: 0.88,
@@ -63,40 +62,38 @@ describe("calcTrustScore", () => {
 
 describe("checkGates", () => {
   it("reports allMet: false when no gates are satisfied", () => {
-    const result = checkGates({ up: 0, cite: 0 }, {}, {});
+    const result = checkGates({ up: 0 }, {}, {});
     expect(result.allMet).toBe(false);
     expect(result.metCount).toBe(0);
   });
 
   it("reports allMet: true when every gate threshold is reached", () => {
-    const post = { up: 20000, cite: 300 };
+    const post = { up: 20000 };
     const passingVotes = { scientific:400, civil:400, independent:400, tech:400, grassroots:400, academic:400, journalism:400, legal:400 };
     const result = checkGates(post, passingVotes, {});
     expect(result.allMet).toBe(true);
-    expect(result.metCount).toBe(5);
+    expect(result.metCount).toBe(4);
   });
 
   it("reports a partial pass when only some gate thresholds are reached, with correctly shaped items", () => {
-    const post = { up: 20000, cite: 300 };
+    const post = { up: 20000 };
     const votes = { scientific: 100 };
     const result = checkGates(post, votes, {});
 
-    expect(result.metCount).toBe(2);
+    expect(result.metCount).toBe(1);
     expect(result.allMet).toBe(false);
 
     const byKey = Object.fromEntries(result.items.map(i => [i.key, i]));
     expect(Object.keys(byKey).sort()).toEqual(
-      ["citations", "diversity", "trustScore", "upvotes", "validations"].sort()
+      ["diversity", "trustScore", "upvotes", "validations"].sort()
     );
 
     expect(byKey.upvotes).toMatchObject({ label: "UPVOTES", val: 20000, req: 10000 });
-    expect(byKey.citations).toMatchObject({ label: "PEER CITATIONS", val: 300, req: 200 });
     expect(byKey.validations).toMatchObject({ label: "CROSS-CLUSTER VALIDATIONS", val: 100, req: 2500 });
     expect(byKey.diversity).toMatchObject({ label: "DIVERSITY INDEX", val: 0, req: 0.72 });
     expect(byKey.trustScore).toMatchObject({ label: "TRUST SCORE", val: 0.65, req: 0.88 });
 
     expect(byKey.upvotes.fmt(byKey.upvotes.val)).toBe("20.0K");
-    expect(byKey.citations.fmt(byKey.citations.val)).toBe("300");
     expect(byKey.validations.fmt(byKey.validations.val)).toBe("100");
     expect(byKey.diversity.fmt(byKey.diversity.val)).toBe("0.0%");
     expect(byKey.trustScore.fmt(byKey.trustScore.val)).toBe("65.0%");
