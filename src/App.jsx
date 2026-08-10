@@ -2069,6 +2069,7 @@ function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
   const [buying, setBuying] = useState(false);
   const [bought, setBought] = useState(false);
   const [record, setRecord] = useState(null);
+  const [buyError, setBuyError] = useState("");
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
@@ -2108,11 +2109,19 @@ function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
 
   const sufficientBalance = (balance || 0) >= totalCost;
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (!user || buying || bought || !sufficientBalance) return;
-    const rec = { qty, cost: totalCost, newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) };
     setBuying(true);
-    setTimeout(() => { setBuying(false); setBought(true); setRecord(rec); if (onBought) onBought(token.sym, qty, totalCost); }, 2000);
+    setBuyError("");
+    try {
+      if (onBought) await onBought(qty, totalCost);
+      setRecord({ qty, cost: totalCost, newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) });
+      setBought(true);
+    } catch (err) {
+      setBuyError(err.message || "Purchase failed. Please try again.");
+    } finally {
+      setBuying(false);
+    }
   };
 
   return (
@@ -2126,7 +2135,7 @@ function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
             <div style={{fontSize:38,marginBottom:12,color:token.col,animation:"sway 2s ease-in-out infinite"}}>⬡</div>
             <div style={{fontSize:9,fontFamily:"monospace",color:token.col,letterSpacing:3,marginBottom:8}}>PURCHASE CONFIRMED</div>
             <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.parch,marginBottom:10}}>+{record.qty} {token.sym}</h2>
-            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:16}}>Recorded on-chain. New token price: <span style={{color:token.col,fontFamily:"monospace",fontWeight:700}}>${record.newPrice.toFixed(2)}</span></p>
+            <p style={{color:C.dust,fontSize:11,lineHeight:1.8,marginBottom:16}}>New token price: <span style={{color:token.col,fontFamily:"monospace",fontWeight:700}}>${record.newPrice.toFixed(2)}</span></p>
             <div style={{background:C.card,border:`1px solid ${C.amber}28`,borderRadius:10,padding:"11px 14px",fontSize:9,fontFamily:"monospace",color:C.dust,lineHeight:2.1,textAlign:"left",marginBottom:14}}>
               <div>⬡ <span style={{color:C.tan}}>Token:</span> <span style={{color:token.col}}>{token.sym}</span></div>
               <div>⬡ <span style={{color:C.tan}}>Quantity:</span> {record.qty.toLocaleString()}</div>
@@ -2144,11 +2153,7 @@ function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
         ) : buying ? (
           <div style={{textAlign:"center",padding:"32px 0"}}>
             <div style={{fontSize:38,marginBottom:14,animation:"pulse 1s infinite",color:token.col}}>⬡</div>
-            <div style={{fontSize:10,fontFamily:"monospace",color:token.col,letterSpacing:2,marginBottom:6}}>PROCESSING…</div>
-            <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,marginBottom:18}}>Updating bonding curve · Routing author commission · Broadcasting to nodes</div>
-            <div style={{height:2,background:C.shadow,borderRadius:2,overflow:"hidden",maxWidth:280,margin:"0 auto"}}>
-              <div style={{height:"100%",width:"100%",background:`linear-gradient(90deg,${token.col},${C.copper})`,animation:"fadein 2s linear forwards"}}/>
-            </div>
+            <div style={{fontSize:10,fontFamily:"monospace",color:token.col,letterSpacing:2}}>PROCESSING…</div>
           </div>
         ) : (
           <>
@@ -2238,6 +2243,12 @@ function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {buyError && (
+              <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+                ✕ {buyError}
               </div>
             )}
 
