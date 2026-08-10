@@ -375,7 +375,7 @@ function PostCard({ post, user, votes, disputes, onValidate, onTokenize, onPostC
                   <div key={g.key} style={{width:5,height:5,borderRadius:"50%",background:g.val>=g.req?C.sprout:C.shadow,boxShadow:g.val>=g.req?`0 0 4px ${C.sprout}88`:undefined}}/>
                 ))}
               </div>
-              <span style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust}}>{gateInfo.metCount}/5</span>
+              <span style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust}}>{gateInfo.metCount}/4</span>
             </div>
             {gateInfo.allMet && post.tokenData && <span style={{fontSize:7,fontFamily:"monospace",color:C.sprout}}>✓ TOKENIZED</span>}
             {gateInfo.allMet && !post.tokenData && user && onTokenize && (
@@ -488,7 +488,7 @@ function PostDetailModal({ post, votes, disputes, user, onClose, onValidate, onT
 
         {gateInfo && (
           <div style={{background:C.bark,border:`1px solid ${gateInfo.allMet?C.amber+"44":C.shadow}`,borderRadius:10,padding:"12px 14px",marginBottom:14}}>
-            <div style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust,letterSpacing:2,marginBottom:8}}>TOKENIZATION GATES {gateInfo.metCount}/5</div>
+            <div style={{fontSize:7,fontFamily:"monospace",color:gateInfo.allMet?C.amber:C.dust,letterSpacing:2,marginBottom:8}}>TOKENIZATION GATES {gateInfo.metCount}/4</div>
             <div style={{display:"flex",flexDirection:"column",gap:5}}>
               {gateInfo.items.map(g => {
                 const met = g.val >= g.req;
@@ -1223,7 +1223,7 @@ function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes
                         <div style={{height:"100%",width:`${trust*100}%`,background:`linear-gradient(90deg,${C.sky},${sc})`,borderRadius:2}}/>
                       </div>
                       <span style={{fontSize:7,fontFamily:"monospace",color:sc,minWidth:48,textAlign:"right"}}>TRUST {(trust*100).toFixed(0)}%</span>
-                      <span style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>{gates.metCount}/5</span>
+                      <span style={{fontSize:7,fontFamily:"monospace",color:C.dust}}>{gates.metCount}/4</span>
                       <span style={{fontSize:8,fontFamily:"monospace",color:C.sprout}}>▲ {nf(p.up)}</span>
                     </div>
                   </div>
@@ -3020,7 +3020,7 @@ export default function Veridax() {
                 <div style={{fontSize:30,marginBottom:14,color:C.amber}}>⬡</div>
                 <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.parch,marginBottom:10}}>No knowledge tokens yet.</h2>
                 <p style={{fontSize:11,color:C.dust,lineHeight:1.85,maxWidth:420,margin:"0 auto"}}>
-                  Tokens are created when a published work clears all five trust gates simultaneously and the community votes YES. The first tokenized discovery will appear here.
+                  Tokens are created when a published work clears all four trust gates simultaneously and the community votes YES. The first tokenized discovery will appear here.
                 </p>
               </div>
             ) : (
@@ -3125,16 +3125,15 @@ export default function Veridax() {
             {/* AND-gate section */}
             <div style={{background:C.bark,border:`1px solid ${C.amber}33`,borderRadius:14,padding:"22px",marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                <span style={{fontSize:7,fontFamily:"monospace",color:C.amber,letterSpacing:3}}>THE FIVE TOKENIZATION GATES</span>
+                <span style={{fontSize:7,fontFamily:"monospace",color:C.amber,letterSpacing:3}}>THE FOUR TOKENIZATION GATES</span>
                 <div style={{flex:1,height:1,background:`${C.amber}22`}}/>
               </div>
               <p style={{fontSize:11,color:C.dust,lineHeight:1.8,marginBottom:16}}>
-                When a post climbs high enough in community trust it becomes eligible for tokenization. But it cannot be tokenized by clearing just one or two metrics — it must simultaneously clear <span style={{color:C.parch}}>all five of these gates at the same time.</span>
+                When a post climbs high enough in community trust it becomes eligible for tokenization. But it cannot be tokenized by clearing just one or two metrics — it must simultaneously clear <span style={{color:C.parch}}>all four of these gates at the same time.</span>
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
                 {[
                   {label:"10,000 upvotes",     icon:"▲", color:C.sprout,  sub:"minimum community endorsement"},
-                  {label:"200 peer citations",  icon:"◎", color:C.sky,     sub:"other published works referencing this one"},
                   {label:"2,500 validations",   icon:"✓", color:C.amber,   sub:"cross-cluster, reputation-weighted"},
                   {label:"72% diversity index", icon:"◈", color:C.copper,  sub:"Shannon entropy across all 8 clusters"},
                   {label:"88% trust score",     icon:"⬡", color:"#d0a068", sub:"65% raw ratio + 35% diversity"},
@@ -3147,14 +3146,14 @@ export default function Veridax() {
                 ))}
               </div>
               <div style={{background:`${C.bloom}08`,border:`1px solid ${C.bloom}28`,borderRadius:9,padding:"11px 14px",fontSize:10,fontFamily:"monospace",color:C.dust,lineHeight:1.8}}>
-                <span style={{color:C.bloom}}>⬡</span> Meeting four out of five gates does nothing. <span style={{color:C.parch}}>All five must be met simultaneously.</span> This AND-gate design means you cannot game any single metric in isolation. Once a post crosses all five thresholds simultaneously, the community votes on whether to launch a knowledge token for it.
+                <span style={{color:C.bloom}}>⬡</span> Meeting three out of four gates does nothing. <span style={{color:C.parch}}>All four must be met simultaneously.</span> This AND-gate design means you cannot game any single metric in isolation. Once a post crosses all four thresholds simultaneously, the community votes on whether to launch a knowledge token for it.
               </div>
             </div>
 
             <div style={{background:C.bark,border:`1px solid ${C.shadow}`,borderRadius:12,padding:"18px"}}>
               <div style={{fontSize:9,fontFamily:"monospace",color:C.dust,letterSpacing:2,marginBottom:12}}>HOW IT PLAYS OUT</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:10}}>
-                {[{n:"01",t:"All Five Gates Clear",c:C.sky,d:"The post has simultaneously cleared all five thresholds. No shortcuts, no workarounds. The AND-gate design makes gaming any single metric futile."},
+                {[{n:"01",t:"All Four Gates Clear",c:C.sky,d:"The post has simultaneously cleared all four thresholds. No shortcuts, no workarounds. The AND-gate design makes gaming any single metric futile."},
                   {n:"02",t:"Community Votes",c:C.amber,d:"Verified humans vote YES or NO to launch a token. Threshold: 66% YES. Symbol assigned. Author commission rate locked in by category."},
                   {n:"03",t:"Bonding Curve Launch",c:C.copper,d:"Price rises as more people buy in. Early recognizers of important discoveries get in cheapest. No fixed supply."},
                   {n:"04",t:"Author Earns Forever",c:C.sprout,d:"Every purchase automatically routes commission to the author's wallet. No invoices. No negotiations. No platform taking a cut."}].map(s => (
