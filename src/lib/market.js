@@ -16,10 +16,10 @@ export async function fetchPurchases() {
   return data;
 }
 
-export async function buyToken({ postId, userId, qty, cost }) {
+export async function buyToken({ postId, userId, qty, cost, commission }) {
   const { data, error } = await supabase
     .from("token_purchases")
-    .insert({ post_id: postId, user_id: userId, qty, cost })
+    .insert({ post_id: postId, user_id: userId, qty, cost, commission })
     .select()
     .single();
   if (error) throw error;
