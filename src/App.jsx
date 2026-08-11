@@ -5,6 +5,7 @@ import { fetchPosts, createPost } from "./lib/posts";
 import { fetchVotes, castVote, aggregateVotes } from "./lib/votes";
 import { fetchTokenizeVotes, castTokenizeVote, aggregateTokenizeVotes } from "./lib/tokenizeVotes";
 import { fetchTokens, fetchPurchases, buyToken as recordTokenPurchase, aggregateMarket } from "./lib/market";
+import { fetchWalletTransactions, depositFunds, withdrawFunds, aggregateWallet } from "./lib/wallet";
 
 const C = {
   soil:"#04050a", earth:"#07080e", bark:"#0d0e18", wood:"#111220",
@@ -14,13 +15,6 @@ const C = {
   sprout:"#72c44a", sproutD:"#72c44a0e", sky:"#5aabaa", skyD:"#5aabaa10",
   bloom:"#c85a45", parch:"#e0d8c0", tan:"#a09070", dust:"#585040",
 };
-
-const LS = {
-  get: (k, def) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; } catch { return def; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-  del: k => { try { localStorage.removeItem(k); } catch {} },
-};
-
 
 const CATS = [
   // Flagship
@@ -2393,6 +2387,7 @@ export default function Veridax() {
   const [tokenRows,        setTokenRows]        = useState([]);
   const [rawTokenizeVotes, setRawTokenizeVotes] = useState([]);
   const [rawPurchases,     setRawPurchases]     = useState([]);
+  const [rawWalletTx,      setRawWalletTx]      = useState([]);
   const [validatingPost,  setValidatingPost]  = useState(null);
   const [tokenizePost,    setTokenizePost]    = useState(null);
   const [buyTokenSym,     setBuyTokenSym]     = useState(null);
@@ -2471,6 +2466,23 @@ export default function Veridax() {
     return () => { active = false; unsubscribe(); };
   }, []);
 
+  // wallet_transactions is privately scoped (RLS: auth.uid() = user_id),
+  // so it can only be fetched once we know who's logged in — and must be
+  // re-fetched (or cleared) whenever that identity changes.
+  useEffect(() => {
+    let active = true;
+    if (!user) { setRawWalletTx([]); return; }
+    (async () => {
+      try {
+        const tx = await fetchWalletTransactions();
+        if (active) setRawWalletTx(tx);
+      } catch (err) {
+        console.error("Failed to load wallet transactions:", err);
+      }
+    })();
+    return () => { active = false; };
+  }, [user?.id]);
+
   const handleJoin = async (profile) => signUp(profile);
   const handleLogin = async ({ email, password }) => { await signIn({ email, password }); };
   const handleLogout = async () => { await signOut(); };
@@ -2515,14 +2527,15 @@ export default function Veridax() {
     setTokenRows(refreshedTokens);
   };
 
-  const handleBuyToken = async (postId, qty, cost) => {
+  const handleBuyToken = async (postId, qty, cost, commission) => {
     if (!user) return;
-    const purchase = await recordTokenPurchase({ postId, userId: user.id, qty, cost });
+    const purchase = await recordTokenPurchase({ postId, userId: user.id, qty, cost, commission });
     setRawPurchases(prev => [...prev, purchase]);
-    if (cost > 0) {
-      setBalance(prev => prev - cost);
-      const sym = tokens.find(t => t.postId === postId)?.sym || "";
-      addTx("buy", -cost, `Bought ${qty.toLocaleString()} × ⬡ ${sym}`);
+    try {
+      const refreshedWalletTx = await fetchWalletTransactions();
+      setRawWalletTx(refreshedWalletTx);
+    } catch (err) {
+      console.error("Purchase succeeded, but refreshing wallet transactions failed:", err);
     }
   };
 
@@ -2549,29 +2562,38 @@ export default function Veridax() {
     return created;
   };
 
-  const [balance,      setBalance]      = useState(() => LS.get('vdx_balance', 0));
-  const [transactions, setTransactions] = useState(() => LS.get('vdx_transactions', []));
-  useEffect(() => LS.set('vdx_balance', balance), [balance]);
-  useEffect(() => LS.set('vdx_transactions', transactions), [transactions]);
-
   const totalValidations = Object.values(postVotes).reduce((s,v) => s + Object.values(v).reduce((a,b) => a+b, 0), 0);
 
-  const addTx = (type, amount, desc) => {
-    setTransactions(prev => [{
-      id: `tx_${Date.now()}`,
-      type, amount, desc,
-      date: new Date().toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }),
-    }, ...prev]);
+  const { balance } = aggregateWallet(rawWalletTx);
+
+  const transactions = rawWalletTx.map(tx => {
+    const date = new Date(tx.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+    if (tx.type === "deposit") {
+      return { id: tx.id, type: "deposit", amount: tx.amount, desc: `Deposit via ${tx.method || "unknown method"}`, date };
+    }
+    if (tx.type === "withdraw") {
+      return { id: tx.id, type: "withdraw", amount: tx.amount, desc: "Withdrawal to wallet", date };
+    }
+    const purchase = rawPurchases.find(p => p.id === tx.purchase_id);
+    const purchaseToken = purchase ? tokens.find(t => t.postId === purchase.post_id) : null;
+    const sym = purchaseToken?.sym || "?";
+    if (tx.type === "buy") {
+      const qtyLabel = purchase ? purchase.qty.toLocaleString() : "some";
+      return { id: tx.id, type: "buy", amount: tx.amount, desc: `Bought ${qtyLabel} × ⬡ ${sym}`, date };
+    }
+    return { id: tx.id, type: "commission", amount: tx.amount, desc: `Commission from ⬡ ${sym}`, date };
+  });
+
+  const handleDeposit = async (amount, method) => {
+    if (!user) return;
+    const tx = await depositFunds({ userId: user.id, amount, method });
+    setRawWalletTx(prev => [tx, ...prev]);
   };
 
-  const handleDeposit = (amount, method) => {
-    setBalance(prev => prev + amount);
-    addTx("deposit", amount, `Deposit via ${method}`);
-  };
-
-  const handleWithdraw = (amount) => {
-    setBalance(prev => prev - amount);
-    addTx("withdraw", -amount, "Withdrawal to wallet");
+  const handleWithdraw = async (amount) => {
+    if (!user) return;
+    const tx = await withdrawFunds({ userId: user.id, amount });
+    setRawWalletTx(prev => [tx, ...prev]);
   };
 
   const navigate = (sectionId) => {
@@ -3681,7 +3703,7 @@ export default function Veridax() {
           onVote={vote => handleTokenizeVote(tokenizePost.id, vote)}
         />
       )}
-      {buyToken && <BuyModal token={buyToken} user={user} balance={balance} onClose={() => setBuyTokenSym(null)} onBought={(qty, cost) => handleBuyToken(buyToken.postId, qty, cost)} onNeedDeposit={() => setShowProfile(true)}/>}
+      {buyToken && <BuyModal token={buyToken} user={user} balance={balance} onClose={() => setBuyTokenSym(null)} onBought={(qty, cost, commission) => handleBuyToken(buyToken.postId, qty, cost, commission)} onNeedDeposit={() => setShowProfile(true)}/>}
       {validatingPost && (
         <ValidationModal
           post={validatingPost}
