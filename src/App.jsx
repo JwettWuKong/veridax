@@ -2112,13 +2112,14 @@ function BuyModal({ token, user, balance, onClose, onBought, onNeedDeposit }) {
   const fillD = `M${fillPts[0]} L${fillPts.slice(1).join(" L")} Z`;
 
   const sufficientBalance = (balance || 0) >= totalCost;
+  const commissionAmount = totalCost * token.commission / 100;
 
   const handleBuy = async () => {
     if (!user || buying || bought || !sufficientBalance) return;
     setBuying(true);
     setBuyError("");
     try {
-      if (onBought) await onBought(qty, totalCost);
+      if (onBought) await onBought(qty, totalCost, commissionAmount);
       setRecord({ qty, cost: totalCost, newSupply: token.supply + qty, newPrice: bondingPrice(token.supply + qty) });
       setBought(true);
     } catch (err) {
