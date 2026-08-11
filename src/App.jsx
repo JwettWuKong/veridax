@@ -1023,6 +1023,7 @@ function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes
   const [depositMethod,   setDepositMethod]   = useState("Credit Card");
   const [walletWorking,   setWalletWorking]   = useState(false);
   const [walletDone,      setWalletDone]      = useState(false);
+  const [walletError,     setWalletError]     = useState("");
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };
@@ -1046,19 +1047,23 @@ function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes
   const walletAddr = user ? "0x" + (user.username + "vdx").split("").map(c => c.charCodeAt(0).toString(16)).join("").padEnd(40, "0").slice(0, 40) : "0x0000000000000000000000000000000000000000";
   const clusterInfo = user ? (CLUSTERS.find(cl => cl.id === user.cluster) || { icon:"🌐", label:"Independent" }) : { icon:"🌐", label:"Independent" };
 
-  const confirmWalletAction = () => {
+  const confirmWalletAction = async () => {
     const amt = parseFloat(walletAmount);
     if (!amt || amt <= 0) return;
     if (walletMode === "withdraw" && amt > (balance || 0)) return;
     setWalletWorking(true);
-    setTimeout(() => {
-      if (walletMode === "deposit") onDeposit(amt, depositMethod);
-      else onWithdraw(amt);
+    setWalletError("");
+    try {
+      if (walletMode === "deposit") await onDeposit(amt, depositMethod);
+      else await onWithdraw(amt);
       setWalletWorking(false);
       setWalletDone(true);
       setWalletAmount("");
       setTimeout(() => { setWalletDone(false); setWalletMode(null); }, 2400);
-    }, 2000);
+    } catch (err) {
+      setWalletWorking(false);
+      setWalletError(err.message || "Something went wrong. Please try again.");
+    }
   };
 
   const TABS = [{k:"works",l:"WORKS"},{k:"portfolio",l:"PORTFOLIO"},{k:"wallet",l:"WALLET"},{k:"activity",l:"ACTIVITY"},{k:"account",l:"ACCOUNT"}];
@@ -1368,6 +1373,11 @@ function DashboardSidebar({ user, posts, portfolio, tokens, userVotes, postVotes
                         <div style={{marginBottom:14}}>
                           <div style={{fontSize:7,fontFamily:"monospace",color:C.dust,letterSpacing:1,marginBottom:5}}>DESTINATION WALLET</div>
                           <div style={{background:C.wood,border:`1px solid ${C.shadow}`,borderRadius:7,padding:"8px 12px",fontSize:8,fontFamily:"monospace",color:C.amber,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{walletAddr}</div>
+                        </div>
+                      )}
+                      {walletError && (
+                        <div style={{background:`${C.bloom}12`,border:`1px solid ${C.bloom}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:10,fontFamily:"monospace",color:C.bloom}}>
+                          ✕ {walletError}
                         </div>
                       )}
                       <div style={{display:"flex",gap:8}}>
